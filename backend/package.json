@@ -11,7 +11,10 @@
     "db:up": "docker compose -f ../docker-compose.yml up -d db",
     "db:migrate": "tsx src/infrastructure/database/migrate.ts",
     "sim:balance": "tsx scripts/simulation-balance.ts",
-    "user:owner": "tsx src/infrastructure/cli/promoteOwner.ts"
+    "user:owner": "tsx src/infrastructure/cli/promoteOwner.ts",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:fixtures": "vitest run test/fixtures --mode fixtures"
   },
   "dependencies": {
     "dotenv": "^18.0.4",
@@ -23,8 +26,12 @@
     "@types/express": "^5.0.6",
     "@types/node": "^26.6.2",
     "@types/pg": "^8.23.1",
+    "@types/supertest": "^7.2.1",
+    "@vitest/coverage-v8": "^5.0.2",
+    "supertest": "^7.3.0",
     "tsx": "^4.23.15",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.2"
   },
   "engines": {
     "node": ">=24"
