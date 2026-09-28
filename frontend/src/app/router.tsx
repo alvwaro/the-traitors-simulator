@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, type RouteObject } from 'react-router-dom';
 import { AppShell } from '../components/layout/AppShell';
 import { LoginPage } from '../features/auth/LoginPage';
 import { HomeLayout } from '../features/home/HomeLayout';
@@ -16,7 +16,8 @@ import { GuidePage } from '../features/guide/GuidePage';
 import { NotFoundPage } from './NotFoundPage';
 import { RequireAuth } from './RequireAuth';
 
-export const router = createBrowserRouter([
+/** As rotas do site (os testes montam as mesmas rotas num roteador em memória). */
+export const routes: RouteObject[] = [
   // porta de entrada: só o login, sem o site por trás
   { path: '/entrar', element: <LoginPage /> },
   {
@@ -54,4 +55,6 @@ export const router = createBrowserRouter([
       { path: '*', element: <NotFoundPage /> },
     ],
   },
-]);
+];
+
+export const router = createBrowserRouter(routes);
