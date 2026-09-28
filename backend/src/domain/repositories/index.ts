@@ -18,3 +18,4 @@ export * from './IStatsRepository';
 export * from './IPublicationRepository';
 export * from './IUserRepository';
 export * from './IAccessRepository';
+export * from './ISeasonSnapshotRepository';

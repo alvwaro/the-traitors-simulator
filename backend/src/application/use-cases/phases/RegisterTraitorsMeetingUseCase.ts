@@ -6,6 +6,7 @@ import { GamePhase, MurderOutcome, PlayerStatus } from '../../../domain/enums';
 import { DomainError } from '../../../domain/errors/DomainError';
 import { loadActiveGame } from '../../services/gameGuards';
 import { PlayerRoster } from '../../services/PlayerRoster';
+import { rememberForUndo } from '../../services/undo';
 
 /**
  * Reunião noturna: assassinato (bloqueado se o alvo tem escudo do dia)
@@ -16,7 +17,10 @@ export class RegisterTraitorsMeetingUseCase implements IUseCase<RegisterTraitors
   constructor(private readonly uow: IUnitOfWork) {}
 
   execute(input: RegisterTraitorsMeetingInput): Promise<TraitorMeetingProps> {
-    return this.uow.run((repos) => this.record(repos, input));
+    return this.uow.run(async (repos) => {
+      await rememberForUndo(repos, input.seasonId, 'Registro da reunião dos traidores');
+      return this.record(repos, input);
+    });
   }
 
   /** A mesma regra dentro de uma transação já aberta (usada também pela simulação automática). */

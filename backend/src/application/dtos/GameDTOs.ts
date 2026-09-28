@@ -28,6 +28,8 @@ export interface GameStateOutput {
   winners: SeasonWinnerProps[];
   /** Modo Jogador: a situação do usuário (null nos outros modos). */
   player: PlayerView | null;
+  /** Temporada manual: há um registro para desfazer (ou uma fase anterior para onde voltar). */
+  canGoBack: boolean;
 }
 
 /** O que o jogador humano precisa decidir para a fase atual andar. */

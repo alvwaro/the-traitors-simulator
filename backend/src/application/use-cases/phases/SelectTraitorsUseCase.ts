@@ -6,6 +6,7 @@ import { GamePhase, PlayerRole } from '../../../domain/enums';
 import { DomainError } from '../../../domain/errors/DomainError';
 import { loadActiveGame } from '../../services/gameGuards';
 import { PlayerRoster } from '../../services/PlayerRoster';
+import { rememberForUndo } from '../../services/undo';
 
 /**
  * Fase TRAITOR_SELECTION do dia 1: define quem são os traidores originais.
@@ -15,7 +16,10 @@ export class SelectTraitorsUseCase implements IUseCase<SelectTraitorsInput, Play
   constructor(private readonly uow: IUnitOfWork) {}
 
   execute(input: SelectTraitorsInput): Promise<PlayerProps[]> {
-    return this.uow.run((repos) => this.record(repos, input));
+    return this.uow.run(async (repos) => {
+      await rememberForUndo(repos, input.seasonId, 'Escolha dos traidores');
+      return this.record(repos, input);
+    });
   }
 
   /** A mesma regra dentro de uma transação já aberta (usada também pela simulação automática). */

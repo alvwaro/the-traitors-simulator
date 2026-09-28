@@ -5,6 +5,7 @@ import { PrizeTransaction } from '../../../domain/entities';
 import { PrizeTransactionType } from '../../../domain/enums';
 import { DomainError } from '../../../domain/errors/DomainError';
 import { loadActiveGame } from '../../services/gameGuards';
+import { rememberForUndo } from '../../services/undo';
 
 /** Penalidades e ajustes manuais no prêmio (fora das missões). */
 export class RegisterPrizeAdjustmentUseCase implements IUseCase<PrizeAdjustmentInput, PrizeAdjustmentOutput> {
@@ -12,6 +13,7 @@ export class RegisterPrizeAdjustmentUseCase implements IUseCase<PrizeAdjustmentI
 
   execute(input: PrizeAdjustmentInput): Promise<PrizeAdjustmentOutput> {
     return this.uow.run(async (repos) => {
+      await rememberForUndo(repos, input.seasonId, 'Ajuste no prêmio');
       const { season, day } = await loadActiveGame(repos, input.seasonId);
       const amount = input.type === PrizeTransactionType.PENALTY ? -Math.abs(input.amount) : input.amount;
 

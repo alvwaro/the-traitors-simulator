@@ -4,6 +4,7 @@ import { PlayerRefInput } from '../../dtos/PlayerDTOs';
 import { PlayerProps } from '../../../domain/entities';
 import { PlayerStatus } from '../../../domain/enums';
 import { loadActiveGame } from '../../services/gameGuards';
+import { rememberForUndo } from '../../services/undo';
 import { PlayerRoster } from '../../services/PlayerRoster';
 
 /** Jogador desistiu / saiu por motivo externo durante a temporada. */
@@ -12,6 +13,7 @@ export class WithdrawPlayerUseCase implements IUseCase<PlayerRefInput, PlayerPro
 
   execute(input: PlayerRefInput): Promise<PlayerProps> {
     return this.uow.run(async (repos) => {
+      await rememberForUndo(repos, input.seasonId, 'Desistência de jogador');
       const { season, day } = await loadActiveGame(repos, input.seasonId);
       const player = (await PlayerRoster.load(repos, season.id)).requireActive(input.playerId);
       player.eliminate(PlayerStatus.WITHDRAWN, day.id);

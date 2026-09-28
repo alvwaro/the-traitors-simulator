@@ -31,5 +31,10 @@ export class DayPhase {
     this.props.endedAt ??= new Date();
   }
 
+  /** A fase volta a ser a atual (o usuário retornou a ela). */
+  reopen(): void {
+    this.props.endedAt = null;
+  }
+
   toJSON(): DayPhaseProps { return { ...this.props }; }
 }

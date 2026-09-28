@@ -21,6 +21,7 @@ import { WithdrawPlayerUseCase } from '../application/use-cases/player/WithdrawP
 import { StartSeasonUseCase } from '../application/use-cases/game/StartSeasonUseCase';
 import { GetGameStateUseCase } from '../application/use-cases/game/GetGameStateUseCase';
 import { AdvancePhaseUseCase } from '../application/use-cases/game/AdvancePhaseUseCase';
+import { GoBackPhaseUseCase } from '../application/use-cases/game/GoBackPhaseUseCase';
 import { StartEndgameUseCase } from '../application/use-cases/game/StartEndgameUseCase';
 import { GetSeasonHistoryUseCase } from '../application/use-cases/game/GetSeasonHistoryUseCase';
 import { RegisterPhaseNotesUseCase } from '../application/use-cases/phases/RegisterPhaseNotesUseCase';
@@ -158,6 +159,7 @@ export function buildContainer(): Container {
       advancePhase,
       startEndgame,
       new GetSeasonHistoryUseCase(repos),
+      new GoBackPhaseUseCase(uow),
     ),
     imageProxy: new ImageProxyController(new RemoteImageFetcher()),
     phase: new PhaseController(

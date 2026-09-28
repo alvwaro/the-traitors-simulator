@@ -18,6 +18,7 @@ import { PgStatsRepository } from './PgStatsRepository';
 import { PgPublicationRepository } from './PgPublicationRepository';
 import { PgSessionRepository, PgUserRepository } from './PgUserRepository';
 import { PgAccessRepository } from './PgAccessRepository';
+import { PgSeasonSnapshotRepository } from './PgSeasonSnapshotRepository';
 
 export function createRepositories(db: Queryable): Repositories {
   return {
@@ -40,5 +41,6 @@ export function createRepositories(db: Queryable): Repositories {
     users: new PgUserRepository(db),
     sessions: new PgSessionRepository(db),
     access: new PgAccessRepository(db),
+    snapshots: new PgSeasonSnapshotRepository(db),
   };
 }

@@ -23,10 +23,13 @@ export function AdvanceBar() {
   const advance = useAction(() => game.advance(seasonId), {
     success: (s) => (s.phase === 'FINALE' ? 'O jogo terminou' : `Agora: dia ${toRoman(s.day ?? 1)}, ${phaseLabel[s.phase!]}`),
   });
+  const back = useAction(() => game.back(seasonId), {
+    success: (s) => `De volta: dia ${toRoman(s.day ?? 1)}, ${phaseLabel[s.phase!]}`,
+  });
   const simulate = useAction(() => simulation.simulate(seasonId));
   const simulateAll = useAction(() => simulation.simulate(seasonId, true), { success: 'Temporada simulada até a revelação final' });
 
-  if (!state.day || !state.phase || state.phase === 'FINALE') return null;
+  if (!state.day || !state.phase) return null;
 
   const automatic = state.season.mode !== 'MANUAL';
   const me = state.player;
@@ -52,6 +55,17 @@ export function AdvanceBar() {
     refresh();
   }
 
+  async function handleBack() {
+    if (await back.run()) refresh();
+  }
+
+  // Temporada manual: desfaz o último registro (a mesa redonda volta para a votação, a final volta para a mesa...).
+  const backButton = state.canGoBack && (
+    <Button variant="quiet" pending={back.pending} disabled={advance.pending} onClick={fireAndForget(handleBack)}>
+      Voltar
+    </Button>
+  );
+
   async function handleAdvance() {
     if (await advance.run()) refresh();
   }
@@ -59,6 +73,15 @@ export function AdvanceBar() {
   async function handleSimulateAll() {
     setConfirmingAll(false);
     if (await simulateAll.run()) refresh();
+  }
+
+  if (state.phase === 'FINALE') {
+    return backButton ? (
+      <div className={styles.bar}>
+        <p className={styles.status}>O jogo terminou. Dá para voltar e desfazer o último registro.</p>
+        <div className={styles.buttons}>{backButton}</div>
+      </div>
+    ) : null;
   }
 
   return (
@@ -85,8 +108,9 @@ export function AdvanceBar() {
             {playing ? 'Continuar' : 'Simular'}
           </Button>
         )}
+        {backButton}
         {!waitingDecision && !needsSimulation && (
-          <Button size="lg" pending={advance.pending} disabled={!ready || simulateAll.pending} onClick={fireAndForget(handleAdvance)}>
+          <Button size="lg" pending={advance.pending} disabled={back.pending || !ready || simulateAll.pending} onClick={fireAndForget(handleAdvance)}>
             Avançar
           </Button>
         )}

@@ -18,6 +18,7 @@ import {
   IUserRepository,
   ISessionRepository,
   IAccessRepository,
+  ISeasonSnapshotRepository,
 } from '../../domain/repositories';
 
 export interface Repositories {
@@ -40,6 +41,7 @@ export interface Repositories {
   users: IUserRepository;
   sessions: ISessionRepository;
   access: IAccessRepository;
+  snapshots: ISeasonSnapshotRepository;
 }
 
 /**

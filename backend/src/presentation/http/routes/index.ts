@@ -117,6 +117,7 @@ export function buildRouter(c: Controllers, guard: AccessGuards): Router {
   router.get('/seasons/:seasonId/state', seasonRead, c.game.state);
   router.get('/seasons/:seasonId/history', seasonRead, c.game.history);
   router.post('/seasons/:seasonId/advance', seasonWrite, c.game.advance);
+  router.post('/seasons/:seasonId/back', seasonWrite, c.game.back);
   router.post('/seasons/:seasonId/endgame', seasonWrite, c.game.endgame);
 
   // Simulação automática

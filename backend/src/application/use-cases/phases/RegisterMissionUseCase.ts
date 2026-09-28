@@ -6,6 +6,7 @@ import { GamePhase, PrizeTransactionType } from '../../../domain/enums';
 import { DomainError } from '../../../domain/errors/DomainError';
 import { loadActiveGame } from '../../services/gameGuards';
 import { PlayerRoster } from '../../services/PlayerRoster';
+import { rememberForUndo } from '../../services/undo';
 
 /** Registra a missão do dia: quem ganhou escudo e quanto entrou no prêmio. */
 export class RegisterMissionUseCase implements IUseCase<RegisterMissionInput, MissionOutput> {
@@ -18,7 +19,10 @@ export class RegisterMissionUseCase implements IUseCase<RegisterMissionInput, Mi
   }
 
   execute(input: RegisterMissionInput): Promise<MissionOutput> {
-    return this.uow.run((repos) => this.record(repos, input));
+    return this.uow.run(async (repos) => {
+      await rememberForUndo(repos, input.seasonId, 'Registro da missão');
+      return this.record(repos, input);
+    });
   }
 
   /** A mesma regra dentro de uma transação já aberta (usada também pela simulação automática). */

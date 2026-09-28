@@ -8,6 +8,7 @@ import { VoteTallyService } from '../../../domain/services';
 import { loadActiveGame } from '../../services/gameGuards';
 import { PlayerRoster } from '../../services/PlayerRoster';
 import { ensureBanishedMatchesVotes, recordVotes } from '../../services/roundTableVotes';
+import { rememberForUndo } from '../../services/undo';
 
 /**
  * Uma rodada da mesa final. Pode ser chamado várias vezes na mesma fase
@@ -20,7 +21,10 @@ export class RegisterEndgameRoundTableUseCase implements IUseCase<RegisterEndgam
   ) {}
 
   execute(input: RegisterEndgameRoundTableInput): Promise<RoundTableOutput> {
-    return this.uow.run((repos) => this.record(repos, input));
+    return this.uow.run(async (repos) => {
+      await rememberForUndo(repos, input.seasonId, 'Registro da mesa final');
+      return this.record(repos, input);
+    });
   }
 
   /** A mesma regra dentro de uma transação já aberta (usada também pela simulação automática). */

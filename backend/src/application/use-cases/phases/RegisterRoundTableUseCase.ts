@@ -8,6 +8,7 @@ import { VoteTallyService } from '../../../domain/services';
 import { loadActiveGame } from '../../services/gameGuards';
 import { PlayerRoster } from '../../services/PlayerRoster';
 import { ensureBanishedMatchesVotes, recordVotes } from '../../services/roundTableVotes';
+import { rememberForUndo } from '../../services/undo';
 
 /** Mesa redonda do dia (2+): votos opcionais e o banido, que tem o papel revelado. */
 export class RegisterRoundTableUseCase implements IUseCase<RegisterRoundTableInput, RoundTableOutput> {
@@ -17,7 +18,10 @@ export class RegisterRoundTableUseCase implements IUseCase<RegisterRoundTableInp
   ) {}
 
   execute(input: RegisterRoundTableInput): Promise<RoundTableOutput> {
-    return this.uow.run((repos) => this.record(repos, input));
+    return this.uow.run(async (repos) => {
+      await rememberForUndo(repos, input.seasonId, 'Registro da mesa redonda');
+      return this.record(repos, input);
+    });
   }
 
   /** A mesma regra dentro de uma transação já aberta (usada também pela simulação automática). */

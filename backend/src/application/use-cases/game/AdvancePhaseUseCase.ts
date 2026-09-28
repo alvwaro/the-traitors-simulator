@@ -9,11 +9,14 @@ import { PhaseFlowPolicy, WinnerPolicy } from '../../../domain/services';
 import { loadActiveGame } from '../../services/gameGuards';
 import { readGameState } from '../../services/gameState';
 import { pendingRequirement } from '../../services/phaseRequirements';
+import { phaseHistory } from '../../services/phaseHistory';
+import { rememberForUndo } from '../../services/undo';
 
 /**
  * Botão "avançar": fecha a fase atual e abre a próxima.
  * Só avança se o que a fase exige já foi registrado (ver phaseRequirements).
  * Ao chegar na FINALE, calcula os vencedores e a divisão do prêmio.
+ * Depois de voltar fases, avançar segue o caminho que já foi registrado (reaproveitando dias e fases).
  */
 export class AdvancePhaseUseCase implements IUseCase<SeasonIdInput, GameStateOutput> {
   constructor(
@@ -23,7 +26,10 @@ export class AdvancePhaseUseCase implements IUseCase<SeasonIdInput, GameStateOut
   ) {}
 
   execute(input: SeasonIdInput): Promise<GameStateOutput> {
-    return this.uow.run((repos) => this.record(repos, input));
+    return this.uow.run(async (repos) => {
+      await rememberForUndo(repos, input.seasonId, 'Avanço de fase');
+      return this.record(repos, input);
+    });
   }
 
   /** A mesma regra dentro de uma transação já aberta (usada também pela simulação automática). */
@@ -39,13 +45,19 @@ export class AdvancePhaseUseCase implements IUseCase<SeasonIdInput, GameStateOut
       await repos.days.savePhase(current);
     }
 
-    const next = this.phaseFlow.next({ day: day.number, phase }, season.isEndgame());
-    let nextDay = day;
-    if (next.day !== day.number) {
+    // Já existe uma fase registrada depois desta (o usuário tinha voltado): segue por ela.
+    const history = await phaseHistory(repos, season.id);
+    const index = history.findIndex((h) => h.day.number === day.number && h.phase.phase === phase);
+    const recorded = index >= 0 ? history[index + 1] : undefined;
+    const next = recorded ? { day: recorded.day.number, phase: recorded.phase.phase } : this.phaseFlow.next({ day: day.number, phase }, season.isEndgame());
+
+    let nextDay = recorded?.day ?? (next.day === day.number ? day : await repos.days.findBySeasonAndNumber(season.id, next.day));
+    if (!nextDay) {
       nextDay = Day.create({ seasonId: season.id, number: next.day });
       await repos.days.create(nextDay);
     }
-    const nextPhase = DayPhase.start(nextDay.id, next.phase);
+    const nextPhase = recorded?.phase ?? (await repos.days.findPhase(nextDay.id, next.phase)) ?? DayPhase.start(nextDay.id, next.phase);
+    nextPhase.reopen();
 
     if (next.phase === GamePhase.FINALE) {
       const finalists = await repos.players.findBySeason(season.id, { status: PlayerStatus.ACTIVE });

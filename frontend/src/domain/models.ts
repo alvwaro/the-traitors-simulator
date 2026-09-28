@@ -173,6 +173,8 @@ export interface GameState {
   winners: Winner[];
   /** Modo Jogador: a situação do usuário. */
   player: PlayerView | null;
+  /** Temporada manual: há um registro para desfazer (ou uma fase anterior para onde voltar). */
+  canGoBack: boolean;
 }
 
 export type PlayerNeed = 'VOTE' | 'REVOTE' | 'FINAL_TABLE' | 'TOWER' | 'OFFER' | 'SEER' | 'SEER_ANNOUNCE' | 'MISSION' | 'FIRE_VOTE';

@@ -7,6 +7,8 @@ export interface IGameService {
   state(seasonId: string): Promise<GameState>;
   history(seasonId: string): Promise<SeasonHistory>;
   advance(seasonId: string): Promise<GameState>;
+  /** Temporada manual: volta para a fase anterior (nada do que foi registrado é apagado). */
+  back(seasonId: string): Promise<GameState>;
   startEndgame(seasonId: string): Promise<GameState>;
 }
 
@@ -27,6 +29,10 @@ export class GameService implements IGameService {
 
   advance(seasonId: string) {
     return this.http.post<GameState>(`/seasons/${seasonId}/advance`);
+  }
+
+  back(seasonId: string) {
+    return this.http.post<GameState>(`/seasons/${seasonId}/back`);
   }
 
   startEndgame(seasonId: string) {

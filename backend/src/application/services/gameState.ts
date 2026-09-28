@@ -1,5 +1,6 @@
 import { MIN_PLAYERS_TO_START } from '../../domain/rules';
-import { PlayerStatus } from '../../domain/enums';
+import { Season } from '../../domain/entities';
+import { GamePhase, PlayerStatus } from '../../domain/enums';
 import { GameStateOutput } from '../dtos/GameDTOs';
 import { Repositories } from '../ports/IUnitOfWork';
 import { requireSeason } from './gameGuards';
@@ -36,5 +37,13 @@ export async function readGameState(repos: Repositories, seasonId: string): Prom
     eliminatedPlayers: shown.filter((p) => p.status !== PlayerStatus.ACTIVE),
     winners: winners.map((w) => w.toJSON()),
     player: await buildPlayerView(repos, season, players, day),
+    canGoBack: await canGoBack(repos, season),
   };
+}
+
+/** Temporada manual: dá para desfazer um registro guardado ou, sem nenhum, voltar para a fase anterior. */
+async function canGoBack(repos: Repositories, season: Season): Promise<boolean> {
+  if (season.isAutomatic() || season.isInSetup()) return false;
+  if ((await repos.snapshots.count(season.id)) > 0) return true;
+  return season.isInProgress() && !(season.currentDay === 1 && season.currentPhase === GamePhase.ARRIVAL);
 }

@@ -8,6 +8,7 @@ import { DomainError } from '../../../domain/errors/DomainError';
 import { ENDGAME_MAX_ACTIVE_PLAYERS } from '../../../domain/rules';
 import { loadActiveGame } from '../../services/gameGuards';
 import { readGameState } from '../../services/gameState';
+import { rememberForUndo } from '../../services/undo';
 
 /**
  * Marca a temporada como ENDGAME quando restam 6 jogadores ou menos.
@@ -18,7 +19,10 @@ export class StartEndgameUseCase implements IUseCase<SeasonIdInput, GameStateOut
   constructor(private readonly uow: IUnitOfWork) {}
 
   execute(input: SeasonIdInput): Promise<GameStateOutput> {
-    return this.uow.run((repos) => this.record(repos, input));
+    return this.uow.run(async (repos) => {
+      await rememberForUndo(repos, input.seasonId, 'Início da reta final');
+      return this.record(repos, input);
+    });
   }
 
   /** A mesma regra dentro de uma transação já aberta (usada também pela simulação automática). */
