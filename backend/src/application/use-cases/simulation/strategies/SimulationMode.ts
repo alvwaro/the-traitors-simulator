@@ -124,8 +124,9 @@ export class PlayerMode implements SimulationMode {
 
   async towerChoice(repos: Repositories, season: Season, day: Day, decision: HumanDecision): Promise<HumanTowerChoice | undefined> {
     if (!this.playing || !this.human.isTraitor()) return undefined;
-    // Na reta final não há mais assassinatos.
+    // Na reta final não há mais assassinatos, nem na noite em que a missão fechou a torre.
     if (murdersOver(this.players.filter((p) => p.isActive()).length)) return undefined;
+    if ((season.simState as SimulationFlags).noMurderDay === day.number) return undefined;
     const view = await buildPlayerView(repos, season, this.players, day);
     const faithful = (id: string | null | undefined) => {
       const p = this.players.find((x) => x.id === id);
