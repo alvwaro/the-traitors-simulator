@@ -390,37 +390,117 @@ function statues(origin: string, prizeAvailable: number, count: number): Mission
 // Os retratos (só nos EUA)
 // ---------------------------------------------------------------------------------------------
 
+const RIDDLES: readonly string[] = [
+  'Charada: "O que é, o que é: quanto mais se tira, maior fica?"',
+  'Enigma: "Tenho cidades, mas não casas; florestas, mas não árvores; água, mas não peixes. O que sou?"',
+  'Adivinha: "Anda com os pés na cabeça."',
+  'Charada: "O que é, o que é: tem dentes mas não morde?"',
+  'Enigma: "Quanto mais seca, mais molhada fica. O que é?"',
+  'Adivinha: "Fala sem boca, ouve sem ouvidos e responde ao vento."',
+  'Charada: "O que é, o que é: cai em pé e corre deitado?"',
+  'Enigma: "Se me nomeia, eu desapareço. O que sou?"',
+  'Adivinha: "Tem pescoço mas não tem cabeça; tem corpo mas não tem pernas."',
+  'Charada: "O que é, o que é: quanto mais se perde, mais se tem?"',
+];
+
+/** Molduras do escudo na galeria: só dois retratos ficam no fim. */
+const FRAMES = 2;
+
+/**
+ * Quem acerta pendura um retrato. A preferência é o próprio; às vezes protege um aliado (um Traidor
+ * tende a proteger o parceiro), e isso levanta suspeitas. Com as molduras cheias, tira o retrato de
+ * quem menos gosta.
+ */
+function placePortrait(ctx: MissionContext, player: SimPlayer, frames: SimPlayer[]): void {
+  const selfFramed = frames.includes(player);
+  const ally = top(
+    ctx.players.filter((p) => p !== player && !frames.includes(p)),
+    (p) => ctx.matrix.get(player.id, p.id).liking + ctx.matrix.get(player.id, p.id).trust + (isTraitor(player) && isTraitor(p) ? 60 : 0) + ctx.rng() * 20,
+    1,
+  )[0];
+  const bond = ally ? ctx.matrix.get(player.id, ally.id).liking : 0;
+  const partnerInCrime = !!ally && isTraitor(player) && isTraitor(ally);
+
+  let chosen: SimPlayer | undefined;
+  if (!selfFramed) {
+    const generosity = 0.1 + (player.traits.loyalty - 50) / 250 + (bond - 60) / 200 + (partnerInCrime ? 0.15 : 0);
+    chosen = ally && ctx.happens(Math.max(0.03, generosity)) ? ally : player;
+  } else if (ally) {
+    // Já está na parede: pode proteger um aliado ou deixar tudo como está.
+    const other = frames.find((p) => p !== player);
+    const dislikeOther = other ? 60 - ctx.matrix.get(player.id, other.id).liking : 40;
+    if (ctx.happens(Math.max(0.1, 0.35 + dislikeOther / 150 + (partnerInCrime ? 0.2 : 0)))) chosen = ally;
+  }
+  if (!chosen) {
+    ctx.say('Com o próprio retrato já na moldura, {user} preferiu não mexer na parede.', [player]);
+    return;
+  }
+
+  // Com as duas molduras cheias, alguém sai (nunca o próprio retrato de quem pendura).
+  if (frames.length >= FRAMES) {
+    const removable = frames.filter((p) => p !== player);
+    const removed = top(removable, (p) => 100 - ctx.matrix.get(player.id, p.id).liking + ctx.matrix.suspicion(player.id, p.id) * 0.5 + ctx.rng() * 20, 1)[0];
+    frames.splice(frames.indexOf(removed), 1);
+    ctx.matrix.adjust(removed.id, player.id, { hatred: 8, trust: -5 }, 0.6 + removed.traits.volatility / 100);
+    ctx.say('{user} tirou o retrato de {user1} da moldura.', [player, removed]);
+  }
+  frames.push(chosen);
+
+  if (chosen === player) {
+    ctx.say('{user} pendurou o próprio retrato numa moldura dourada.', [player]);
+    return;
+  }
+  ctx.matrix.adjust(chosen.id, player.id, { liking: 10, trust: 8 });
+  const penalty = selfFramed ? 0.5 : 1;
+  for (const observer of ctx.players) {
+    if (observer === player || observer === chosen) continue;
+    ctx.matrix.adjust(observer.id, player.id, { trust: -5 * penalty }, 0.5 + observer.traits.paranoia / 100);
+    ctx.matrix.adjust(observer.id, chosen.id, { trust: -3 * penalty }, 0.5 + observer.traits.paranoia / 100);
+  }
+  ctx.say(
+    selfFramed
+      ? 'Já protegido(a), {user} usou a vez para pendurar o retrato de {user1}. Alguns trocaram olhares.'
+      : 'Em vez do próprio, {user} pendurou o retrato de {user1}. A galeria murmurou: por que proteger justo {user1}?',
+    [player, chosen],
+  );
+  if (partnerInCrime) ctx.secret('Traidor(a), {user} protegeu o(a) parceiro(a) de torre, {user1}.', [player, chosen]);
+}
+
 const portraits: MissionDefinition = {
   key: 'portraits',
   origin: US,
   name: 'Os Retratos',
-  description: 'Perguntas sobre o castelo e sobre o próprio jogo. Cada acerto vale dinheiro e deixa o jogador pendurar o próprio retrato; quem erra está fora da missão. Os retratos que ficam nas molduras finais ganham escudo.',
+  description:
+    'Enigmas, charadas e adivinhas na galeria de retratos. Cada acerto vale dinheiro e dá direito a pendurar um retrato numa das duas molduras do escudo; com as duas ocupadas, é preciso tirar alguém. ' +
+    'Cada um prefere pendurar o próprio retrato, mas pode proteger outra pessoa, o que levanta suspeitas. Quem erra sai da galeria. Os dois retratos que sobram no fim ganham escudo.',
   prizeAvailable: 20000,
   play(ctx) {
-    ctx.say('Na galeria de retratos, oito perguntas. Cada acerto vale ' + ctx.money(2500) + '; errar tira o jogador da sala.');
+    ctx.say(`Na galeria, oito enigmas e duas molduras douradas vazias. Cada acerto vale ${ctx.money(2500)} e um retrato na parede; errar tira o jogador da sala.`);
     let alive = [...ctx.players];
-    const hung: SimPlayer[] = [];
+    const frames: SimPlayer[] = [];
+    const riddles = shuffle(ctx.rng, RIDDLES);
     let earned = 0;
     for (let q = 1; q <= 8 && alive.length; q++) {
-      const answerer = ctx.pick(1, (p) => p.traits.skill + p.traits.insight * 0.5 + p.traits.influence * 0.3 + 10, alive)[0];
+      const riddle = riddles[(q - 1) % riddles.length];
+      const answerer = ctx.pick(1, (p) => p.traits.skill + p.traits.insight + 10, alive)[0];
       if (ctx.happens(0.07)) {
-        ctx.say(`Pergunta ${q}: {user} sabia a resposta, mas travou quando o relógio da galeria badalou. Fora.`, [answerer]);
+        ctx.say(`${riddle} {user} sabia a resposta, mas travou quando o relógio da galeria badalou. Fora.`, [answerer]);
         alive = alive.filter((p) => p !== answerer);
-      } else if (ctx.attempt(answerer, 52)) {
-        earned += 2500;
-        hung.push(answerer);
-        ctx.say(`Pergunta ${q}: {user} respondeu sem hesitar e pendurou o próprio retrato.`, [answerer]);
-      } else {
-        alive = alive.filter((p) => p !== answerer);
-        ctx.say(`Pergunta ${q}: {user} bateu o pé na resposta errada e saiu da galeria.`, [answerer]);
+        continue;
       }
+      if (!ctx.attempt(answerer, 55)) {
+        alive = alive.filter((p) => p !== answerer);
+        ctx.say(`${riddle} {user} bateu o pé na resposta errada e saiu da galeria.`, [answerer]);
+        continue;
+      }
+      earned += 2500;
+      ctx.say(`${riddle} {user} acertou e ganhou o direito de pendurar um retrato.`, [answerer]);
+      placePortrait(ctx, answerer, frames);
       if (q === 4) ctx.chatter(1);
     }
-    // As duas últimas molduras são as do escudo.
-    const framed = [...new Set(hung.slice(-2))];
-    if (framed.length) ctx.shield(framed.length === 2 ? 'Os retratos de {user} e {user1} ficaram nas molduras douradas: escudos.' : 'O retrato de {user} ficou na moldura dourada: escudo.', framed);
+    if (frames.length) ctx.shield(frames.length === 2 ? 'No fim, os retratos de {user} e {user1} ficaram nas molduras douradas: escudos.' : 'No fim, só o retrato de {user} ficou na moldura dourada: escudo.', frames);
     ctx.chatter(1);
-    return { prizeEarned: earned, shieldIds: framed.map((p) => p.id) };
+    return { prizeEarned: earned, shieldIds: frames.map((p) => p.id) };
   },
 };
 
