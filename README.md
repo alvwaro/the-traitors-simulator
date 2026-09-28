@@ -53,3 +53,6 @@ npm run user:owner -- seu_usuario
 | raiz       | `npm run user:owner -- <usuario>` | Torna a conta dona do site             |
 | `backend`  | `npm run sim:balance -- 200 30 MIX` | Roda temporadas em memória e mede o equilíbrio |
 | `frontend` | `npm run preview`      | Serve o build de produção                        |
+| `backend`  | `npm test` / `npm run test:coverage` | Testes (API de verdade num banco `<nome>_test`, recriado a cada execução; precisa do Postgres rodando) |
+| `backend`  | `npm run test:fixtures` | Grava de novo as respostas da API usadas nos testes do frontend |
+| `frontend` | `npm test` / `npm run test:coverage` | Testes das telas com as respostas gravadas da API |
