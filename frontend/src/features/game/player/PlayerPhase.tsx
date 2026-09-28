@@ -87,13 +87,15 @@ export function PlayerPhase() {
 
       {breakfast && storyFeed}
       {breakfast && showResult && <PhaseResult phase={phase} simulated={simulated} />}
-      {me.invites.length > 0 && !me.need && <InvitesPanel me={me} />}
       {me.canTalk && <TalkPanel me={me} />}
 
       {/* Suas conversas logo abaixo das opções; fora do café, o resto da história vem depois. */}
       {talk.length > 0 && <EventFeed events={talk} playersById={playersById} />}
       {!breakfast && storyFeed}
       {faithfulNight && simulated && <p className={styles.prompt}>A noite passou. O que aconteceu na torre você só vai descobrir no café da manhã.</p>}
+
+      {/* Pedidos de aliança sempre no fim da página, para não se perderem no meio da história. */}
+      {me.invites.length > 0 && !me.need && <InvitesPanel me={me} />}
 
       <EliminationReveal elimination={revealed} onClose={() => setRevealed(null)} />
     </>
