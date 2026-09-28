@@ -1,0 +1,74 @@
+.feed {
+  display: grid;
+  gap: 1.25rem;
+  margin-top: 2.5rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.conversation {
+  min-width: 0;
+  display: grid;
+  justify-items: center;
+  gap: 1rem;
+  padding: 1.5rem 1.25rem;
+  text-align: center;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+
+.faces {
+  display: flex;
+  justify-content: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.line {
+  max-width: 60ch;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+.line strong {
+  color: var(--gold);
+  font-weight: 700;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.countLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.count {
+  width: 4.5rem;
+}
+
+.note {
+  font-size: 0.85rem;
+  color: var(--text-faint);
+}

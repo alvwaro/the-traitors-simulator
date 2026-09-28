@@ -1,0 +1,134 @@
+.day {
+  display: grid;
+  gap: 1rem;
+  padding: 1.4rem 1.5rem 1.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.dayTitle {
+  font-size: 1.6rem;
+}
+
+.entry {
+  position: relative;
+  display: grid;
+  gap: 0.3rem;
+  padding-left: 1.1rem;
+  border-left: 2px solid var(--border-strong);
+}
+
+.entry::before {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: 0.4rem;
+  width: 10px;
+  height: 10px;
+  background: var(--surface);
+  border: 2px solid var(--parchment);
+  transform: rotate(45deg);
+}
+
+.night {
+  border-left-color: var(--danger);
+}
+
+.night::before {
+  background: var(--danger);
+  border-color: var(--danger);
+}
+
+.entryTitle {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.prose {
+  color: var(--text-muted);
+  white-space: pre-line;
+}
+
+.votes {
+  justify-self: start;
+  border-collapse: collapse;
+  margin: 0.3rem 0;
+  font-size: 0.95rem;
+}
+
+.votes caption {
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  padding-bottom: 0.2rem;
+}
+
+.votes td {
+  padding: 0.35rem 2.2rem 0.35rem 0;
+  border-top: 1px solid var(--border);
+}
+
+.votes td:first-child,
+.votes td:last-child {
+  font-weight: 600;
+}
+
+.votes td:nth-child(2) {
+  color: var(--text-faint);
+}
+
+.verdict {
+  font-weight: 600;
+}
+
+.traitor {
+  color: var(--danger);
+}
+
+.list {
+  display: grid;
+  gap: var(--gap);
+  max-width: var(--page);
+  margin: 0 auto;
+}
+
+.ledger {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ledger td {
+  padding: 0.45rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.ledger td:last-child {
+  text-align: right;
+  font-weight: 600;
+}
+
+.negative {
+  color: var(--danger);
+}
+
+.story {
+  margin: 0.6rem 0;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid var(--border);
+}
+
+.storySummary {
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.story[open] .storySummary {
+  color: var(--text);
+}

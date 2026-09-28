@@ -1,0 +1,32 @@
+{
+  "name": "the-traitors-backend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Gerenciador/simulador de temporadas do reality The Traitors",
+  "scripts": {
+    "dev": "tsx watch src/main/server.ts",
+    "build": "tsc",
+    "start": "node dist/main/server.js",
+    "typecheck": "tsc --noEmit",
+    "db:up": "docker compose -f ../docker-compose.yml up -d db",
+    "db:migrate": "tsx src/infrastructure/database/migrate.ts",
+    "sim:balance": "tsx scripts/simulation-balance.ts",
+    "user:owner": "tsx src/infrastructure/cli/promoteOwner.ts"
+  },
+  "dependencies": {
+    "dotenv": "^18.0.4",
+    "express": "^5.2.1",
+    "pg": "^8.23.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.2",
+    "@types/pg": "^8.23.1",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

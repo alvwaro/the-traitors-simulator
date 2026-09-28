@@ -1,0 +1,81 @@
+.header {
+  display: grid;
+  justify-items: center;
+  gap: 0.35rem;
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+.season {
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* botões com cara de link, como o da crônica */
+.link {
+  padding: 0;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: var(--parchment);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.day {
+  font-size: clamp(2.6rem, 6vw, 3.6rem);
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+
+.phase {
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: var(--parchment);
+}
+
+.stats {
+  display: flex;
+  margin: 1.25rem 0 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.stat {
+  padding: 0.55rem 1.4rem;
+  border-left: 1px solid var(--border);
+}
+
+.stat:first-child {
+  border-left: 0;
+}
+
+.stat dt {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.stat dd {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.pot {
+  color: var(--gold);
+}
+
+@media (max-width: 520px) {
+  .stat {
+    padding: 0.5rem 0.8rem;
+  }
+}

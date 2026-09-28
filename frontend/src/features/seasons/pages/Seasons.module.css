@@ -1,0 +1,83 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+  gap: var(--gap);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: var(--gap);
+  align-items: start;
+}
+
+.stack {
+  display: grid;
+  gap: var(--gap);
+}
+
+.formStack {
+  display: grid;
+  gap: 1rem;
+}
+
+.summary {
+  color: var(--text-muted);
+}
+
+.startBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: var(--gap);
+  padding: 1.1rem 1.3rem;
+  background: var(--surface-accent);
+  border: 1px solid var(--accent);
+  border-left: 4px solid var(--accent-bright);
+}
+
+.startText {
+  font-weight: 600;
+  font-size: 1.05rem;
+}
+
+.relationships {
+  margin-top: var(--gap);
+}
+
+.tabs {
+  display: flex;
+  margin-bottom: 1.1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.tab {
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: none;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -1px;
+  cursor: pointer;
+}
+
+.tab[aria-selected='true'] {
+  color: var(--text);
+  border-bottom-color: var(--accent-bright);
+}
+
+.actionsRow {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}

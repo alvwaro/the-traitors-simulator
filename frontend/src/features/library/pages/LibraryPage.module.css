@@ -1,0 +1,23 @@
+.page {
+  max-width: var(--page);
+  margin: 0 auto;
+}
+
+/* barra no topo de cada aba: contagem + ação principal */
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+}
+
+.count {
+  color: var(--text-muted);
+}
+
+.stack {
+  display: grid;
+  gap: var(--gap);
+}

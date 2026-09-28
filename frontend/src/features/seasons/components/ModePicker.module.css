@@ -1,0 +1,98 @@
+.options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  gap: 0.75rem;
+}
+
+.option {
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.9rem 1rem;
+  font: inherit;
+  text-align: left;
+  color: var(--text-muted);
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: border-color 0.15s var(--ease), background-color 0.15s var(--ease);
+}
+
+.option:not(:disabled):hover {
+  border-color: var(--parchment);
+}
+
+.option:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.on {
+  color: var(--text);
+  background: var(--surface-accent);
+  border-color: var(--accent-bright);
+  box-shadow: inset 4px 0 0 var(--accent-bright);
+}
+
+.title {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.text {
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+/* ---------- loucura e missões ---------- */
+.simulation {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem 1.1rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+
+.chaos {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.chaosHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.chaosTitle {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.chaosValue {
+  font-variant-numeric: tabular-nums;
+  color: var(--gold);
+}
+
+.chaos input {
+  width: 100%;
+  accent-color: var(--danger);
+}
+
+.chaosHint {
+  font-size: 0.8rem;
+  color: var(--text-faint);
+}
+
+.you {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+.youFields {
+  display: grid;
+  gap: 0.7rem;
+}

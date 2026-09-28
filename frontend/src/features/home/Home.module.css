@@ -1,0 +1,72 @@
+/* página inicial: seções (temporadas, casts, personagens) empilhadas */
+.sections {
+  display: grid;
+  gap: calc(var(--gap) * 2);
+}
+
+.section {
+  display: grid;
+  gap: 1rem;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.sectionTitle {
+  font-size: 1.35rem;
+}
+
+.sectionSubtitle {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.intro {
+  margin-bottom: var(--gap);
+  color: var(--text-muted);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+  gap: var(--gap);
+}
+
+/* atalhos da biblioteca na Minha Área */
+.shortcuts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+  gap: var(--gap);
+}
+
+.shortcut {
+  display: grid;
+  gap: 0.25rem;
+  padding: 1.1rem 1.2rem;
+  text-decoration: none;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: border-color 0.15s var(--ease);
+}
+
+.shortcut:hover {
+  border-color: var(--border-strong);
+}
+
+.shortcutCount {
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.shortcutLabel {
+  color: var(--text-muted);
+}

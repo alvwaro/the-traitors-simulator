@@ -1,0 +1,362 @@
+.prompt {
+  margin-top: 1.5rem;
+  padding: 1.4rem;
+  text-align: center;
+  color: var(--text-muted);
+  background: var(--surface-2);
+  border: 1px dashed var(--border-strong);
+}
+
+.feed {
+  display: grid;
+  gap: 0.8rem;
+  margin-top: 2rem;
+}
+
+.faces {
+  display: flex;
+  justify-content: center;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+}
+
+/* frases longas quebram dentro do quadro, nunca para fora */
+.dialogue,
+.dramatic,
+.secret,
+.highlight,
+.narration,
+.votes {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.line {
+  max-width: 62ch;
+  line-height: 1.6;
+}
+
+.line strong,
+.narration strong,
+.highlight strong,
+.dramaticLine strong,
+.voteText strong {
+  color: var(--gold);
+  font-weight: 700;
+}
+
+/* narrador */
+.narration {
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  text-align: center;
+  font-style: italic;
+  color: var(--text-muted);
+}
+
+/* falas */
+.dialogue {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 0.8rem;
+  padding: 1.2rem 1.25rem 1.3rem;
+  text-align: center;
+  font-size: 1.05rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--border-strong);
+}
+
+.privateTag {
+  justify-self: center;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+/* revelações e mortes */
+.dramatic {
+  display: grid;
+  justify-items: center;
+  gap: 0.9rem;
+  padding: 1.6rem 1.25rem;
+  text-align: center;
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-top: 4px solid var(--gold);
+}
+
+.murder {
+  border-top-color: var(--wine);
+}
+
+.dramaticLine {
+  max-width: 50ch;
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+/* segredos (torre, escudos escondidos, recrutamento) */
+.secret {
+  display: grid;
+  justify-items: center;
+  gap: 0.6rem;
+  padding: 1rem 1.25rem;
+  text-align: center;
+  background: var(--surface-danger);
+  border: 1px solid var(--danger-deep);
+}
+
+.secretTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--danger);
+}
+
+/* aliança, traição, escudo */
+.highlight {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  padding: 0.7rem 1rem;
+  text-align: center;
+  background: var(--surface-accent);
+  border: 1px solid var(--accent);
+}
+
+.highlight .faces {
+  gap: 0.4rem;
+}
+
+.betrayal {
+  background: var(--surface-danger);
+  border-color: var(--danger-deep);
+}
+
+/* votação */
+.votes {
+  padding: 1rem 1.1rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+
+.votesTitle {
+  margin-bottom: 0.7rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* placar: quantos votos cada um recebeu */
+.tally {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.4rem;
+  margin: 0 0 0.9rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.tallyItem strong {
+  margin-left: 0.25rem;
+  color: var(--gold);
+}
+
+/* duas colunas de votos lado a lado (uma só em telas estreitas), bem separadas */
+.voteColumns {
+  display: grid;
+  align-items: start;
+  gap: 0.2rem 2.4rem;
+}
+
+/* duas colunas só quando cabem; entre elas, uma divisória discreta no meio do espaço */
+@media (min-width: 620px) {
+  .voteColumnsTwo {
+    grid-template-columns: 1fr 1fr;
+    column-gap: 0;
+  }
+
+  .voteColumnsTwo .voteColumn:first-child {
+    padding-right: 1.4rem;
+  }
+
+  .voteColumnsTwo .voteColumn + .voteColumn {
+    padding-left: 1.4rem;
+    border-left: 1px solid var(--border);
+  }
+}
+
+.voteColumn {
+  min-width: 0;
+}
+
+/* cada coluna: quem votou → em quem */
+.voteTable {
+  width: 100%;
+  border-collapse: collapse;
+  /* larguras fixas: as duas colunas vizinhas ficam alinhadas, seja qual for o tamanho dos nomes */
+  table-layout: fixed;
+  font-size: 0.9rem;
+}
+
+.voteTable th:first-child,
+.voteTable th:last-child {
+  width: calc(50% - 1.2rem);
+}
+
+.voteTable th {
+  padding: 0 0 0.5rem;
+  text-align: left;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.voteTable td {
+  height: 2.6rem;
+  padding: 0.3rem 0;
+  border-top: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.voteTable th:nth-child(2),
+.voteTable td:nth-child(2) {
+  width: 2.4rem;
+  text-align: center;
+}
+
+.voteArrow {
+  color: var(--text-faint);
+  font-size: 1.1rem;
+}
+
+.voteWho {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.voteWho strong {
+  overflow: hidden;
+  min-width: 0;
+  color: var(--text);
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.voteChoice {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* conversa do jogador (modo Jogador): a fala dele e a resposta do personagem */
+.exchange {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  min-width: 0;
+  max-width: 85%;
+  padding: 0.7rem 0.9rem;
+  overflow-wrap: anywhere;
+  border: 1px solid var(--border);
+}
+
+.exchange .faces {
+  flex: none;
+  gap: 0.3rem;
+}
+
+.mine {
+  justify-self: end;
+  background: var(--surface-accent);
+  border-color: var(--accent);
+}
+
+.theirs {
+  justify-self: start;
+  background: var(--surface-2);
+}
+
+/* divisória discreta entre as partes da narrativa (conversas, castelo, votação, revelação) */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin: 1.2rem 0 0.4rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* alguém veio falar a sós com você (fofoca, aviso, convite, cobrança) */
+.approach {
+  flex-wrap: wrap;
+  border-left: 3px solid var(--gold);
+}
+
+.approach .line {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+
+
+.voteWho > :first-child {
+  flex: none;
+}
+
+/* reta final: a última mesa redonda e cada rodada do Fogo da Verdade em blocos separados */
+.stage {
+  display: grid;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding: 1.2rem 1.25rem 1.4rem;
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-top: 3px solid var(--gold);
+}
+
+.stageFire {
+  border-top-color: var(--wine);
+}
+
+.stageTitle {
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-align: center;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.stage .feed {
+  margin-top: 0;
+}

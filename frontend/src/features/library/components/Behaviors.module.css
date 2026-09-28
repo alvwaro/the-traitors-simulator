@@ -1,0 +1,171 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+  gap: 1rem;
+}
+
+.card {
+  display: grid;
+  align-content: start;
+  gap: 0.45rem;
+  padding: 1rem 1.1rem;
+  font: inherit;
+  text-align: left;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent-bright);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: border-color 0.15s var(--ease), background-color 0.15s var(--ease);
+}
+
+.card:hover {
+  background: var(--surface-2);
+  border-color: var(--parchment);
+  border-left-color: var(--accent-bright);
+}
+
+.cardName {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.cardDescription {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.effects {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.2rem;
+}
+
+.effectUp,
+.effectDown {
+  padding: 0.05rem 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid;
+}
+
+.effectUp {
+  color: var(--faithful);
+  border-color: var(--accent);
+}
+
+.effectDown {
+  color: var(--danger);
+  border-color: var(--danger-deep);
+}
+
+/* ---------- editor ---------- */
+.editor {
+  display: grid;
+  gap: 1.4rem;
+}
+
+.group {
+  display: grid;
+  gap: 0.2rem;
+  margin: 0;
+  padding: 1rem 1.2rem 0.6rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+
+.groupTitle {
+  padding: 0 0.4rem;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.groupLead {
+  margin-bottom: 0.4rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.slider {
+  display: grid;
+  grid-template-columns: 11rem 1fr 3rem;
+  grid-template-areas:
+    'label range value'
+    'hint hint hint';
+  align-items: center;
+  column-gap: 0.9rem;
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--border);
+}
+
+.sliderLabel {
+  grid-area: label;
+  font-weight: 600;
+}
+
+.slider input {
+  grid-area: range;
+  width: 100%;
+  accent-color: var(--accent-bright);
+}
+
+.plus,
+.minus,
+.zero {
+  grid-area: value;
+  font-weight: 700;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.plus {
+  color: var(--faithful);
+}
+
+.minus {
+  color: var(--danger);
+}
+
+.zero {
+  color: var(--text-faint);
+}
+
+.sliderHint {
+  grid-area: hint;
+  font-size: 0.8rem;
+  color: var(--text-faint);
+}
+
+.example {
+  padding: 0.9rem 1.1rem;
+  color: var(--text-muted);
+  background: var(--surface-accent);
+  border: 1px solid var(--accent);
+}
+
+.example strong {
+  color: var(--text);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.spacer {
+  flex: 1;
+}
+
+@media (max-width: 560px) {
+  .slider {
+    grid-template-columns: 1fr 3rem;
+    grid-template-areas:
+      'label value'
+      'range range'
+      'hint hint';
+  }
+}

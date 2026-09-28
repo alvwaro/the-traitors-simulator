@@ -1,0 +1,51 @@
+.bar {
+  display: grid;
+  justify-items: center;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.error {
+  color: var(--danger);
+  font-size: 0.9rem;
+}
+
+/* a arte é montada fora da tela, no tamanho real, só para virar imagem */
+.offscreen {
+  position: fixed;
+  top: 0;
+  left: -10000px;
+  pointer-events: none;
+}
+
+.preview {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  max-height: 68vh;
+  margin: 0 auto;
+  aspect-ratio: 9 / 16;
+  box-shadow: 0 10px 40px rgb(0 0 0 / 0.6);
+}
+
+.download {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.6rem 1.2rem;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--accent);
+  border: 1px solid var(--accent-hover);
+  text-decoration: none;
+}
+
+.download:hover {
+  background: var(--accent-hover);
+}

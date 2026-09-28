@@ -1,0 +1,30 @@
+# Dependências
+node_modules/
+
+# Builds e caches
+dist/
+build/
+coverage/
+*.tsbuildinfo
+.vite/
+.scannerwork/
+
+# Variáveis de ambiente (use os arquivos .env.example)
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+
+# IDEs e sistema
+.idea/
+*.iml
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
+
+# Claude Code (configuração local)
+.claude/settings.local.json

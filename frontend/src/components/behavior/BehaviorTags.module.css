@@ -1,0 +1,52 @@
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chip {
+  padding: 0.05rem 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--accent-bright);
+  background: var(--surface-accent);
+  border: 1px solid var(--accent);
+}
+
+.picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.option {
+  padding: 0.3rem 0.7rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  cursor: pointer;
+  transition: background-color 0.15s var(--ease), color 0.15s var(--ease), border-color 0.15s var(--ease);
+}
+
+.option:hover {
+  color: var(--text);
+  border-color: var(--parchment);
+}
+
+.on {
+  color: var(--text);
+  background: var(--accent);
+  border-color: var(--accent-bright);
+}
+
+.empty {
+  font-size: 0.85rem;
+  color: var(--text-faint);
+}

@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 420">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="32%" r="80%">
+      <stop offset="0" stop-color="#361317"/>
+      <stop offset="1" stop-color="#060303"/>
+    </radialGradient>
+    <linearGradient id="cloak" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2c3430"/>
+      <stop offset=".45" stop-color="#171c19"/>
+      <stop offset="1" stop-color="#090b0a"/>
+    </linearGradient>
+    <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3a4540"/>
+      <stop offset="1" stop-color="#1a201d"/>
+    </linearGradient>
+    <radialGradient id="void" cx="50%" cy="30%" r="80%">
+      <stop offset="0" stop-color="#000"/>
+      <stop offset="1" stop-color="#0c0d0c"/>
+    </radialGradient>
+  </defs>
+  <rect width="300" height="420" fill="url(#bg)"/>
+
+  <!-- manto: capuz em ponta caindo largo pelos ombros -->
+  <path fill="url(#cloak)" d="M150 34C116 42 82 70 70 118c-10 42-6 82-12 118-6 34-30 54-50 76C-4 340-8 380-10 420h320c-2-40-6-80-18-108-20-22-44-42-50-76-6-36-2-76-12-118C218 70 184 42 150 34Z"/>
+
+  <!-- dobras do capuz e do manto -->
+  <g fill="none" stroke-linecap="round">
+    <g stroke="#000" stroke-opacity=".45" stroke-width="4">
+      <path d="M146 40C110 58 86 96 82 148"/>
+      <path d="M154 40c36 18 60 56 64 108"/>
+      <path d="M72 250c-8 30-26 50-40 70"/>
+      <path d="M228 250c8 30 26 50 40 70"/>
+      <path d="M58 330c-4 30-6 60-6 90"/>
+      <path d="M242 330c4 30 6 60 6 90"/>
+      <path d="M112 300c-4 40-4 80-2 120"/>
+      <path d="M188 300c4 40 4 80 2 120"/>
+    </g>
+    <g stroke="#4d5a54" stroke-opacity=".5" stroke-width="2">
+      <path d="M150 38c-26 10-48 30-60 62"/>
+      <path d="M86 268c-10 24-24 40-36 54"/>
+    </g>
+  </g>
+
+  <!-- borda dobrada do capuz, em arco -->
+  <path fill="url(#rim)" d="M150 80c-32 8-54 36-58 78-4 42 2 76 16 102l42 26 42-26c14-26 20-60 16-102-4-42-26-70-58-78Z"/>
+
+  <!-- rosto escondido na sombra -->
+  <path fill="url(#void)" d="M150 96c-24 8-40 32-43 66-3 36 3 64 14 84l29 18 29-18c11-20 17-48 14-84-3-34-19-58-43-66Z"/>
+
+  <!-- fecho do manto -->
+  <path d="M130 304h40" stroke="#6b5230" stroke-width="3"/>
+  <circle cx="128" cy="304" r="8" fill="#8a6a3a"/>
+  <circle cx="172" cy="304" r="8" fill="#8a6a3a"/>
+  <circle cx="128" cy="304" r="4" fill="#b8925a"/>
+  <circle cx="172" cy="304" r="4" fill="#b8925a"/>
+</svg>

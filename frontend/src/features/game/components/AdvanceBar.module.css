@@ -1,0 +1,31 @@
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 1rem 1.3rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--text-faint);
+}
+
+.ready {
+  border-left-color: var(--faithful);
+}
+
+.status {
+  font-weight: 600;
+}
+
+.next {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}

@@ -1,0 +1,243 @@
+/* ---------- medidor ---------- */
+.meter {
+  display: grid;
+  grid-template-columns: minmax(40px, 1fr) 2.6rem;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 90px;
+}
+
+.meterTrack {
+  height: 6px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.meterFill {
+  display: block;
+  height: 100%;
+  transition: width 0.3s var(--ease);
+}
+
+.trust {
+  background: var(--faithful);
+}
+
+.suspicion {
+  background: var(--danger);
+}
+
+.liking {
+  background: var(--gold);
+}
+
+.hatred {
+  background: var(--wine);
+}
+
+.chance {
+  background: var(--parchment);
+}
+
+.meterValue {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+/* ---------- termômetro ---------- */
+.thermometer {
+  display: grid;
+  gap: 1rem;
+}
+
+.controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.sortLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.sortSelect {
+  padding: 0.3rem 0.5rem;
+  font: inherit;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: 0.45rem 0.6rem;
+  text-align: left;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--border);
+}
+
+.table thead th {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--text-faint);
+}
+
+.table tbody th {
+  font-weight: 400;
+}
+
+.rowSelected {
+  background: var(--surface-2);
+}
+
+.playerCell {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 170px;
+  padding: 0;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+span.playerCell {
+  cursor: default;
+}
+
+.playerText {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.playerName {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-weight: 600;
+}
+
+.traitorName {
+  color: var(--danger);
+}
+
+.rowTags {
+  justify-content: flex-start;
+}
+
+.allies {
+  font-size: 0.75rem;
+  color: var(--accent-bright);
+}
+
+.na {
+  color: var(--text-faint);
+}
+
+.footnote {
+  font-size: 0.8rem;
+  color: var(--text-faint);
+}
+
+.muted {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+/* ---------- detalhe de um jogador ---------- */
+.detail {
+  display: grid;
+  gap: 0.8rem;
+  padding: 1rem 1.1rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  overflow-x: auto;
+}
+
+.detailHead {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.detailTitle {
+  font-size: 1.15rem;
+}
+
+.divider {
+  border-left: 1px solid var(--border-strong);
+}
+
+.feelings {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(90px, 1fr));
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.2rem;
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 1px solid transparent;
+}
+
+button.feelings {
+  cursor: pointer;
+}
+
+button.feelings:hover {
+  border-color: var(--border-strong);
+}
+
+.editFields {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.editSlider {
+  display: grid;
+  grid-template-columns: 6rem 1fr 3rem;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.editSlider input {
+  accent-color: var(--accent-bright);
+}
+
+.editSlider strong {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- painel da preparação ---------- */
+.panelIntro {
+  margin-bottom: 1rem;
+  color: var(--text-muted);
+}

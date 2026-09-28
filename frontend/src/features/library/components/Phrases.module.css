@@ -1,0 +1,189 @@
+.form {
+  display: grid;
+  gap: 1.1rem;
+}
+
+.selects {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.toneHint {
+  margin-top: -0.4rem;
+  font-size: 0.85rem;
+  color: var(--text-faint);
+}
+
+.error {
+  font-weight: 600;
+  color: var(--danger);
+}
+
+.preview {
+  padding: 1rem 1.25rem;
+  text-align: center;
+  font-size: 1.05rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+
+.preview strong {
+  color: var(--gold);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+/* ---------- filtro por momento ---------- */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+
+.filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.8rem;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  cursor: pointer;
+}
+
+.filter:hover {
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+
+.filterOn {
+  color: var(--text);
+  background: var(--accent);
+  border-color: var(--accent-bright);
+}
+
+.filterCount {
+  font-size: 0.78rem;
+  color: var(--text-faint);
+}
+
+.filterOn .filterCount {
+  color: var(--text-muted);
+}
+
+/* ---------- lista ---------- */
+.list {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  padding: 0.85rem 1.1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.itemEditing {
+  border-color: var(--gold);
+}
+
+.itemBody {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.badges {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.badge,
+.behaviorBadge {
+  padding: 0.05rem 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 1px solid var(--border-strong);
+  color: var(--text-muted);
+}
+
+.behaviorBadge {
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--accent-bright);
+  background: var(--surface-accent);
+  border-color: var(--accent);
+}
+
+.tone-ACCUSATION,
+.tone-CONFLICT {
+  color: var(--danger);
+  border-color: var(--danger-deep);
+}
+
+.tone-SUSPICION,
+.tone-STRATEGY {
+  color: var(--gold);
+  border-color: var(--frame-gold-dark);
+}
+
+.tone-FRIENDLY,
+.tone-ALLIANCE,
+.tone-DEFENSE {
+  color: var(--faithful);
+  border-color: var(--accent);
+}
+
+.text {
+  overflow-wrap: anywhere;
+  line-height: 1.6;
+}
+
+.token,
+.victimToken {
+  padding: 0.05rem 0.35rem;
+  font-size: 0.9em;
+  font-weight: 600;
+  color: var(--bg);
+  background: var(--gold);
+}
+
+.victimToken {
+  color: var(--text);
+  background: var(--wine);
+}
+
+.itemActions {
+  display: flex;
+  gap: 0.5rem;
+  flex: none;
+}
+
+@media (max-width: 720px) {
+  .selects {
+    grid-template-columns: 1fr;
+  }
+  .item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

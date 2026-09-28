@@ -1,0 +1,22 @@
+.ornament {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--border-strong);
+  margin: 1.4rem 0;
+}
+
+.line {
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+}

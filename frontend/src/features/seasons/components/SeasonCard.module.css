@@ -1,0 +1,132 @@
+.card {
+  display: grid;
+  gap: 0.35rem;
+  padding: 1.2rem 1.3rem;
+  min-height: 150px;
+  text-decoration: none;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: 4px solid var(--border-strong);
+  border-radius: var(--radius) var(--radius) 0 0;
+  transition: border-color 0.15s var(--ease), background-color 0.15s var(--ease);
+}
+
+.card:hover {
+  background: var(--surface-2);
+  border-color: var(--parchment);
+}
+
+.IN_PROGRESS,
+.ENDGAME {
+  border-top-color: var(--accent-bright);
+}
+
+.FINISHED {
+  border-top-color: var(--gold);
+}
+
+/* temporada pronta: moldura dourada para se destacar das personalizadas */
+.featured {
+  border-color: var(--frame-gold-dark);
+  border-top-color: var(--frame-gold);
+}
+
+.status {
+  justify-self: start;
+  padding: 0.1rem 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+
+.IN_PROGRESS .status,
+.ENDGAME .status {
+  color: var(--text);
+  background: var(--accent);
+  border-color: var(--accent-bright);
+}
+
+.FINISHED .status {
+  color: var(--bg);
+  background: var(--gold);
+  border-color: var(--gold);
+}
+
+.name {
+  font-size: 1.35rem;
+  margin-top: 0.3rem;
+}
+
+.where {
+  color: var(--text-muted);
+}
+
+.date {
+  align-self: end;
+  font-size: 0.8rem;
+  color: var(--text-faint);
+}
+
+/* ---------- editar / apagar ---------- */
+.wrapper {
+  position: relative;
+  display: grid;
+}
+
+/* rodapé do cartão: fora do link e no fluxo, para não cobrir o nome nem os selos */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.35rem;
+  padding: 0.55rem 0.9rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: 0;
+  border-radius: 0 0 var(--radius) var(--radius);
+}
+
+.action {
+  padding: 0.15rem 0.55rem;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: color 0.15s var(--ease), border-color 0.15s var(--ease);
+}
+
+.action:hover,
+.action:focus-visible {
+  color: var(--text);
+  border-color: var(--parchment);
+}
+
+.danger:hover,
+.danger:focus-visible {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.badges {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.mode {
+  padding: 0.1rem 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gold);
+  border: 1px solid var(--frame-gold-dark);
+}

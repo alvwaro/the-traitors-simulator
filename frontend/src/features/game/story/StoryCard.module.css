@@ -1,0 +1,709 @@
+/*
+ * Arte do story: veludo com damasco, filete metálico simples com losangos nos cantos
+ * e tipografia régia. Cada situação tem sua paleta (classes .theme-*).
+ * Medidas em px porque a arte tem tamanho fixo (540×960, exportada em 2×).
+ */
+.card {
+  /* paleta padrão (elenco): esmeralda e ouro */
+  --bg-deep: #04150e;
+  --bg: #0d3524;
+  --glow: rgb(40 110 75 / 0.55);
+  --gold: #d9b45f;
+  --gold-light: #f3dc9b;
+  --gold-dark: #8a6a2a;
+  --ivory: #f4ead3;
+
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: var(--ivory);
+  font-family: var(--font);
+  background:
+    radial-gradient(ellipse 70% 45% at 50% 42%, var(--glow), transparent 70%),
+    radial-gradient(ellipse 120% 90% at 50% 50%, transparent 55%, rgb(0 0 0 / 0.6) 100%),
+    url('../../../assets/story/damask.svg') center / 90px auto,
+    linear-gradient(180deg, var(--bg-deep), var(--bg) 35%, var(--bg) 65%, var(--bg-deep));
+  /* o damasco fica bem sutil por baixo do brilho */
+  background-blend-mode: normal, normal, soft-light, normal;
+}
+
+/* conversas: azul-meia-noite e champanhe */
+.theme-talk {
+  --bg-deep: #050b1a;
+  --bg: #13244a;
+  --glow: rgb(60 95 160 / 0.5);
+  --gold: #d8c69a;
+  --gold-light: #f5ebcf;
+  --gold-dark: #7d6f4f;
+}
+
+/* banimento: púrpura real e prata antiga */
+.theme-banished {
+  --bg-deep: #0f0619;
+  --bg: #2d1346;
+  --glow: rgb(120 70 165 / 0.5);
+  --gold: #c9c2d8;
+  --gold-light: #f2eef9;
+  --gold-dark: #6c6480;
+}
+
+/* assassinato: vinho-sangue e ouro rosé */
+.theme-murdered {
+  --bg-deep: #130305;
+  --bg: #3e0b13;
+  --glow: rgb(150 35 45 / 0.5);
+  --gold: #d9a27f;
+  --gold-light: #f6d4be;
+  --gold-dark: #7d4a33;
+}
+
+/* missão: bronze e âmbar */
+.theme-mission {
+  --bg-deep: #130c04;
+  --bg: #3a2710;
+  --glow: rgb(160 110 45 / 0.5);
+  --gold: #e2b45c;
+  --gold-light: #fbe2a4;
+  --gold-dark: #8a6420;
+}
+
+/* final: preto e ouro vivo */
+.theme-crown {
+  --bg-deep: #050504;
+  --bg: #1c1911;
+  --glow: rgb(130 105 45 / 0.5);
+  --gold: #f0c75e;
+  --gold-light: #fff0b8;
+  --gold-dark: #8f6d1f;
+}
+
+/* escudos: aço azulado e prata */
+.theme-shield {
+  --bg-deep: #03101a;
+  --bg: #0f2f45;
+  --glow: rgb(70 140 185 / 0.5);
+  --gold: #bcd3e2;
+  --gold-light: #eef6fb;
+  --gold-dark: #5d7c90;
+}
+
+/* mesa redonda: carvalho escuro à luz de velas */
+.theme-table {
+  --bg-deep: #0d0704;
+  --bg: #2b1a0e;
+  --glow: rgb(190 120 50 / 0.45);
+  --gold: #e0b25e;
+  --gold-light: #fbe0a3;
+  --gold-dark: #8a5f22;
+}
+
+/* torre: breu e vermelho-sangue, à luz de tocha */
+.theme-tower {
+  --bg-deep: #050304;
+  --bg: #1b0d10;
+  --glow: rgb(140 30 40 / 0.4);
+  --gold: #c98a6a;
+  --gold-light: #efc6ae;
+  --gold-dark: #6e3b2a;
+}
+
+/* filete único em volta da arte */
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 18px;
+  border: 1px solid var(--gold);
+  pointer-events: none;
+}
+
+/* losango em cada canto do filete */
+.corner {
+  position: absolute;
+  z-index: 1;
+  width: 9px;
+  height: 9px;
+  background: var(--gold);
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+
+.tl {
+  top: 14px;
+  left: 14px;
+}
+
+.tr {
+  top: 14px;
+  right: 14px;
+}
+
+.bl {
+  bottom: 14px;
+  left: 14px;
+}
+
+.br {
+  right: 14px;
+  bottom: 14px;
+}
+
+/* ---------- cabeçalho ---------- */
+.header {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  /* abaixo da faixa do topo que o Instagram cobre (perfil e barra de progresso) */
+  padding: 108px 40px 0;
+  text-align: center;
+}
+
+/* fonte próxima à do logo oficial (serifada romana de hastes longas) */
+.brand {
+  font-family: 'Cinzel', serif;
+  font-size: 49px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  background: linear-gradient(180deg, var(--gold-light) 0%, var(--gold) 45%, var(--gold-dark) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 1px rgb(0 0 0 / 0.6));
+}
+
+.season {
+  margin-top: 10px;
+  font-family: 'Cinzel', serif;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  /* compensa o espaço após a última letra, para centralizar de verdade */
+  padding-left: 0.3em;
+  text-transform: uppercase;
+  color: var(--gold-light);
+  text-shadow: 0 2px 6px rgb(0 0 0 / 0.6);
+}
+
+/* ---------- palco ---------- */
+.stage {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  min-height: 0;
+  /* acima da faixa de baixo que o Instagram cobre (responder story, reações) */
+  padding: 16px 30px 116px;
+}
+
+.headline {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 21px;
+  font-style: italic;
+  font-weight: 600;
+  text-align: center;
+}
+
+.bad {
+  color: #e39a8e;
+}
+
+.good {
+  color: #b9d9a6;
+}
+
+/* espaços menores que no site, para os retratos poderem ser maiores */
+.wall {
+  --wall-row-gap: 14px;
+  --wall-column-gap: 12px;
+  /* as linhas já vêm com 5; sem quebra, o arredondamento da exportação não empurra ninguém para baixo */
+  --wall-wrap: nowrap;
+}
+
+/* ---------- conversas: como no site, fotos em cima e a frase embaixo ---------- */
+.conversations {
+  display: grid;
+  gap: 16px;
+  width: 100%;
+}
+
+.conversation {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  /* não deixa a frase alargar o cartão */
+  min-width: 0;
+  padding: 14px 18px;
+  text-align: center;
+  background: color-mix(in srgb, var(--bg-deep) 68%, transparent);
+  border: 1px solid color-mix(in srgb, var(--gold) 55%, transparent);
+}
+
+.faces {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  /* retratos das conversas um pouco maiores */
+  zoom: 1.12;
+}
+
+.line {
+  /* a frase quebra dentro do cartão, mesmo com palavras longas */
+  width: 100%;
+  overflow-wrap: anywhere;
+  /* mesma fonte do resto do site */
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.45;
+  color: var(--ivory);
+}
+
+.line strong {
+  font-style: normal;
+  font-weight: 700;
+  color: var(--gold-light);
+}
+
+/* ---------- destaque (eliminação, missão, vencedores) ---------- */
+.spotlight {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: center;
+}
+
+.verdict {
+  margin-top: 8px;
+  /* nomes longos quebram em linhas com folga, sem sobrepor o texto de baixo */
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  font-family: 'Cinzel', serif;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--gold-light);
+  text-shadow: 0 2px 8px rgb(0 0 0 / 0.7);
+}
+
+.role {
+  font-family: 'Cinzel', serif;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.detail {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px;
+  font-style: italic;
+  line-height: 1.4;
+  color: rgb(244 234 211 / 0.8);
+}
+
+.prize {
+  font-family: 'Cinzel', serif;
+  font-size: 34px;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.label {
+  margin-top: 14px;
+  font-family: 'Cinzel', serif;
+  font-size: 12px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+
+/* muitas conversas (4 a 10): duas colunas de cartões, retratos pequenos em cima */
+.compact {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+}
+
+.compact .conversation {
+  gap: 8px;
+  padding: 10px 10px 12px;
+}
+
+/* número ímpar: o último cartão fica sozinho, centralizado */
+.compact .conversation:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+  justify-self: center;
+  width: calc(50% - 5px);
+}
+
+.compact .faces {
+  gap: 6px;
+  zoom: 1.2;
+}
+
+.compact .line {
+  font-size: 13.5px;
+  line-height: 1.4;
+}
+
+/* ---------- versão simples (conversas): fundo liso, sem filete, sem título ---------- */
+.plain {
+  /* damasco bem apagado por baixo de uma camada da própria cor do fundo */
+  background:
+    linear-gradient(color-mix(in srgb, var(--bg) 55%, transparent), color-mix(in srgb, var(--bg) 55%, transparent)),
+    url('../../../assets/story/damask.svg') center / 90px auto,
+    var(--bg);
+  background-blend-mode: normal, soft-light, normal;
+}
+
+.plain::before {
+  display: none;
+}
+
+/* sem título, o palco começa logo abaixo da faixa do topo que o Instagram cobre */
+.plain .stage {
+  padding-top: 110px;
+}
+
+.plain .conversation {
+  background: rgb(0 0 0 / 0.3);
+  /* borda fina para separar o cartão do fundo */
+  border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent);
+}
+
+/* assassinato na versão simples: foto e texto no meio da tela */
+.plain .spotlight {
+  gap: 16px;
+}
+
+/* ---------- banimento: foto sozinha, o anúncio num cartão e os votos numa caixa ---------- */
+.banishment {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  gap: 18px;
+  width: 100%;
+  text-align: center;
+}
+
+/* círculo da verdade: a foto fica no meio, por cima dos anéis */
+.truthSeat {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+.truthCircle {
+  position: absolute;
+  inset: 0;
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+.truthSeat > :last-child {
+  position: relative;
+}
+
+/* mesma caixa dos cartões de conversa */
+.box {
+  display: grid;
+  /* textos longos não alargam a caixa: quem se ajusta é a fonte (FitLine) */
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  padding: 22px 22px 20px;
+  background: rgb(0 0 0 / 0.3);
+  border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent);
+}
+
+/* linha única que ocupa a largura toda da caixa; a fonte é reduzida no FitLine se não couber */
+.fitLine {
+  width: 100%;
+  min-width: 0;
+  /* folga nas laterais: na imagem o texto pode sair um pouco mais largo que na tela */
+  padding-inline: 8px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.bannedName {
+  margin-top: 6px;
+  font-family: var(--font);
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--gold-light);
+}
+
+.announce {
+  font-family: var(--font);
+  font-size: 20px;
+  line-height: 1.4;
+  color: var(--ivory);
+}
+
+.reveal {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2px;
+  width: 100%;
+  min-width: 0;
+  margin-top: 8px;
+  font-family: var(--font);
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.voteBox {
+  width: auto;
+  min-width: 110px;
+  gap: 2px;
+  padding: 12px 22px;
+}
+
+.voteCount {
+  font-family: var(--font);
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--gold-light);
+}
+
+.voteLabel {
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgb(244 234 211 / 0.75);
+}
+
+/* ---------- retângulo que separa o conteúdo do fundo (escudos, assassinato) ---------- */
+.panel {
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+  width: 100%;
+  padding: 30px 26px 32px;
+  text-align: center;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg-deep) 92%, transparent), color-mix(in srgb, var(--bg-deep) 82%, transparent));
+  border: 1px solid var(--gold);
+  /* filete interno, como uma moldura dupla */
+  box-shadow:
+    inset 0 0 0 5px color-mix(in srgb, var(--bg-deep) 90%, transparent),
+    inset 0 0 0 6px color-mix(in srgb, var(--gold) 45%, transparent),
+    0 14px 40px rgb(0 0 0 / 0.55);
+}
+
+/* no assassinato o retângulo guarda foto e textos com o mesmo respiro */
+.panel.spotlight {
+  gap: 14px;
+}
+
+.panelTitle {
+  font-family: 'Cinzel', serif;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--gold-light);
+  text-shadow: 0 2px 8px rgb(0 0 0 / 0.7);
+}
+
+.panelText {
+  max-width: 420px;
+  overflow-wrap: anywhere;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 21px;
+  font-style: italic;
+  line-height: 1.4;
+  color: rgb(244 234 211 / 0.88);
+}
+
+.panelText strong {
+  font-style: normal;
+  font-weight: 700;
+  color: var(--gold-light);
+}
+
+/* ---------- escudos: símbolo acima do retângulo ---------- */
+.shieldScene {
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.emblem {
+  display: grid;
+  place-items: center;
+  width: 88px;
+  height: 88px;
+  color: var(--gold-light);
+  background: radial-gradient(circle, color-mix(in srgb, var(--gold) 26%, var(--bg-deep)), var(--bg-deep) 72%);
+  border: 1px solid var(--gold);
+  border-radius: 50%;
+  box-shadow:
+    inset 0 0 0 4px var(--bg-deep),
+    inset 0 0 0 5px color-mix(in srgb, var(--gold) 45%, transparent),
+    0 10px 28px rgb(0 0 0 / 0.55);
+}
+
+/*
+ * Fotos dos vencedores: sem zoom (na exportação o zoom quebra a linha errado
+ * e joga fotos por cima do texto). Quebra em linhas centralizadas.
+ */
+.shieldFaces {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px 12px;
+  width: 100%;
+}
+
+/* ---------- mesa redonda: jogadores numa oval em volta do tampo ---------- */
+.roundTable {
+  position: relative;
+  flex: none;
+}
+
+.table {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  place-content: center;
+  gap: 6px;
+  text-align: center;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background:
+    radial-gradient(ellipse at 50% 40%, rgb(255 210 140 / 0.18), transparent 60%),
+    repeating-radial-gradient(ellipse at 50% 50%, rgb(0 0 0 / 0) 0 7px, rgb(0 0 0 / 0.12) 7px 9px),
+    linear-gradient(160deg, #5a3a1e, #3a2412 55%, #24160b);
+  border: 3px solid var(--gold);
+  box-shadow:
+    0 0 0 6px rgb(0 0 0 / 0.35),
+    0 0 0 7px color-mix(in srgb, var(--gold) 50%, transparent),
+    0 18px 40px rgb(0 0 0 / 0.65),
+    inset 0 0 40px rgb(0 0 0 / 0.55);
+}
+
+.tableTitle {
+  font-family: 'Cinzel', serif;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  /* compensa o espaço após a última letra */
+  padding-left: 0.22em;
+  text-transform: uppercase;
+  color: var(--gold-light);
+  text-shadow: 0 2px 6px rgb(0 0 0 / 0.8);
+}
+
+.tableVotes {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px;
+  font-style: italic;
+  color: rgb(244 234 211 / 0.85);
+}
+
+.tableImage {
+  position: absolute;
+  left: 50%;
+  overflow: hidden;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 16px 34px rgb(0 0 0 / 0.6);
+}
+
+.tableImage img {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  max-width: none;
+  height: auto;
+  transform: translate(-50%, -50%);
+}
+
+.seat {
+  position: absolute;
+  z-index: 2;
+}
+
+/* setas dos votos: por cima da mesa, por baixo dos retratos */
+.arrows {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: visible;
+}
+
+.arrow path,
+.arrowShadow path {
+  fill: none;
+  stroke-linecap: round;
+}
+
+.arrow path {
+  stroke: #e8c27a;
+  stroke-width: 2.4;
+}
+
+.arrow polygon {
+  fill: #e8c27a;
+}
+
+.arrowShadow path {
+  stroke: rgb(0 0 0 / 0.75);
+  stroke-width: 5.5;
+}
+
+.arrowShadow polygon {
+  fill: rgb(0 0 0 / 0.75);
+  stroke: rgb(0 0 0 / 0.75);
+  stroke-width: 3;
+  stroke-linejoin: round;
+}
+
+.seatInner {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+}
+
+.seatVotes {
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 700;
+  color: rgb(244 234 211 / 0.7);
+}
+
+.leader {
+  color: #e39a8e;
+}
+
+/* ---------- torre: uma frase só, em letra normal (sem caixa-alta) ---------- */
+.towerText {
+  max-width: 400px;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 27px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--gold-light);
+  text-shadow: 0 2px 8px rgb(0 0 0 / 0.7);
+}

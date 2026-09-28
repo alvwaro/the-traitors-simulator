@@ -1,0 +1,146 @@
+-- =====================================================================
+-- Frases do CAFÉ DA MANHÃ.
+-- {victim} = quem foi assassinado na noite (só aparece quando houve morte).
+-- Frases sem {victim} não podem supor que alguém morreu.
+-- =====================================================================
+
+INSERT INTO phrases (phase, tone, behavior_id, text)
+SELECT 'BREAKFAST'::phrase_phase, v.tone::phrase_tone, b.id, v.text
+FROM (VALUES
+  -- emoção / luto
+  ('EMOTION', 'Chorão', '{user} chorou em cima do mingau quando percebeu que {victim} não ia descer.'),
+  ('EMOTION', 'Querido', '{user} deixou a xícara de {victim} na mesa, cheia, "caso aconteça um milagre".'),
+  ('EMOTION', 'Dramático', '{user} leu em voz alta um poema improvisado para {victim}. Rimou "castelo" com "cutelo".'),
+  ('EMOTION', 'Fiel', '"{victim} era meu(minha) parceiro(a). Quem fez isso vai pagar", disse {user}, sem piscar.'),
+  ('EMOTION', 'Protetor', '{user} se culpou pela morte de {victim}: "Eu devia ter dormido na porta do quarto."'),
+  ('EMOTION', NULL, '{user} contou que {victim} tinha prometido ensinar uma receita de família. Não deu tempo.'),
+  ('EMOTION', 'Carente', '{user} abraçou todo mundo que entrou no salão, um por um, até ter certeza de que estavam vivos.'),
+  ('EMOTION', NULL, '{user} ficou olhando a cadeira vazia de {victim} e não conseguiu comer nada.'),
+  ('EMOTION', 'Heroico', '{user} ergueu a xícara: "Por {victim}. Vamos ganhar isso por ele(a)."'),
+  ('EMOTION', 'Chorão', '{user} chorou tanto que {user1} passou o café inteiro entregando guardanapos.'),
+  ('EMOTION', 'Frio', '{user} comentou a morte de {victim} com a mesma voz com que pediu mais torrada. A mesa estranhou.'),
+  ('EMOTION', 'Tímido', '{user} confessou, baixinho, que acordou às quatro da manhã com medo de ser o(a) próximo(a).'),
+  ('EMOTION', NULL, '{user} lembrou que {victim} foi a primeira pessoa a falar com ele(a) na chegada. A voz embargou.'),
+  ('EMOTION', 'Dramático', '{user} se ajoelhou ao lado da cadeira de {victim} como numa cena de novela das nove.'),
+  ('EMOTION', NULL, '{user} disse que sonhou com a família e acordou achando que estava em casa. Não estava.'),
+  ('EMOTION', 'Carente', '{user} perguntou a {user1} se ainda eram amigos. Era a terceira vez na semana.'),
+  ('EMOTION', 'Querido', '{user} fez um prato para {user1}, que estava abalado(a) demais para levantar.'),
+  ('EMOTION', NULL, '{user} olhou pela janela e disse: "Lá fora o sol nasce como se nada tivesse acontecido."'),
+  ('EMOTION', 'Chorão', '{user} começou a chorar antes mesmo de saber quem tinha morrido. "É preventivo."'),
+  ('EMOTION', 'Fiel', '{user} pegou o guardanapo de {victim} e guardou no bolso como lembrança.'),
+
+  -- suspeita
+  ('SUSPICION', 'Detetive', '{user} reparou que {user1} chegou ao café arrumado(a) demais para quem "dormiu mal".'),
+  ('SUSPICION', 'Paranoico', '{user} contou quem desceu por último: foi {user1}. De novo.'),
+  ('SUSPICION', NULL, '"Por que mataram {victim} e não você, {user1}?", perguntou {user}, mexendo o café.'),
+  ('SUSPICION', 'Fofoqueiro', '{user} cochichou com {user2}: "{victim} passou a noite de ontem falando de {user1}. Coincidência?"'),
+  ('SUSPICION', 'Observador', '{user} viu {user1} olhar para a cadeira vazia de {victim} sem nenhuma surpresa.'),
+  ('SUSPICION', 'Astuto', '{user} percebeu que {user1} não perguntou quem tinha morrido. "Já sabia?"'),
+  ('SUSPICION', 'Detetive', '{user} anotou: {user1} comeu com apetite demais para uma manhã de luto.'),
+  ('SUSPICION', 'Paranoico', '{user} desconfia do croissant, do chá e principalmente de {user1}.'),
+  ('SUSPICION', NULL, '{user} lembrou que {user1} foi o(a) único(a) que não se assustou com a notícia.'),
+  ('SUSPICION', 'Estrategista', '{user} fez as contas: quem não ganhou escudo e ainda está vivo? {user1} está na lista.'),
+  ('SUSPICION', NULL, '{user} perguntou a {user1} por que a luz do quarto estava acesa às três da manhã.'),
+  ('SUSPICION', 'Detetive', '{user} reparou que {user1} usou "era" para falar de {victim} antes da notícia oficial.'),
+  ('SUSPICION', 'Fofoqueiro', '{user} contou para metade da mesa que ouviu passos no corredor perto do quarto de {user1}.'),
+  ('SUSPICION', 'Paranoico', '"Vocês perceberam que ninguém próximo de {user1} morre?", disse {user}. Ninguém tinha percebido.'),
+  ('SUSPICION', 'Observador', '{user} viu {user1} trocar um olhar rápido com {user2} quando a porta abriu.'),
+  ('SUSPICION', NULL, '{user} achou suspeito {user1} ter guardado lugar para exatamente o número certo de pessoas.'),
+  ('SUSPICION', 'Astuto', '{user} testou {user1}: "Ouvi dizer que a torre fica fria à noite." {user1} respondeu: "Nem tanto."'),
+  ('SUSPICION', 'Invejoso', '{user} desconfia de {user1} porque "ninguém acorda com o cabelo desse jeito".'),
+
+  -- acusação
+  ('ACCUSATION', 'Explosivo', '{user} bateu na mesa: "{user1}, onde você estava ontem à meia-noite?"'),
+  ('ACCUSATION', NULL, '{user} apontou o garfo para {user1}: "Você tem cara de quem dorme muito bem à noite."'),
+  ('ACCUSATION', 'Vingativo', '{user} lembrou a todos que {user1} votou nele(a) e agora quer ser amigo(a). "Traidor faz isso."'),
+  ('ACCUSATION', 'Carismático', '{user} levantou e fez um discurso contra {user1} antes do café esfriar.'),
+  ('ACCUSATION', 'Detetive', '{user} ligou os pontos em voz alta: {victim} desconfiava de {user1}, e {victim} sumiu.'),
+  ('ACCUSATION', 'Explosivo', '"Pode parar de fingir, {user1}! Eu vi a sua cara quando a porta abriu!", gritou {user}.'),
+  ('ACCUSATION', 'Líder', '{user} avisou que hoje o voto dele(a) já tem nome: {user1}.'),
+  ('ACCUSATION', 'Rebelde', '{user} acusou {user1} justamente porque ninguém mais acusou.'),
+  ('ACCUSATION', 'Paranoico', '{user} jurou que {user1} tem o cheiro de vela da torre no casaco.'),
+  ('ACCUSATION', NULL, '{user} disse, olhando nos olhos de {user1}: "Eu não vou esquecer que você sorriu hoje."'),
+  ('ACCUSATION', 'Arrogante', '{user} anunciou para todos que "resolveu o jogo" e que o traidor é {user1}. Ninguém pediu.'),
+  ('ACCUSATION', 'Mentiroso', '{user} disse que viu {user1} subindo para a torre. {user} estava dormindo.'),
+
+  -- amizade
+  ('FRIENDLY', 'Querido', '{user} guardou um croissant para {user1}: "Come, vai ser um dia longo."'),
+  ('FRIENDLY', 'Amado', '{user} fez {user1} rir contando histórias da infância, aliviando o clima da mesa.'),
+  ('FRIENDLY', 'Brincalhão', '{user} fez um bigode de chantili e sentou ao lado de {user1} como se nada fosse.'),
+  ('FRIENDLY', 'Protetor', '{user} passou a manhã inteira do lado de {user1}, que estava abalado(a).'),
+  ('FRIENDLY', 'Diplomata', '{user} serviu chá para {user1} e para quem estava brigando com {user1}. Paz armada.'),
+  ('FRIENDLY', NULL, '{user} e {user1} comemoraram estar vivos com um brinde de suco de laranja.'),
+  ('FRIENDLY', 'Carente', '{user} disse a {user1}: "Se você morrer, eu morro junto." {user1} pediu para não exagerar.'),
+  ('FRIENDLY', NULL, '{user} ensinou {user1} a fazer ovo mexido do jeito da avó dele(a).'),
+  ('FRIENDLY', 'Querido', '{user} deixou um bilhete fofo no guardanapo de {user1}: "Sobrevivemos mais um dia."'),
+  ('FRIENDLY', NULL, '{user} dividiu a última geleia de morango com {user1}. Em Highlands, isso é amor.'),
+
+  -- conflito
+  ('CONFLICT', 'Explosivo', '{user} e {user1} discutiram porque um acusou o outro de fingir choro ontem.'),
+  ('CONFLICT', 'Invejoso', '{user} não suportou os elogios que {user1} recebeu e largou o café pela metade.'),
+  ('CONFLICT', 'Vingativo', '"Você votou em mim ontem, {user1}. Eu não esqueço", disse {user}, sem levantar os olhos.'),
+  ('CONFLICT', NULL, '{user} e {user1} brigaram pela última fatia de bacon. Os outros apostaram em quem ganharia.'),
+  ('CONFLICT', 'Arrogante', '{user} disse que {user1} "não tem estratégia nenhuma". {user1} respondeu com a manteiga.'),
+  ('CONFLICT', 'Explosivo', '{user} derrubou a cadeira ao levantar para responder {user1}. O mordomo suspirou.'),
+  ('CONFLICT', NULL, '{user} cobrou de {user1} a defesa que não veio na última mesa redonda.'),
+  ('CONFLICT', 'Rebelde', '{user} se recusou a sentar perto de {user1}: "Traidor ou não, eu não gosto de você."'),
+  ('CONFLICT', 'Traíra', '{user} jurou que nunca prometeu nada a {user1}. Tinha prometido. Três vezes.'),
+  ('CONFLICT', 'Competitivo', '{user} jogou na cara de {user1} o fracasso da última missão.'),
+  ('CONFLICT', NULL, '{user} e {user1} começaram discutindo o chá e terminaram discutindo o voto de ontem.'),
+  ('CONFLICT', 'Invejoso', '{user} disse que {user1} só ganhou escudo "porque todo mundo tem pena".'),
+  ('CONFLICT', 'Vingativo', '{user} colocou sal no café de {user1}. Ninguém provou nada.'),
+
+  -- humor (inclusive o ácido)
+  ('HUMOR', NULL, '{user} chegou de roupão e anunciou: "Se eu morrer hoje, quero ser lembrado(a) assim."'),
+  ('HUMOR', NULL, '"Estou vivo(a)! Alguém mais surpreso(a) do que eu?", brincou {user}.'),
+  ('HUMOR', 'Fofoqueiro', '{user} jurou para {user1} que o mingau estava com gosto de traição.'),
+  ('HUMOR', 'Brincalhão', '{user} brindou: "A {victim}, que pelo menos não precisa mais comer esse mingau."'),
+  ('HUMOR', 'Frio', '{user} comentou: "Pelo menos agora sobra mais bacon." A mesa não sabia se ria de {victim} ou do bacon.'),
+  ('HUMOR', 'Caótico', '{user} anunciou que vai dormir com o garfo embaixo do travesseiro a partir de hoje.'),
+  ('HUMOR', NULL, '{user} disse que a morte de {victim} foi um desperdício: "Ele(a) nem terminou o livro que pegou emprestado."'),
+  ('HUMOR', 'Brincalhão', '{user} entrou no salão de braços abertos: "Surpresa! Ainda não foi dessa vez!"'),
+  ('HUMOR', NULL, '{user} sugeriu instalar uma câmera no corredor. {user1} lembrou que o programa inteiro é uma câmera.'),
+  ('HUMOR', 'Arrogante', '{user} disse que os traidores não o(a) matam "por medo". {user1} disse que é "por pena".'),
+  ('HUMOR', NULL, '{user} contou que desceu a escada devagar "para dar tempo de alguém morrer antes dele(a)".'),
+  ('HUMOR', 'Chorão', '{user} chorou porque o pão estava queimado. Depois chorou por {victim}. Nessa ordem.'),
+  ('HUMOR', 'Caótico', '{user} fez uma lista dos próximos a morrer e colou na geladeira. {user1} estava em primeiro.'),
+  ('HUMOR', NULL, '{user} disse que o café da manhã virou "chamada de presença com risco de morte".'),
+  ('HUMOR', 'Brincalhão', '{user} bateu na mesa três vezes: "Toc toc. Quem é? Não é {victim}, com certeza."'),
+  ('HUMOR', NULL, '{user} perguntou se alguém ia comer a torrada de {victim}. Silêncio. Comeu.'),
+  ('HUMOR', 'Fofoqueiro', '{user} já tinha uma teoria para a morte, outra para o bolo sumido e uma terceira sobre {user1}.'),
+  ('HUMOR', NULL, '{user} comentou que o castelo tem mais morte que novela mexicana e menos drama que o grupo.'),
+  ('HUMOR', 'Dramático', '{user} entrou no salão com óculos escuros "por respeito ao luto". Era só ressaca.'),
+  ('HUMOR', NULL, '{user} disse que está pensando em dormir na cozinha: "Ninguém mata perto da comida."'),
+  ('HUMOR', 'Ovelha', '{user} perguntou a {user1} em quem desconfiar hoje, "para já ir me acostumando".'),
+  ('HUMOR', NULL, '{user} brincou que {victim} só morreu para escapar da missão de hoje.'),
+  ('HUMOR', 'Frio', '{user} passou manteiga no pão enquanto a notícia era dada. Nem tremeu a faca.'),
+  ('HUMOR', 'Caótico', '{user} anunciou que vai votar em quem pegar o último croissant. {user1} largou o croissant.'),
+  ('HUMOR', NULL, '"Quantos somos hoje? Ainda dá pra formar um time de futebol?", perguntou {user}.'),
+  ('HUMOR', 'Brincalhão', '{user} propôs um minuto de silêncio por {victim} e cronometrou no relógio de parede.'),
+
+  -- neutro
+  ('NEUTRAL', NULL, '{user} comentou com {user1} que a missão de hoje devia envolver água gelada. De novo.'),
+  ('NEUTRAL', 'Tímido', '{user} passou o café inteiro calado(a), só observando quem falava demais.'),
+  ('NEUTRAL', 'Observador', '{user} contou mentalmente quantas vezes cada pessoa falou em "traidor". Guardou os números.'),
+  ('NEUTRAL', NULL, '{user} e {user1} discutiram, com calma, quem pode ter sido o alvo e por quê.'),
+  ('NEUTRAL', 'Estrategista', '{user} desenhou um mapa de alianças com migalhas de pão. Desfez rápido quando {user1} chegou.'),
+  ('NEUTRAL', NULL, '{user} perguntou a {user1} como estava dormindo. "Com um olho aberto."'),
+  ('NEUTRAL', 'Frio', '{user} tomou o café em silêncio e saiu do salão sem se despedir.'),
+  ('NEUTRAL', NULL, '{user} lembrou a todos que ainda faltam muitos dias e muita coisa pode mudar.'),
+
+  -- aliança e defesa
+  ('ALLIANCE', 'Fiel', '{user} piscou para {user1} do outro lado da mesa: o pacto continua de pé.'),
+  ('ALLIANCE', 'Estrategista', '{user} sussurrou para {user1}: "Hoje a gente vota junto. Confia em mim."'),
+  ('ALLIANCE', 'Protetor', '{user} avisou a {user1}: "Se vierem atrás de você na mesa, vão ter que passar por mim."'),
+  ('ALLIANCE', NULL, '{user} e {user1} trocaram um aceno discreto: sobrevivemos, o plano continua.'),
+  ('ALLIANCE', 'Líder', '{user} chamou {user1} para uma caminhada no jardim depois do café. Voltaram com um plano.'),
+  ('ALLIANCE', 'Manipulador', '{user} disse a {user1} que é a única pessoa em quem confia. Disse o mesmo para mais três.'),
+  ('DEFENSE', 'Fiel', '"Parem de olhar para {user1}! Eu respondo por ele(a)", disse {user}.'),
+  ('DEFENSE', NULL, '{user} saiu em defesa de {user1} assim que {user2} começou a insinuar coisas.'),
+  ('DEFENSE', 'Protetor', '{user} lembrou a {user2} que {user1} passou a noite contando histórias no salão. "Álibi perfeito."'),
+  ('DEFENSE', 'Diplomata', '{user} pediu calma: "Acusar {user1} no café não traz {victim} de volta."'),
+  ('DEFENSE', 'Carismático', '{user} defendeu {user1} com tanta segurança que até {user2} ficou em dúvida.'),
+  ('DEFENSE', 'Heroico', '{user} se colocou entre {user1} e {user2}: "Se é pra desconfiar, desconfia de mim."')
+) AS v(tone, behavior, text)
+LEFT JOIN behaviors b ON lower(b.name) = lower(v.behavior)
+ON CONFLICT DO NOTHING;

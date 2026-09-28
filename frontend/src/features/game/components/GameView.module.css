@@ -1,0 +1,19 @@
+.page {
+  display: grid;
+  gap: var(--gap);
+  max-width: var(--page);
+  margin: 0 auto;
+}
+
+.toggle {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin-top: 1rem;
+}
+
+.info {
+  display: grid;
+  gap: var(--gap);
+}

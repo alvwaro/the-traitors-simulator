@@ -1,0 +1,32 @@
+.editor {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1.3rem;
+  align-items: start;
+}
+
+.editorFields {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.tags {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.tagsLabel {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+@media (max-width: 520px) {
+  .editor {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+  .editorFields {
+    width: 100%;
+  }
+}

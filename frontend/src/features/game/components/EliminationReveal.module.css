@@ -1,0 +1,48 @@
+.reveal {
+  display: grid;
+  justify-items: center;
+  gap: 0.9rem;
+  width: 100%;
+  min-width: 0;
+}
+
+/* textos quebram dentro da caixa (nomes longos incluídos), em linhas equilibradas */
+.headline,
+.role {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+.headline {
+  font-size: 1.3rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--text);
+}
+
+/* fonte régia, clima de anúncio do castelo */
+.role {
+  font-family: var(--font-royal);
+  font-size: clamp(1.6rem, 6vw, 2.4rem);
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  /* fonte decorativa alta: entrelinha maior para as linhas não se encostarem */
+  line-height: 1.35;
+  animation: unveil 1.2s var(--ease) both 0.3s;
+}
+
+.traitor {
+  color: var(--danger);
+}
+
+.faithful {
+  color: var(--faithful);
+}
+
+@keyframes unveil {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+}

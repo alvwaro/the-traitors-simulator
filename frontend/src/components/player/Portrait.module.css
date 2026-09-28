@@ -1,0 +1,316 @@
+.portrait {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 0.5rem;
+  padding: 0;
+  background: none;
+  border: 0;
+  text-align: center;
+  /* tamanho fixo por size: nunca encolhe nem estica dentro de linhas flex (todas as fotos iguais) */
+  flex: none;
+  color: var(--text);
+}
+
+.xs {
+  width: 44px;
+}
+
+.sm {
+  width: 76px;
+}
+
+.md {
+  width: 112px;
+}
+
+.lg {
+  width: 150px;
+}
+
+.xl {
+  width: 200px;
+}
+
+.frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  background: var(--surface-2);
+  border: 2px solid var(--border-strong);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: border-color 0.15s var(--ease), transform 0.15s var(--ease);
+}
+
+.window {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* X em PNG (config/eliminationMarks.ts), esticado de ponta a ponta da foto */
+.markImage {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  pointer-events: none;
+}
+
+.initials {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.xs .initials {
+  font-size: 0.8rem;
+}
+
+.name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.sm .name {
+  font-size: 0.8rem;
+}
+
+.lg .name,
+.xl .name {
+  font-size: 1.05rem;
+}
+
+.caption {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.2;
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+.clickable:hover:not(:disabled) .frame {
+  border-color: var(--parchment);
+}
+
+.selected .frame {
+  border-color: var(--accent-bright);
+  box-shadow: 0 0 0 2px var(--accent-bright);
+}
+
+.selected .name {
+  color: var(--accent-bright);
+}
+
+.disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
+/* eliminado (banido, assassinado ou desistente): só a foto fica cinza */
+.out .photo,
+.out .initials {
+  filter: grayscale(1) brightness(0.6);
+}
+
+.out .name {
+  color: var(--text-faint);
+  text-decoration: line-through;
+  text-decoration-color: var(--text-faint);
+}
+
+.murdered .frame {
+  border-color: var(--danger);
+}
+
+.murdered .name {
+  color: var(--danger);
+  text-decoration-color: var(--danger);
+}
+
+/* ---------- retrato emoldurado (só na simulação) ---------- */
+.framed {
+  gap: 0.2rem;
+}
+
+.framed .frame {
+  aspect-ratio: 3 / 4;
+  padding: 4px;
+  background: #140e0a;
+  border: 3px solid var(--frame-gold);
+  box-shadow:
+    0 0 0 1px var(--frame-gold-dark),
+    inset 0 0 0 1px var(--frame-gold-light),
+    inset 0 0 0 3px var(--frame-gold-dark);
+}
+
+.framed.xs .frame {
+  padding: 2px;
+  border-width: 2px;
+  box-shadow:
+    0 0 0 1px var(--frame-gold-dark),
+    inset 0 0 0 1px var(--frame-gold-light);
+}
+
+.framed.clickable:hover:not(:disabled) .frame {
+  border-color: var(--frame-gold-light);
+}
+
+.framed.selected .frame {
+  border-color: var(--frame-gold-light);
+  box-shadow:
+    0 0 0 1px var(--frame-gold-dark),
+    0 0 0 4px var(--accent-bright),
+    inset 0 0 0 1px var(--frame-gold-light),
+    inset 0 0 0 3px var(--frame-gold-dark);
+}
+
+.framed .badge {
+  top: 5px;
+}
+
+
+.framed .badge {
+  left: 5px;
+}
+
+.cross {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke-linecap: square;
+  pointer-events: none;
+}
+
+.cross.gray {
+  stroke: var(--x-gray);
+  stroke-width: 7;
+}
+
+.cross.red {
+  stroke: var(--wine);
+  stroke-width: 9;
+}
+
+
+
+.badge {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  display: grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 0.2rem;
+  color: var(--bg);
+  background: var(--gold);
+}
+
+/* ---------- moldura em PNG (config/portraitFrame.ts) ---------- */
+.framed.pngFrame .frame,
+.framed.pngFrame.selected .frame {
+  container-type: inline-size;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+
+/* a foto ocupa só a janela transparente do PNG */
+.pngFrame .window {
+  position: absolute;
+  top: var(--frame-top);
+  right: var(--frame-right);
+  bottom: var(--frame-bottom);
+  left: var(--frame-left);
+  width: auto;
+  height: auto;
+}
+
+.frameImage {
+  position: absolute;
+  inset: 0;
+  border: 0 solid transparent;
+  pointer-events: none;
+  /* envelhecimento discreto, no mesmo tom da foto (a arte do story troca por tema) */
+  filter: var(--frame-filter);
+  transition: filter 0.15s var(--ease);
+}
+
+.pngFrame.clickable:hover:not(:disabled) .frameImage {
+  filter: var(--frame-filter) brightness(1.15);
+}
+
+.framed.pngFrame.selected .frame {
+  outline: 3px solid var(--accent-bright);
+  outline-offset: 3px;
+}
+
+
+.framed.pngFrame .badge {
+  top: calc(var(--frame-top) + 3px);
+  left: calc(var(--frame-left) + 3px);
+}
+
+/* ---------- foto envelhecida (só na simulação) ----------
+ * tom amarronzado mais claro + estática + sombra escura nas bordas com poeira.
+ * As camadas ficam por baixo do X. */
+.framed .photo {
+  filter: sepia(0.45) saturate(0.8) contrast(0.9) brightness(1.08);
+}
+
+.framed.out .photo,
+.framed.out .initials {
+  filter: sepia(0.2) grayscale(1) contrast(0.9) brightness(0.62);
+}
+
+.framed .window::before,
+.framed .window::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* estática */
+.framed .window::before {
+  background: url('../../assets/vintage/grain.svg');
+  mix-blend-mode: overlay;
+  opacity: 0.4;
+}
+
+/* sombra escura nas bordas + partículas */
+.framed .window::after {
+  background:
+    url('../../assets/vintage/dust.svg') center / 100% 100% no-repeat,
+    radial-gradient(ellipse 75% 70% at 50% 45%, transparent 45%, rgb(38 22 10 / 0.45) 78%, rgb(20 11 4 / 0.8) 100%);
+  box-shadow: inset 0 0 14px rgb(15 8 3 / 0.7);
+}

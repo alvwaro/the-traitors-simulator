@@ -1,0 +1,14 @@
+/* os espaços podem ser trocados por quem usa a parede (ex.: arte do story) */
+.wall {
+  display: grid;
+  justify-items: center;
+  gap: var(--wall-row-gap, 1.6rem);
+}
+
+/* cada linha tem no máximo 5 retratos, centralizados */
+.row {
+  display: flex;
+  flex-wrap: var(--wall-wrap, wrap);
+  justify-content: center;
+  gap: var(--wall-row-gap, 1.6rem) var(--wall-column-gap, 1.3rem);
+}

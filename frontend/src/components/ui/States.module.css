@@ -1,0 +1,36 @@
+.state {
+  display: grid;
+  justify-items: center;
+  gap: 0.6rem;
+  padding: 2.5rem 1rem;
+  text-align: center;
+}
+
+.title {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.text {
+  max-width: 46ch;
+  color: var(--text-muted);
+}
+
+.candle {
+  width: 8px;
+  height: 22px;
+  border-radius: 50% 50% 40% 40%;
+  background: var(--gold);
+  animation: flame 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes flame {
+  from {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+  to {
+    transform: scaleY(0.85);
+    opacity: 0.6;
+  }
+}

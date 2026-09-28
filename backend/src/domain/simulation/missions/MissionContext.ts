@@ -1,0 +1,157 @@
+import { PhrasePhase, PhraseTone, SimulationEventKind } from '../../enums';
+import { surprises } from '../chaos';
+import { Narrator } from '../narration';
+import { RelationshipMatrix } from '../RelationshipMatrix';
+import { chance, clamp, Rng, shuffle, weightedPick } from '../random';
+import { Social } from '../social';
+import { isTraitor, SimPlayer } from '../traits';
+
+export interface MissionOutcome {
+  prizeEarned: number;
+  shieldIds: string[];
+}
+
+/** Reviravoltas que uma missão deixa armadas para a noite. */
+export interface MissionTwists {
+  /** Condenados da masmorra: os traidores só podem assassinar um deles esta noite. */
+  dungeonIds?: string[];
+  /** A taça envenenada: o assassinato desta noite ignora escudos. */
+  poisonTonight?: boolean;
+  /** Quem ganhou o poder do Vidente (janta com alguém esta noite e descobre o papel). */
+  seerId?: string;
+}
+
+/** Missão jogável: roteiro com a ordem dos acontecimentos e as regras de dinheiro e escudos. */
+export interface MissionDefinition {
+  key: string;
+  /** De qual temporada do programa ("EUA T1", "Reino Unido T2"...). */
+  origin: string;
+  name: string;
+  description: string;
+  prizeAvailable: number;
+  play(ctx: MissionContext): MissionOutcome;
+}
+
+/** Ferramentas que o roteiro de uma missão usa para sortear, testar habilidade e narrar. */
+export class MissionContext {
+  constructor(
+    readonly rng: Rng,
+    readonly matrix: RelationshipMatrix,
+    /** Jogadores presentes, em ordem aleatória. */
+    readonly players: readonly SimPlayer[],
+    private readonly narrator: Narrator,
+    private readonly social: Social,
+    /** Formata dinheiro na moeda da temporada. */
+    readonly money: (amount: number) => string,
+    /** Loucura (0 a 1): resultados que fogem da habilidade. */
+    private readonly chaos = 0,
+  ) {}
+
+  /** Preenchido pelo roteiro; lido depois da missão. */
+  readonly twists: MissionTwists = {};
+
+  /** Traidores presentes (o público sabe quem são). */
+  get traitors(): SimPlayer[] {
+    return this.players.filter(isTraitor);
+  }
+
+  /** Linha do narrador; `text` usa {user}, {user1}... na ordem de `players`. */
+  say(text: string, players: readonly SimPlayer[] = []): void {
+    this.narrator.line(SimulationEventKind.MISSION_STEP, text, players);
+  }
+
+  /** Algo que só o público vê (escudo secreto, poder do Vidente...). */
+  secret(text: string, players: readonly SimPlayer[] = []): void {
+    this.narrator.line(SimulationEventKind.SECRET, text, players);
+  }
+
+  shield(text: string, players: readonly SimPlayer[]): void {
+    this.narrator.line(SimulationEventKind.SHIELD, text, players);
+  }
+
+  /** Conversas durante a missão, com as frases da biblioteca. */
+  chatter(count = 2, among: readonly SimPlayer[] = this.players): void {
+    for (let i = 0; i < count; i++) {
+      const line = this.narrator.speak(this.matrix, {
+        phase: PhrasePhase.MISSION,
+        speakers: among,
+        audience: this.players,
+        tones: {
+          [PhraseTone.HUMOR]: 3.8,
+          [PhraseTone.NEUTRAL]: 1.7,
+          [PhraseTone.CONFLICT]: 1.45,
+          [PhraseTone.FRIENDLY]: 1.2,
+          [PhraseTone.SUSPICION]: 1,
+          [PhraseTone.EMOTION]: 0.5,
+          [PhraseTone.ALLIANCE]: 0.35,
+        },
+      });
+      if (line) this.social.applyLine(line);
+    }
+  }
+
+  /**
+   * Testa a habilidade de alguém. Difícil (difficulty alto) derruba a chance; parceiros de quem
+   * ele gosta ajudam. Parceiros reagem ao resultado: sucesso rende simpatia, fracasso rende rancor.
+   */
+  attempt(player: SimPlayer, difficulty = 50, partners: readonly SimPlayer[] = []): boolean {
+    const others = partners.filter((p) => p.id !== player.id);
+    const teamwork = others.length
+      ? others.reduce((sum, q) => sum + (this.matrix.get(q.id, player.id).liking + this.matrix.get(player.id, q.id).liking) / 2 - 50, 0) / others.length / 250
+      : 0;
+    const expected = clamp(0.62 + (player.traits.skill - difficulty) / 110 + teamwork, 0.05, 0.95);
+    const success = chance(this.rng, surprises(this.rng, this.chaos, player) ? 0.5 : expected);
+    for (const partner of others) {
+      if (success) this.matrix.adjust(partner.id, player.id, { liking: 2, trust: 1 });
+      else this.matrix.adjust(partner.id, player.id, { trust: -2, hatred: 2 }, 0.6 + partner.traits.volatility / 100);
+    }
+    return success;
+  }
+
+  /** Divide todos em `count` equipes equilibradas. */
+  teams(count: number): SimPlayer[][] {
+    const teams: SimPlayer[][] = Array.from({ length: count }, () => []);
+    shuffle(this.rng, this.players).forEach((p, i) => teams[i % count].push(p));
+    return teams;
+  }
+
+  /** Duplas por afinidade: cada um procura quem mais gosta entre os que sobraram. */
+  pairs(max = Infinity): [SimPlayer, SimPlayer][] {
+    const free = shuffle(this.rng, this.players);
+    const pairs: [SimPlayer, SimPlayer][] = [];
+    while (free.length >= 2 && pairs.length < max) {
+      const a = free.shift()!;
+      const b = weightedPick(this.rng, free, (q) => (this.matrix.get(a.id, q.id).liking + this.matrix.get(q.id, a.id).liking + 10) ** 2)!;
+      free.splice(free.indexOf(b), 1);
+      pairs.push([a, b]);
+    }
+    return pairs;
+  }
+
+  /** Sorteia `count` pessoas diferentes, com chance proporcional ao peso. */
+  pick(count: number, weight: (p: SimPlayer) => number = () => 1, pool: readonly SimPlayer[] = this.players): SimPlayer[] {
+    const left = [...pool];
+    const chosen: SimPlayer[] = [];
+    while (chosen.length < count && left.length) {
+      const p = weightedPick(this.rng, left, weight)!;
+      left.splice(left.indexOf(p), 1);
+      chosen.push(p);
+    }
+    return chosen;
+  }
+
+  /** Quem o grupo mais gosta (média de simpatia recebida). */
+  popularity(p: SimPlayer): number {
+    return this.matrix.toward(p.id, this.players.map((x) => x.id)).liking;
+  }
+
+  /** Todos passam a gostar um pouco mais de quem se destacou. */
+  applaud(player: SimPlayer, amount = 3): void {
+    for (const other of this.players) if (other.id !== player.id) this.matrix.adjust(other.id, player.id, { liking: amount });
+  }
+
+  /** O que alguém diz sobre outro chega a todos (como numa acusação). */
+  spread(speaker: SimPlayer, target: SimPlayer, trust: number): void {
+    this.social.broadcast(speaker, target, { trust });
+  }
+}

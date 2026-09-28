@@ -1,0 +1,20 @@
+{
+  "name": "the-traitors",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Gerenciador e simulador de temporadas do reality The Traitors (monorepo: backend + frontend)",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "install:all": "npm ci --prefix backend && npm ci --prefix frontend",
+    "db:up": "docker compose up -d db",
+    "db:down": "docker compose down",
+    "db:migrate": "npm run db:migrate --prefix backend",
+    "dev:api": "npm run dev --prefix backend",
+    "dev:web": "npm run dev --prefix frontend",
+    "typecheck": "npm run typecheck --prefix backend && npm run typecheck --prefix frontend",
+    "build": "npm run build --prefix backend && npm run build --prefix frontend",
+    "user:owner": "npm run user:owner --prefix backend --"
+  }
+}

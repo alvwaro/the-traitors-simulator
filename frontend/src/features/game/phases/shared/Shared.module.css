@@ -1,0 +1,219 @@
+.notes {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+/* cabeçalho do dia: parede de fotos */
+.wall {
+  display: grid;
+  gap: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.news {
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.newsBad {
+  color: var(--danger);
+}
+
+.newsGood {
+  color: var(--faithful);
+}
+
+/* blocos de resultado */
+.result {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.75rem;
+  padding: 1.5rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+
+.resultText {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.resultTitle {
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.resultMeta {
+  color: var(--text-muted);
+}
+
+.traitorText {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.faithfulText {
+  color: var(--faithful);
+  font-weight: 700;
+}
+
+.section {
+  display: grid;
+  gap: 1.1rem;
+  margin-top: 2rem;
+}
+
+.sectionTitle {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* sorteio dos escudos: quantidade + botões na mesma linha */
+.drawRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.6rem;
+  margin-bottom: 0.9rem;
+}
+
+.drawRow > :first-child {
+  width: 9rem;
+}
+
+.formStack {
+  display: grid;
+  gap: 1.4rem;
+}
+
+.muted {
+  color: var(--text-muted);
+}
+
+.submitRow {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.choiceList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 0.9rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.choiceRow {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.5rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+
+.choiceName {
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+}
+
+.toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border: 1px solid var(--border-strong);
+}
+
+.toggle button {
+  padding: 0.35rem 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--text-muted);
+  background: var(--bg);
+  border: 0;
+  cursor: pointer;
+}
+
+.toggle button + button {
+  border-left: 1px solid var(--border-strong);
+}
+
+.toggle button[aria-pressed='true'] {
+  color: var(--bg);
+  background: var(--faithful);
+}
+
+.toggle button.banish[aria-pressed='true'] {
+  color: var(--text);
+  background: var(--danger-deep);
+}
+
+.winners {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin: 1.5rem 0;
+}
+
+.verdict {
+  text-align: center;
+  font-size: clamp(1.8rem, 4vw, 2.4rem);
+  font-weight: 700;
+}
+
+.verdictTraitors {
+  color: var(--danger);
+}
+
+.verdictFaithful {
+  color: var(--faithful);
+}
+
+/* barra de sorteio (traidores, votos, escolhas da final) */
+.drawBar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+}
+
+.drawCount {
+  width: 5rem;
+  text-align: center;
+}
+
+.center {
+  text-align: center;
+}
+
+@media (max-width: 560px) {
+  .result {
+    flex-direction: column;
+    text-align: center;
+  }
+}

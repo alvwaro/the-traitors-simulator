@@ -1,0 +1,387 @@
+/* ---------- você ---------- */
+.you {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding: 0.8rem 1rem;
+  background: var(--surface-accent);
+  border: 1px solid var(--accent);
+  border-left: 4px solid var(--accent-bright);
+}
+
+.youTraitor {
+  background: var(--surface-danger);
+  border-color: var(--danger-deep);
+  border-left-color: var(--danger);
+}
+
+.youText {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.youName {
+  font-weight: 700;
+}
+
+.traitorText,
+.faithfulText {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.traitorText {
+  color: var(--danger);
+}
+
+.faithfulText {
+  color: var(--faithful);
+}
+
+.talks {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-align: right;
+}
+
+.talks strong {
+  font-size: 1.2rem;
+  color: var(--gold);
+}
+
+.spectator {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding: 0.9rem 1.1rem;
+  color: var(--text-muted);
+  background: var(--surface-2);
+  border: 1px dashed var(--border-strong);
+}
+
+.spectator strong {
+  color: var(--text);
+}
+
+/* ---------- revelação do papel ---------- */
+.reveal {
+  display: grid;
+  justify-items: center;
+  gap: 0.8rem;
+  padding: 1.5rem;
+  text-align: center;
+  border: 1px solid var(--border-strong);
+}
+
+.revealTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.revealFaithful {
+  background: var(--surface-accent);
+  border-top: 4px solid var(--faithful);
+}
+
+.revealFaithful .revealTitle {
+  color: var(--faithful);
+}
+
+.revealTraitor {
+  background: var(--surface-danger);
+  border-top: 4px solid var(--danger);
+}
+
+.revealTraitor .revealTitle {
+  color: var(--danger);
+}
+
+/* ---------- painéis de decisão e conversa ---------- */
+.panel {
+  display: grid;
+  gap: 0.8rem;
+  margin-top: 1.5rem;
+  padding: 1.1rem 1.2rem 1.2rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+}
+
+.tower {
+  background: var(--surface-danger);
+  border-color: var(--danger-deep);
+}
+
+.panelTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.panelHint {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.panelActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.choice {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.choiceButton {
+  flex: 1;
+  min-width: 9rem;
+  padding: 0.6rem 0.9rem;
+  font: inherit;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  cursor: pointer;
+}
+
+.choiceEnd {
+  color: var(--bg);
+  background: var(--faithful);
+  border-color: var(--faithful);
+}
+
+.choiceBanish {
+  color: var(--text);
+  background: var(--danger-deep);
+  border-color: var(--danger);
+}
+
+.prompt {
+  margin-top: 1.5rem;
+  padding: 1.2rem;
+  text-align: center;
+  color: var(--text-muted);
+  background: var(--surface-2);
+  border: 1px dashed var(--border-strong);
+}
+
+/* ---------- escolher o que falar ---------- */
+.actions {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.actionsHead {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.4rem;
+}
+
+/* Uma coluna por intenção: positivas, negativas, suspeita, estratégia. */
+.actionColumns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 0.8rem;
+  align-items: start;
+}
+
+.actionColumn {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.actionGroup {
+  margin: 0;
+  padding-bottom: 0.3rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  border-bottom: 2px solid var(--border-strong);
+}
+
+.group-good .actionGroup {
+  border-bottom-color: var(--accent-bright);
+}
+
+.group-bad .actionGroup {
+  border-bottom-color: var(--danger);
+}
+
+.group-doubt .actionGroup,
+.group-plan .actionGroup {
+  border-bottom-color: var(--gold);
+}
+
+.action {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.6rem 0.8rem;
+  font: inherit;
+  text-align: left;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--border-strong);
+  cursor: pointer;
+}
+
+.action:hover:not(:disabled) {
+  border-color: var(--parchment);
+}
+
+.action:disabled {
+  opacity: 0.5;
+  cursor: progress;
+}
+
+.actionLabel {
+  font-weight: 700;
+}
+
+.actionHint {
+  font-size: 0.8rem;
+  color: var(--text-faint);
+}
+
+.action-ACCUSE,
+.action-INSULT {
+  border-left-color: var(--danger);
+}
+
+.action-SUSPECT,
+.action-ASK {
+  border-left-color: var(--gold);
+}
+
+.action-DEFEND,
+.action-TRUST,
+.action-ALLIANCE,
+.action-PRAISE,
+.action-JOKE {
+  border-left-color: var(--accent-bright);
+}
+
+@media (max-width: 560px) {
+  .you {
+    grid-template-columns: auto 1fr;
+  }
+  .talks {
+    grid-column: 1 / -1;
+    text-align: left;
+  }
+}
+
+/* ---------- planos dos parceiros na torre ---------- */
+.intents {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.intent {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.9rem;
+  background: var(--bg);
+  border: 1px solid var(--danger-deep);
+}
+
+.intentPledged {
+  border-color: var(--gold);
+}
+
+/* ---------- sua aliança ---------- */
+.allies {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  padding-top: 0.6rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  border-top: 1px dashed var(--accent);
+}
+
+.alliesNames {
+  min-width: 0;
+  color: var(--text);
+}
+
+/* ---------- convites para aliança ---------- */
+.invites {
+  border-left: 4px solid var(--accent-bright);
+}
+
+.invite {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.6rem 0.8rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.inviteFaces {
+  display: flex;
+  gap: 0.2rem;
+}
+
+.inviteText {
+  min-width: 0;
+}
+
+.inviteActions {
+  display: flex;
+  gap: 0.4rem;
+}
+
+@media (max-width: 560px) {
+  .invite {
+    grid-template-columns: 1fr;
+  }
+}
+
+.alliance {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  width: 100%;
+}
+
+/* ---------- empate na votação ---------- */
+.tie {
+  border-left: 4px solid var(--gold);
+}
+
+/* Vidente: o jantar e o relato no café. */
+.seer {
+  border-color: var(--gold);
+  background: color-mix(in srgb, var(--gold) 7%, transparent);
+}

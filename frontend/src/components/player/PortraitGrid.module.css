@@ -1,0 +1,25 @@
+.grid {
+  display: grid;
+  gap: 1.5rem 1.2rem;
+  justify-items: center;
+}
+
+.xs {
+  grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
+}
+
+.sm {
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+}
+
+.md {
+  grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+}
+
+.lg {
+  grid-template-columns: repeat(auto-fill, minmax(156px, 1fr));
+}
+
+.xl {
+  grid-template-columns: repeat(auto-fill, minmax(206px, 1fr));
+}

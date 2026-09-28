@@ -1,0 +1,141 @@
+.shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* faixa em tartan nas cores da paleta (mantida a pedido) */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background-color: #120d0a;
+  background-image:
+    repeating-linear-gradient(90deg, rgba(62, 90, 65, 0.55) 0 2px, transparent 2px 22px, rgba(111, 82, 56, 0.5) 22px 34px, transparent 34px 56px),
+    repeating-linear-gradient(0deg, rgba(62, 90, 65, 0.45) 0 2px, transparent 2px 22px, rgba(111, 82, 56, 0.42) 22px 34px, transparent 34px 56px);
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.header::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(20, 14, 10, 0.7);
+  pointer-events: none;
+}
+
+.inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0.9rem 1.5rem;
+}
+
+.crest {
+  display: grid;
+  text-decoration: none;
+}
+
+.crestTitle {
+  font-weight: 700;
+  font-size: 1.4rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+.crestSub {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.link {
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-decoration: none;
+  color: var(--text-muted);
+  padding: 0.3rem 0;
+  border-bottom: 2px solid transparent;
+}
+
+.link:hover {
+  color: var(--text);
+}
+
+.active {
+  color: var(--text);
+  border-bottom-color: var(--accent-bright);
+}
+
+/* conta logada: nome (leva à Minha Área) e sair */
+.account {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding-left: 1.2rem;
+  border-left: 1px solid var(--border-strong);
+}
+
+.ownerBadge {
+  margin-left: 0.4rem;
+  padding: 0.05rem 0.4rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gold);
+  border: 1px solid var(--frame-gold-dark);
+}
+
+.logout {
+  padding: 0;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.logout:hover {
+  color: var(--text);
+}
+
+.main {
+  flex: 1;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2.75rem 1.5rem 5rem;
+}
+
+.footer {
+  padding: 1.2rem;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-faint);
+  border-top: 1px solid var(--border);
+}
+
+@media (max-width: 640px) {
+  .inner,
+  .main {
+    padding-inline: 1rem;
+  }
+  .crestTitle {
+    font-size: 1.15rem;
+  }
+}

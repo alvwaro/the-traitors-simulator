@@ -1,0 +1,66 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  /* coluna do tamanho da tela: o diálogo nunca cresce além dela por causa de um texto longo */
+  grid-template-columns: minmax(0, 1fr);
+  place-items: center;
+  padding: 1rem;
+  background: rgba(12, 8, 6, 0.86);
+  animation: fade 0.2s var(--ease);
+}
+
+.dialog {
+  width: min(520px, 100%);
+  min-width: 0;
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+  padding: 1.6rem;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  animation: rise 0.25s var(--ease);
+}
+
+.wide {
+  width: min(960px, 100%);
+}
+
+.dramatic {
+  width: min(560px, 100%);
+  padding: 2.2rem 1.8rem 1.8rem;
+  text-align: center;
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-top: 4px solid var(--gold);
+}
+
+.title {
+  font-size: 1.35rem;
+  margin-bottom: 1rem;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 1.5rem;
+}
+
+.dramatic .footer {
+  justify-content: center;
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}

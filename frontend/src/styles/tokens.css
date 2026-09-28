@@ -1,0 +1,55 @@
+/*
+ * Paleta: marrom escuro de castelo + verde escuro suave (musgo das Highlands),
+ * com dourado para prêmio/molduras e pergaminho para o texto.
+ */
+:root {
+  --parchment: #e8dcc4;
+
+  /* superfícies sólidas em marrom, do fundo para a frente */
+  --bg: #17110d;
+  --surface: #221913;
+  --surface-2: #2c2119;
+  --surface-3: #372a20;
+  --surface-accent: #1b231b;
+  --surface-danger: #2a1714;
+
+  /* bordas */
+  --border: #4a3a2e;
+  --border-strong: #6f5a48;
+
+  /* texto */
+  --text: #f3ece0;
+  --text-muted: #cdbfa9;
+  --text-faint: #9c8c77;
+
+  /* destaque principal: verde escuro suave */
+  --accent: #3e5a41;
+  --accent-hover: #4b6b4e;
+  --accent-bright: #93b58a;
+
+  /* cores com significado no jogo */
+  --danger: #dc6a5f; /* assassinato, traidor, erro */
+  --danger-deep: #5e231d;
+  --faithful: #a9c99a; /* fiel */
+  --gold: #e3b957; /* prêmio e escudos */
+  --x-gray: #c2b8a8;
+  --wine: #7a1f2b; /* X dos assassinados */
+
+  /* moldura dourada (usada enquanto não houver PNG de moldura) */
+  --frame-gold: #c9a24a;
+  --frame-gold-light: #efd58a;
+  --frame-gold-dark: #5e4a1c;
+  --frame-dead: #4a4034;
+  --frame-dead-light: #6b5f4f;
+  /* filtro da moldura PNG na simulação: envelhecida, sem exagero */
+  --frame-filter: sepia(0.35) saturate(0.85) contrast(0.92) brightness(0.92);
+
+  --font: 'DM Sans', system-ui, sans-serif;
+  /* fonte régia, só para a revelação */
+  --font-royal: 'Cinzel Decorative', 'Cinzel', serif;
+
+  --radius: 2px;
+  --gap: 1.75rem;
+  --page: 1040px;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
