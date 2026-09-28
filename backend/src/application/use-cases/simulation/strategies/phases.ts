@@ -13,6 +13,7 @@ import {
   seerMissionFor,
   SimulationFlags,
 } from '../../../../domain/simulation';
+import { DomainError } from '../../../../domain/errors/DomainError';
 import { Repositories } from '../../../ports/IUnitOfWork';
 import { activeSim } from '../../../services/simulation';
 import { PhaseContext, PhaseSimulation } from './PhaseSimulation';
@@ -67,7 +68,7 @@ export class BreakfastSimulation implements PhaseSimulation {
 /** Missão do dia: cada um joga pelas próprias habilidades; o prêmio respeita o teto do pote. */
 export class MissionSimulation implements PhaseSimulation {
   readonly phase = GamePhase.MISSION;
-  async run({ engine, recorders, repos, season, day, state, flags }: PhaseContext): Promise<void> {
+  async run({ engine, recorders, repos, season, day, state, flags, decision }: PhaseContext): Promise<void> {
     // O último dia tem a missão final; na 3ª temporada, perto dela, uma missão vale o poder do Vidente.
     const active = activeSim(state).length;
     let def = finaleFor(season.missionPool, season.id);
@@ -75,7 +76,20 @@ export class MissionSimulation implements PhaseSimulation {
       const seer = seerMissionFor(season.missionPool);
       def = seer && isSeerMissionDay(flags, day.number, active) ? seer : missionFor(await repos.missions.countBySeason(season.id), season.missionPool, season.id);
     }
-    const outcome = engine.mission(def);
+    // Modo Jogador: a missão pode parar para perguntar algo; cada resposta faz a missão rodar de novo até a próxima.
+    const pending = flags.pendingMission?.day === day.number ? flags.pendingMission : undefined;
+    const answers = [...(pending?.answers ?? [])];
+    if (pending) {
+      const answer = decision.missionAnswer;
+      if (!answer || !pending.question.options.some((o) => o.id === answer)) throw new DomainError('Escolha uma das opções da missão');
+      answers.push(answer);
+    }
+    const outcome = engine.mission(def, answers);
+    if (outcome.pending) {
+      flags.pendingMission = { day: day.number, answers: answers.slice(0, outcome.pending.answered), question: outcome.pending.question, preview: engine.events.map((e) => ({ ...e })) };
+      return;
+    }
+    delete flags.pendingMission;
     const pot = await repos.prizes.getPrizePot(season.id);
     const room = season.maxPrizePot === null ? Infinity : Math.max(0, season.maxPrizePot - pot);
     await recorders.mission.record(repos, {

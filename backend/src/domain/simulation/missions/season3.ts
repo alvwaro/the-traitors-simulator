@@ -19,6 +19,9 @@ const UK = 'Reino Unido T3';
 /** Passo de arredondamento do dinheiro: centenas de dólares ou dezenas de libras. */
 const stepOf = (origin: string) => (origin === US ? 500 : 50);
 
+/** Opções de escolha que são pessoas (a tela mostra nome e retrato). */
+const personOptions = (players: readonly SimPlayer[]) => players.map((p) => ({ id: p.id, label: '', playerId: p.id }));
+
 /** Imprevistos do caminho; cada um custa (ou devolve) minutos. */
 interface Incident {
   text: string;
@@ -56,6 +59,85 @@ const ROWING_INCIDENTS: readonly Incident[] = [
   { text: 'O vento virou a favor. {user} puxou um canto viking e o barco voou pela água.', minutes: -3, cast: 1, effect: laugh },
   { text: 'A correnteza empurrou o barco para as pedras. {user} desviou no último segundo.', minutes: 2, cast: 1 },
 ];
+
+/**
+ * Os dois que ficam no pontão. No modo Jogador, quem está no barco escolhe: se oferecer, deixar o grupo
+ * decidir ou insistir em ficar no barco (se o grupo apontar você, insistir pode colocar outra pessoa no
+ * seu lugar, e ela não esquece).
+ */
+function chooseChained(
+  ctx: MissionContext,
+  boat: readonly SimPlayer[],
+  captain: SimPlayer,
+  index: number,
+  info: { item: string; fuel: number; minutesLeft: number },
+): SimPlayer[] {
+  const weight = (p: SimPlayer) => (p.id === captain.id ? 1 : 10 + p.traits.loyalty * 0.4 + (100 - ctx.popularity(p)) * 0.6);
+  const human = boat.find((p) => ctx.isHuman(p));
+  const stance = human
+    ? ctx.ask({
+        id: 'longboat-pontoon',
+        prompt: `Pontão ${index + 1}: ${info.item} espera ali, e duas pessoas vão ficar acorrentadas para pegá-lo. ${info.fuel} de 2 galões a bordo, ${info.minutesLeft} minutos no relógio, ${boat.length} pessoas no barco. Esta noite, só quem ficar acorrentado(a) pode ser assassinado(a). O que você faz?`,
+        playerIds: [],
+        options: [
+          { id: 'volunteer', label: 'Me oferecer para ficar no pontão' },
+          { id: 'group', label: 'Deixar o grupo decidir' },
+          { id: 'insist', label: 'Insistir em ficar no barco' },
+        ],
+      })
+    : 'group';
+
+  if (human && stance === 'volunteer') {
+    const partner = ctx.pick(1, weight, boat.filter((p) => p !== human))[0];
+    ctx.applaud(human, 4);
+    if (partner) {
+      ctx.say(`Pontão ${index + 1}: {user} se ofereceu para ficar e o grupo escolheu {user1} para fazer companhia. As correntes fecharam nos tornozelos.`, [human, partner]);
+      return [human, partner];
+    }
+    ctx.say(`Pontão ${index + 1}: {user} se ofereceu para ficar. As correntes fecharam nos tornozelos.`, [human]);
+    return [human];
+  }
+
+  let leaving = ctx.pick(2, weight, boat);
+  if (human && stance === 'insist') leaving = insistOnBoat(ctx, human, boat, leaving, index, weight);
+
+  const volunteer = leaving.filter((p) => !ctx.isHuman(p) && p.traits.loyalty >= 60 && ctx.happens(0.6));
+  if (volunteer.length === leaving.length) {
+    ctx.say(`Pontão ${index + 1}: {user} e {user1} se ofereceram para ficar. As correntes fecharam nos tornozelos.`, leaving);
+  } else {
+    for (const p of leaving.filter((x) => !volunteer.includes(x))) ctx.matrix.adjust(p.id, captain.id, { hatred: 4, trust: -3 });
+    ctx.say(`Pontão ${index + 1}: {user} e {user1} ficam no pontão. Acorrentados, os dois viram o barco se afastar.`, leaving);
+  }
+  return leaving;
+}
+
+/** O jogador bate o pé para ficar no barco: pesa a influência e o quanto gostam dele. */
+function insistOnBoat(
+  ctx: MissionContext,
+  human: SimPlayer,
+  boat: readonly SimPlayer[],
+  leaving: SimPlayer[],
+  index: number,
+  weight: (p: SimPlayer) => number,
+): SimPlayer[] {
+  const others = boat.filter((p) => p !== human);
+  if (!leaving.includes(human)) {
+    for (const o of others) ctx.matrix.adjust(o.id, human.id, { trust: -1 }, 0.5 + o.traits.paranoia / 100);
+    ctx.say(`Pontão ${index + 1}: {user} deixou claro que não sai do barco. Alguns acharam estranho alguém se proteger tanto.`, [human]);
+    return leaving;
+  }
+  const wins = chance(ctx.rng, Math.min(0.85, Math.max(0.1, (human.traits.influence + ctx.popularity(human)) / 200)));
+  const replacement = wins ? ctx.pick(1, weight, boat.filter((p) => !leaving.includes(p)))[0] : undefined;
+  if (!replacement) {
+    for (const o of others) ctx.matrix.adjust(o.id, human.id, { trust: -2, liking: -2 });
+    ctx.say(`Pontão ${index + 1}: {user} tentou de todo jeito ficar no barco, mas o grupo não cedeu.`, [human]);
+    return leaving;
+  }
+  ctx.matrix.adjust(replacement.id, human.id, { hatred: 12, trust: -8, liking: -6 });
+  for (const o of others) if (o !== replacement) ctx.matrix.adjust(o.id, human.id, { trust: -3 }, 0.5 + o.traits.paranoia / 100);
+  ctx.say(`Pontão ${index + 1}: o grupo apontou {user}, mas {user} bateu o pé e não saiu do barco. {user1} foi no lugar e não tirou os olhos de {user}.`, [human, replacement]);
+  return leaving.map((p) => (p === human ? replacement : p));
+}
 
 function longboat(origin: string, prizeAvailable: number): MissionDefinition {
   const step = stepOf(origin);
@@ -105,16 +187,9 @@ function longboat(origin: string, prizeAvailable: number): MissionDefinition {
         visited++;
 
         // Quem fica acorrentado: voluntários leais ou quem o grupo empurra (os menos queridos, os mais suspeitos).
-        const leaving = ctx.pick(2, (p) => (p.id === captain.id ? 1 : 10 + p.traits.loyalty * 0.4 + (100 - ctx.popularity(p)) * 0.6), boat);
-        const volunteer = leaving.filter((p) => p.traits.loyalty >= 60 && ctx.happens(0.6));
+        const leaving = chooseChained(ctx, boat, captain, i, { item: fuelAt.has(i) ? 'um galão de combustível' : 'um baú de ouro', fuel, minutesLeft: clock.left });
         boat = boat.filter((p) => !leaving.includes(p));
         chained.push(...leaving);
-        if (volunteer.length === leaving.length) {
-          ctx.say(`Pontão ${i + 1}: {user} e {user1} se ofereceram para ficar. As correntes fecharam nos tornozelos.`, leaving);
-        } else {
-          for (const p of leaving.filter((x) => !volunteer.includes(x))) ctx.matrix.adjust(p.id, captain.id, { hatred: 4, trust: -3 });
-          ctx.say(`Pontão ${i + 1}: o grupo apontou {user} e {user1}. Acorrentados, os dois viram o barco se afastar.`, leaving);
-        }
 
         // O item do pontão.
         const hauler = ctx.pick(1, (p) => p.traits.skill + p.traits.aggression * 0.3, leaving)[0];
@@ -159,9 +234,25 @@ function longboat(origin: string, prizeAvailable: number): MissionDefinition {
         if (left <= 0 || boat.length < 4) continue;
         const greed = boat.reduce((s, p) => s + p.traits.aggression + (100 - p.traits.paranoia), 0) / boat.length / 200;
         const hurry = clock.left < homeTrip + 12 ? 0.35 : 0;
-        const goOn = ctx.happens(0.05) || chance(ctx.rng, Math.max(0.05, 0.25 + greed * 0.5 - hurry - (boat.length < 7 ? 0.15 : 0)));
-        const bold = top(boat, (p) => p.traits.aggression + ctx.rng() * 30, 1)[0];
-        const careful = top(boat.filter((p) => p !== bold), (p) => p.traits.paranoia + ctx.rng() * 30, 1)[0] ?? bold;
+        // O jogador no barco dá o voto dele; quanto mais influente, mais o barco escuta.
+        const human = boat.find((p) => ctx.isHuman(p));
+        const vote = human
+          ? ctx.ask({
+              id: 'longboat-continue',
+              prompt: `Os dois galões estão a bordo. Faltam ${left} pontão(ões), ${clock.left} minutos no relógio e ${boat.length} pessoas no barco (seguir deixa mais duas acorrentadas). O que você defende?`,
+              playerIds: [],
+              options: [
+                { id: 'go', label: 'Seguir para o próximo pontão (mais dinheiro)' },
+                { id: 'back', label: 'Voltar agora e acender o círculo' },
+              ],
+            })
+          : undefined;
+        const push = human ? (vote === 'go' ? 1 : -1) * (0.2 + human.traits.influence / 250) : 0;
+        const goOn = ctx.happens(0.05) || chance(ctx.rng, Math.max(0.05, Math.min(0.95, 0.25 + greed * 0.5 - hurry - (boat.length < 7 ? 0.15 : 0) + push)));
+        const bold = human && vote === 'go' ? human : top(boat, (p) => p.traits.aggression + ctx.rng() * 30, 1)[0];
+        const careful = human && vote === 'back' ? human : (top(boat.filter((p) => p !== bold), (p) => p.traits.paranoia + ctx.rng() * 30, 1)[0] ?? bold);
+        if (human && vote === 'go' && !goOn) ctx.say('{user} queria seguir, mas foi voto vencido.', [human]);
+        if (human && vote === 'back' && goOn) ctx.say('{user} pediu para voltar, mas o barco seguiu em frente.', [human]);
         if (goOn) {
           ctx.say('{user} convenceu o barco: "Tem mais dinheiro lá na frente, a gente não veio até aqui para voltar!" {user1} remou calado(a).', pair(bold, careful));
         } else {
@@ -241,17 +332,26 @@ function cages(origin: string, prizeAvailable: number, release: number): Mission
       const rescuers = ctx.players.filter((p) => !caged.includes(p));
       ctx.say(`Meia hora no relógio. ${tokenList(caged.length)} ${caged.length > 1 ? 'balançam' : 'balança'} dentro das gaiolas.`, caged);
 
+      // Jogador do lado de fora: escolhe qual gaiola a equipe dele ataca primeiro (o relógio pode não dar para todas).
+      const human = rescuers.find((p) => ctx.isHuman(p));
+      let order = caged;
+      if (human && caged.length > 1) {
+        const firstId = ctx.ask({ id: 'cages-first', prompt: 'Meia hora para encher os tubos. Qual gaiola você e sua equipe atacam primeiro?', playerIds: [], options: personOptions(caged) });
+        order = [...caged].sort((a, b) => Number(b.id === firstId) - Number(a.id === firstId));
+      }
+
       const coinValue = uk ? 50 : 0;
       let coins = 0;
       const freed: SimPlayer[] = [];
       const shieldIds: string[] = [];
-      for (const prisoner of caged) {
+      for (const [n, prisoner] of order.entries()) {
         if (freed.length >= release) {
           ctx.say('Só dava para abrir uma gaiola a mais. {user} ficou lá em cima, vendo os outros descerem.', [prisoner]);
           ctx.matrix.adjust(prisoner.id, byInfluence(rescuers).id, { hatred: 5 });
           continue;
         }
-        const team = ctx.pick(Math.min(3, rescuers.length), (p) => p.traits.skill + ctx.matrix.get(p.id, prisoner.id).liking, rescuers);
+        let team = ctx.pick(Math.min(3, rescuers.length), (p) => p.traits.skill + ctx.matrix.get(p.id, prisoner.id).liking, rescuers);
+        if (human && n === 0 && !team.includes(human)) team = [human, ...team.slice(0, -1)];
         let minutes = 7 + ctx.rng() * 6 - team.reduce((s, p) => s + p.traits.skill - 50, 0) / 40;
         if (ctx.happens(0.3)) minutes += incident(ctx, TREE_INCIDENTS, team);
         const inTime = clock.spend(minutes);
@@ -261,8 +361,11 @@ function cages(origin: string, prizeAvailable: number, release: number): Mission
           freed.push(prisoner);
           for (const r of team) ctx.matrix.adjust(prisoner.id, r.id, { liking: 8, trust: 5 });
           ctx.say('{user} derramou as últimas moedas no tubo e a gaiola de {user1} se abriu.', pair(team[0], prisoner));
-          // Quem sai não fica com o escudo: entrega a alguém de confiança.
-          const chosen = top(ctx.players.filter((p) => p !== prisoner && !shieldIds.includes(p.id)), (p) => ctx.matrix.get(prisoner.id, p.id).liking + ctx.matrix.get(prisoner.id, p.id).trust + ctx.rng() * 20, 1)[0];
+          // Quem sai não fica com o escudo: entrega a alguém de confiança (o jogador escolhe a quem).
+          const candidates = ctx.players.filter((p) => p !== prisoner && !shieldIds.includes(p.id));
+          const chosen = ctx.isHuman(prisoner) && candidates.length
+            ? candidates.find((p) => p.id === ctx.ask({ id: 'cages-shield', prompt: 'Sua gaiola se abriu! Você não pode ficar com o escudo: a quem vai entregá-lo?', playerIds: [], options: personOptions(candidates) }))
+            : top(candidates, (p) => ctx.matrix.get(prisoner.id, p.id).liking + ctx.matrix.get(prisoner.id, p.id).trust + ctx.rng() * 20, 1)[0];
           if (chosen) {
             shieldIds.push(chosen.id);
             ctx.matrix.adjust(chosen.id, prisoner.id, { liking: 10, trust: 8 });
@@ -285,6 +388,43 @@ function cages(origin: string, prizeAvailable: number, release: number): Mission
 // A casa dos espelhos
 // ---------------------------------------------------------------------------------------------
 
+const DOORS = ['a porta do palhaço', 'a porta espelhada', 'a porta vermelha', 'a porta estreita'] as const;
+
+/**
+ * Uma sala da casa dos espelhos com o jogador: ele escolhe a porta. Uma porta errada se entrega
+ * (espetos à mostra) e o parceiro dá um palpite, que acerta mais quando ele é habilidoso.
+ */
+function humanDoor(ctx: MissionContext, human: SimPlayer, partner: SimPlayer, room: number): boolean {
+  const right = ctx.oneOf(DOORS);
+  const wrong = DOORS.filter((d) => d !== right);
+  const obvious = ctx.oneOf(wrong);
+  const partnerRight = chance(ctx.rng, Math.min(0.85, 0.45 + partner.traits.skill / 250 + partner.traits.insight / 500));
+  // Um Traidor pode "errar" o palpite de propósito para afundar a missão.
+  const lying = isTraitor(partner) && !isTraitor(human) && ctx.happens(0.2);
+  const hint = partnerRight && !lying ? right : ctx.oneOf(wrong.filter((d) => d !== obvious));
+  const door = ctx.ask({
+    id: 'fun-house-door',
+    prompt: `Sala ${room} de 4. O balão treme nas suas mãos. Por ${obvious} dá para ver espetos brilhando. {user} cochicha: "Vai ${hint.replace('a porta', 'pela porta')}!" Qual porta você abre?`,
+    playerIds: [partner.id],
+    options: DOORS.map((d) => ({ id: d, label: d[0].toUpperCase() + d.slice(1) })),
+  });
+  const followed = door === hint;
+  if (door === right) {
+    if (!followed) ctx.matrix.adjust(partner.id, human.id, { trust: 3, liking: 2 });
+    ctx.say(`Sala ${room}: {user} abriu ${door} e o balão passou inteiro${followed ? ', como {user1} tinha dito' : ''}.`, [human, partner]);
+    return true;
+  }
+  if (!followed) ctx.matrix.adjust(partner.id, human.id, { hatred: 6, trust: -4 });
+  else ctx.matrix.adjust(human.id, partner.id, { trust: -5, hatred: 3 });
+  ctx.say(
+    followed
+      ? `Sala ${room}: {user} seguiu o palpite de {user1} e abriu ${door}. Um espeto na parede e o balão virou farrapo.`
+      : `Sala ${room}: {user} ignorou {user1} e abriu ${door}. Um espeto e o balão estourou; a porta certa era ${right}.`,
+    [human, partner],
+  );
+  return false;
+}
+
 function funHouse(origin: string, prizeAvailable: number, perBalloon: number): MissionDefinition {
   const uk = origin === UK;
   return {
@@ -299,9 +439,12 @@ function funHouse(origin: string, prizeAvailable: number, perBalloon: number): M
       let first: [SimPlayer, SimPlayer] | undefined;
       for (const [a, b] of ctx.pairs(Math.round(prizeAvailable / perBalloon))) {
         let intact = true;
+        const human = [a, b].find((p) => ctx.isHuman(p));
         for (let room = 1; room <= 4 && intact; room++) {
           const chooser = chance(ctx.rng, 0.5) ? a : b;
-          if (ctx.happens(0.03)) {
+          if (human) {
+            intact = humanDoor(ctx, human, human === a ? b : a, room);
+          } else if (ctx.happens(0.03)) {
             intact = false;
             ctx.say(`Sala ${room}: um palhaço saltou do escuro e {user} apertou o balão com o susto. Estourou.`, [chooser]);
           } else if (!ctx.attempt(chooser, 30 + room * 3, [a, b])) {
@@ -353,11 +496,29 @@ function statues(origin: string, prizeAvailable: number, count: number): Mission
       const faces = ctx.pick(Math.min(count, ctx.players.length), () => 1);
       const teams = ctx.teams(2).filter((t) => t.length);
       ctx.say(`${count} pedestais no alto da colina e 45 minutos. As cabeças têm nomes do elenco.`);
+      // Jogador: escolhe qual cabeça a equipe dele sobe primeiro (e carrega ele mesmo). O tempo pode não dar para todas.
+      const human = ctx.human && ctx.players.includes(ctx.human) ? ctx.human : undefined;
+      const humanTeam = human ? teams.findIndex((t) => t.includes(human)) : -1;
+      let humanSlot = -1;
+      if (human && humanTeam >= 0) {
+        const slots = faces.map((_, i) => i).filter((i) => i % teams.length === humanTeam);
+        if (slots.length) {
+          const firstId = ctx.ask({
+            id: 'statues-first',
+            prompt: `Sua equipe tem ${slots.length} cabeça(s) para subir a colina. Estátua completa protege quem está esculpido. Qual você carrega primeiro?`,
+            playerIds: [],
+            options: personOptions(slots.map((i) => faces[i])),
+          });
+          const from = slots.find((i) => faces[i].id === firstId) ?? slots[0];
+          [faces[slots[0]], faces[from]] = [faces[from], faces[slots[0]]];
+          humanSlot = slots[0];
+        }
+      }
       let earned = 0;
       const built: SimPlayer[] = [];
       for (const [i, face] of faces.entries()) {
         const team = teams[i % teams.length];
-        const builder = ctx.pick(1, (p) => p.traits.skill + p.traits.aggression * 0.3, team)[0];
+        const builder = i === humanSlot && human ? human : ctx.pick(1, (p) => p.traits.skill + p.traits.aggression * 0.3, team)[0];
         let minutes = (45 / count) * (0.7 + ctx.rng() * 0.6) - (builder.traits.skill - 50) / 25;
         if (ctx.happens(0.2)) minutes += incident(ctx, HILL_INCIDENTS, team);
         if (!clock.spend(minutes)) {
@@ -390,17 +551,23 @@ function statues(origin: string, prizeAvailable: number, count: number): Mission
 // Os retratos (só nos EUA)
 // ---------------------------------------------------------------------------------------------
 
-const RIDDLES: readonly string[] = [
-  'Charada: "O que é, o que é: quanto mais se tira, maior fica?"',
-  'Enigma: "Tenho cidades, mas não casas; florestas, mas não árvores; água, mas não peixes. O que sou?"',
-  'Adivinha: "Anda com os pés na cabeça."',
-  'Charada: "O que é, o que é: tem dentes mas não morde?"',
-  'Enigma: "Quanto mais seca, mais molhada fica. O que é?"',
-  'Adivinha: "Fala sem boca, ouve sem ouvidos e responde ao vento."',
-  'Charada: "O que é, o que é: cai em pé e corre deitado?"',
-  'Enigma: "Se me nomeia, eu desapareço. O que sou?"',
-  'Adivinha: "Tem pescoço mas não tem cabeça; tem corpo mas não tem pernas."',
-  'Charada: "O que é, o que é: quanto mais se perde, mais se tem?"',
+interface Riddle {
+  text: string;
+  answer: string;
+  wrong: readonly [string, string];
+}
+
+const RIDDLES: readonly Riddle[] = [
+  { text: 'Charada: "O que é, o que é: quanto mais se tira, maior fica?"', answer: 'O buraco', wrong: ['A sombra', 'A dívida'] },
+  { text: 'Enigma: "Tenho cidades, mas não casas; florestas, mas não árvores; água, mas não peixes. O que sou?"', answer: 'Um mapa', wrong: ['Um sonho', 'Um livro'] },
+  { text: 'Adivinha: "Anda com os pés na cabeça."', answer: 'O piolho', wrong: ['O chapéu', 'A formiga'] },
+  { text: 'Charada: "O que é, o que é: tem dentes mas não morde?"', answer: 'O pente', wrong: ['A chave', 'O relógio'] },
+  { text: 'Enigma: "Quanto mais seca, mais molhada fica. O que é?"', answer: 'A toalha', wrong: ['A areia', 'O guarda-chuva'] },
+  { text: 'Adivinha: "Fala sem boca, ouve sem ouvidos e responde ao vento."', answer: 'O eco', wrong: ['O sino', 'A sombra'] },
+  { text: 'Charada: "O que é, o que é: cai em pé e corre deitado?"', answer: 'A chuva', wrong: ['O rio', 'A neve'] },
+  { text: 'Enigma: "Se me nomeia, eu desapareço. O que sou?"', answer: 'O silêncio', wrong: ['O segredo', 'A escuridão'] },
+  { text: 'Adivinha: "Tem pescoço mas não tem cabeça; tem corpo mas não tem pernas."', answer: 'A garrafa', wrong: ['A camisa', 'O violão'] },
+  { text: 'Charada: "O que é, o que é: quanto mais cresce, menos se vê?"', answer: 'A escuridão', wrong: ['A neblina', 'A idade'] },
 ];
 
 /** Molduras do escudo na galeria: só dois retratos ficam no fim. */
@@ -422,7 +589,9 @@ function placePortrait(ctx: MissionContext, player: SimPlayer, frames: SimPlayer
   const partnerInCrime = !!ally && isTraitor(player) && isTraitor(ally);
 
   let chosen: SimPlayer | undefined;
-  if (!selfFramed) {
+  if (ctx.isHuman(player)) {
+    chosen = humanPortraitChoice(ctx, player, frames);
+  } else if (!selfFramed) {
     const generosity = 0.1 + (player.traits.loyalty - 50) / 250 + (bond - 60) / 200 + (partnerInCrime ? 0.15 : 0);
     chosen = ally && ctx.happens(Math.max(0.03, generosity)) ? ally : player;
   } else if (ally) {
@@ -435,11 +604,15 @@ function placePortrait(ctx: MissionContext, player: SimPlayer, frames: SimPlayer
     ctx.say('Com o próprio retrato já na moldura, {user} preferiu não mexer na parede.', [player]);
     return;
   }
+  const protectedPartner = chosen !== player && isTraitor(player) && isTraitor(chosen);
 
   // Com as duas molduras cheias, alguém sai (nunca o próprio retrato de quem pendura).
   if (frames.length >= FRAMES) {
     const removable = frames.filter((p) => p !== player);
-    const removed = top(removable, (p) => 100 - ctx.matrix.get(player.id, p.id).liking + ctx.matrix.suspicion(player.id, p.id) * 0.5 + ctx.rng() * 20, 1)[0];
+    const removed =
+      ctx.isHuman(player) && removable.length > 1
+        ? (removable.find((p) => p.id === ctx.ask({ id: 'portrait-remove', prompt: `As duas molduras estão ocupadas. Para pendurar ${chosen === player ? 'o seu retrato' : 'o retrato'}, você precisa tirar alguém. Quem sai?`, playerIds: [], options: personOptions(removable) })) ?? removable[0])
+        : top(removable, (p) => 100 - ctx.matrix.get(player.id, p.id).liking + ctx.matrix.suspicion(player.id, p.id) * 0.5 + ctx.rng() * 20, 1)[0];
     frames.splice(frames.indexOf(removed), 1);
     ctx.matrix.adjust(removed.id, player.id, { hatred: 8, trust: -5 }, 0.6 + removed.traits.volatility / 100);
     ctx.say('{user} tirou o retrato de {user1} da moldura.', [player, removed]);
@@ -463,7 +636,25 @@ function placePortrait(ctx: MissionContext, player: SimPlayer, frames: SimPlayer
       : 'Em vez do próprio, {user} pendurou o retrato de {user1}. A galeria murmurou: por que proteger justo {user1}?',
     [player, chosen],
   );
-  if (partnerInCrime) ctx.secret('Traidor(a), {user} protegeu o(a) parceiro(a) de torre, {user1}.', [player, chosen]);
+  if (protectedPartner) ctx.secret('Traidor(a), {user} protegeu o(a) parceiro(a) de torre, {user1}.', [player, chosen]);
+}
+
+/** O jogador acertou: escolhe qual retrato pendurar (o próprio, o de outra pessoa ou, já na parede, nenhum). */
+function humanPortraitChoice(ctx: MissionContext, player: SimPlayer, frames: readonly SimPlayer[]): SimPlayer | undefined {
+  const selfFramed = frames.includes(player);
+  const others = ctx.players.filter((p) => p !== player && !frames.includes(p));
+  const wall = frames.length ? `Na parede agora: ${tokenList(frames.length)}.` : 'As duas molduras estão vazias.';
+  const answer = ctx.ask({
+    id: 'portrait-hang',
+    prompt: `Você acertou! ${wall} Qual retrato você pendura? Proteger outra pessoa no lugar de si mesmo(a) levanta suspeitas.`,
+    playerIds: frames.map((p) => p.id),
+    options: [
+      selfFramed ? { id: 'none', label: 'Não mexer na parede (meu retrato já está lá)' } : { id: 'self', label: 'Pendurar o meu retrato' },
+      ...personOptions(others),
+    ],
+  });
+  if (answer === 'self') return player;
+  return others.find((p) => p.id === answer);
 }
 
 const portraits: MissionDefinition = {
@@ -481,14 +672,26 @@ const portraits: MissionDefinition = {
     const riddles = shuffle(ctx.rng, RIDDLES);
     let earned = 0;
     for (let q = 1; q <= 8 && alive.length; q++) {
-      const riddle = riddles[(q - 1) % riddles.length];
+      const { text: riddle, answer, wrong } = riddles[(q - 1) % riddles.length];
       const answerer = ctx.pick(1, (p) => p.traits.skill + p.traits.insight + 10, alive)[0];
-      if (ctx.happens(0.07)) {
+      if (ctx.isHuman(answerer)) {
+        // Sua vez: responder o enigma (errar tira você da galeria).
+        const guess = ctx.ask({
+          id: 'portrait-riddle',
+          prompt: `Pergunta ${q} de 8, e é a sua vez. ${riddle} Errar tira você da galeria.`,
+          playerIds: [],
+          options: shuffle(ctx.rng, [answer, ...wrong]).map((a) => ({ id: a, label: a })),
+        });
+        if (guess !== answer) {
+          alive = alive.filter((p) => p !== answerer);
+          ctx.say(`${riddle} {user} respondeu "${guess}". Era "${answer}": fora da galeria.`, [answerer]);
+          continue;
+        }
+      } else if (ctx.happens(0.07)) {
         ctx.say(`${riddle} {user} sabia a resposta, mas travou quando o relógio da galeria badalou. Fora.`, [answerer]);
         alive = alive.filter((p) => p !== answerer);
         continue;
-      }
-      if (!ctx.attempt(answerer, 55)) {
+      } else if (!ctx.attempt(answerer, 55)) {
         alive = alive.filter((p) => p !== answerer);
         ctx.say(`${riddle} {user} bateu o pé na resposta errada e saiu da galeria.`, [answerer]);
         continue;
@@ -544,7 +747,23 @@ function gunpowder(origin: string, prizeAvailable: number): MissionDefinition {
             ctx.say('{user} abriu o caixote e o ouro brilhou: ' + ctx.money(1000) + ' para o prêmio.', [player]);
           } else {
             shielded.push(player);
-            ctx.secret('{user} abriu o caixote e encontrou um escudo. Decidiu não contar a ninguém.', [player]);
+            const tell =
+              ctx.isHuman(player) &&
+              ctx.ask({
+                id: 'gunpowder-shield',
+                prompt: 'Você girou a chave e, em vez de pólvora, encontrou um escudo! Ninguém viu. Conta para o grupo ou guarda segredo?',
+                playerIds: [],
+                options: [
+                  { id: 'secret', label: 'Guardar segredo (os Traidores não sabem que estou protegido(a))' },
+                  { id: 'tell', label: 'Contar ao grupo (ganho confiança, mas todos sabem)' },
+                ],
+              }) === 'tell';
+            if (tell) {
+              for (const o of ctx.players) if (o !== player) ctx.matrix.adjust(o.id, player.id, { trust: 4 });
+              ctx.say('{user} ergueu o escudo e mostrou para todo mundo: "Não tenho nada a esconder."', [player]);
+            } else {
+              ctx.secret('{user} abriu o caixote e encontrou um escudo. Decidiu não contar a ninguém.', [player]);
+            }
           }
         } else {
           barrels++;
@@ -583,9 +802,37 @@ const boxes: MissionDefinition = {
     ctx.say('Seis caixões, seis duplas, oito minutos de mãos dadas entre aranhas, baratas e ratos.');
     const survivors: [SimPlayer, SimPlayer][] = [];
     let earned = 0;
+    let humanPair: [SimPlayer, SimPlayer] | undefined;
     for (const [a, b] of ctx.pairs(6)) {
       const nerve = (p: SimPlayer) => 35 + (p.traits.volatility - 50) * 0.5;
       const minute = ctx.between(1, 8);
+      const human = [a, b].find((p) => ctx.isHuman(p));
+      if (human) {
+        const partner = human === a ? b : a;
+        const hold = ctx.ask({
+          id: 'boxes-hold',
+          prompt: `Minuto ${minute} de 8 dentro do caixão. Uma aranha peluda sobe pelo seu pescoço e algo mordisca o seu tornozelo. A mão de {user} aperta a sua. O que você faz?`,
+          playerIds: [partner.id],
+          options: [
+            { id: 'hold', label: 'Fechar os olhos e aguentar firme' },
+            { id: 'release', label: 'Soltar a mão e sair do caixão' },
+          ],
+        });
+        if (hold === 'hold' && ctx.attempt(human, nerve(human) - 15, [partner]) && ctx.attempt(partner, nerve(partner), [human])) {
+          earned += 4500;
+          survivors.push([a, b]);
+          humanPair = [human, partner];
+          ctx.matrix.adjust(partner.id, human.id, { liking: 8, trust: 6 });
+          ctx.say('{user} e {user1} aguentaram os oito minutos inteiros, de mãos dadas até o fim.', [human, partner]);
+        } else if (hold === 'hold') {
+          ctx.say('{user} aguentou firme, mas {user1} não segurou e soltou a mão.', [human, partner]);
+          ctx.matrix.adjust(human.id, partner.id, { liking: -3 });
+        } else {
+          ctx.matrix.adjust(partner.id, human.id, { hatred: 7, liking: -5 });
+          ctx.say('{user} soltou a mão e saiu do caixão. {user1} ficou sozinho(a) com os bichos e o dinheiro da dupla foi embora.', [human, partner]);
+        }
+        continue;
+      }
       if (ctx.happens(0.06)) {
         ctx.say(`Minuto ${minute}: um rato entrou pela manga de {user}. Nem {user1} segurou.`, [a, b]);
       } else if (ctx.attempt(a, nerve(a), [b]) && ctx.attempt(b, nerve(b), [a])) {
@@ -601,7 +848,15 @@ const boxes: MissionDefinition = {
       }
     }
     ctx.chatter(1);
-    const rings = top(survivors, ([a, b]) => a.traits.skill + b.traits.skill + ctx.rng() * 60, ctx.between(1, 3));
+    const rings = top(survivors.filter((s) => s !== humanPair && !(humanPair && s.includes(humanPair[0]))), ([a, b]) => a.traits.skill + b.traits.skill + ctx.rng() * 60, ctx.between(1, 3));
+    if (humanPair) {
+      // A dupla do jogador procura a aliança: ele escolhe onde enfiar a mão.
+      const spots = ['Debaixo das baratas', 'No meio das aranhas', 'No ninho dos ratos'];
+      const lucky = ctx.oneOf(spots);
+      const spot = ctx.ask({ id: 'boxes-ring', prompt: 'Vocês resistiram! Agora, a aliança escondida no caixão vale escudo para a dupla. Onde você procura?', playerIds: [], options: spots.map((s) => ({ id: s, label: s })) });
+      if (spot === lucky) rings.push(humanPair);
+      else ctx.say(`{user} revirou ${spot.toLowerCase()} e não achou nada. A aliança estava ${lucky.toLowerCase()}.`, [humanPair[0]]);
+    }
     for (const [a, b] of rings) ctx.shield('{user} e {user1} acharam uma aliança no meio dos bichos: escudos para os dois.', [a, b]);
     return { prizeEarned: earned, shieldIds: rings.flat().map((p) => p.id) };
   },
@@ -610,6 +865,20 @@ const boxes: MissionDefinition = {
 // ---------------------------------------------------------------------------------------------
 // Cantigas ao contrário
 // ---------------------------------------------------------------------------------------------
+
+const SONGS: readonly string[] = [
+  'Atirei o pau no gato',
+  'Nana neném que a Cuca vem pegar',
+  'Marcha soldado cabeça de papel',
+  'Ciranda cirandinha vamos todos cirandar',
+  'O cravo brigou com a rosa',
+  'Borboletinha tá na cozinha',
+  'Se essa rua fosse minha',
+  'Escravos de Jó jogavam caxangá',
+];
+
+/** A cantiga como a boneca canta: de trás para frente. */
+const reversed = (song: string) => [...song.toLowerCase()].reverse().join('');
 
 function nurseryRhymes(origin: string, prizeAvailable: number): MissionDefinition {
   return {
@@ -625,9 +894,35 @@ function nurseryRhymes(origin: string, prizeAvailable: number): MissionDefinitio
       ctx.say('Bonecas antigas, cantigas ao contrário e um telefone chiando entre o bosque e o castelo.');
       let earned = 0;
       const shieldFinder = ctx.happens(0.8) ? ctx.pick(1, (p) => p.traits.insight + p.traits.skill, woods)[0] : undefined;
+      const songs = shuffle(ctx.rng, SONGS);
       for (let rhyme = 1; rhyme <= 4; rhyme++) {
-        const listener = ctx.pick(1, (p) => p.traits.skill, woods)[0];
-        const singer = castle.length ? ctx.pick(1, (p) => p.traits.sociability + p.traits.skill, castle)[0] : listener;
+        // O jogador faz a primeira cantiga da equipe dele (no bosque, ouvindo; no castelo, cantando).
+        const humanTurn = rhyme === 1 && ctx.human && ctx.players.includes(ctx.human) ? ctx.human : undefined;
+        const listener = humanTurn && woods.includes(humanTurn) ? humanTurn : ctx.pick(1, (p) => p.traits.skill, woods)[0];
+        const singer = humanTurn && castle.includes(humanTurn) ? humanTurn : castle.length ? ctx.pick(1, (p) => p.traits.sociability + p.traits.skill, castle)[0] : listener;
+        if (humanTurn) {
+          const song = songs[rhyme - 1];
+          const inWoods = woods.includes(humanTurn);
+          const guess = ctx.ask({
+            id: 'nursery-rhyme',
+            prompt: inWoods
+              ? `Cantiga ${rhyme}: a boneca do bosque canta, de trás para frente: "${reversed(song)}". Qual cantiga é essa? (A equipe do castelo depende de você.)`
+              : `Cantiga ${rhyme}: pelo telefone, {user} repete o som da boneca: "${reversed(song)}". Você grava no gramofone e inverte. Qual cantiga é essa?`,
+            playerIds: inWoods ? [] : [listener.id],
+            options: shuffle(ctx.rng, [song, ...songs.filter((s) => s !== song).slice(0, 2)]).map((s) => ({ id: s, label: s })),
+          });
+          clock.spend(8 + ctx.rng() * 4);
+          const otherSide = inWoods ? ctx.attempt(singer, 50, castle) : ctx.attempt(listener, 55, woods);
+          if (guess === song && otherSide) {
+            earned += per;
+            ctx.say(`Cantiga ${rhyme}: {user} reconheceu "${song}" e a equipe acertou no gramofone.`, [humanTurn]);
+          } else if (guess === song) {
+            ctx.say(`Cantiga ${rhyme}: {user} reconheceu "${song}", mas a outra ponta do telefone embaralhou a letra.`, [humanTurn]);
+          } else {
+            ctx.say(`Cantiga ${rhyme}: {user} apostou em "${guess}". Era "${song}".`, [humanTurn]);
+          }
+          continue;
+        }
         let minutes = 7 + ctx.rng() * 5;
         if (ctx.happens(0.2)) {
           minutes += 4;
@@ -680,7 +975,28 @@ function chess(origin: string, prizeAvailable: number, perAnswer: number): Missi
       for (const [i, q] of questions.entries()) {
         const answer = q.answer();
         if (!answer) continue;
-        const guesser = ctx.pick(1, (p) => p.traits.skill + p.traits.paranoia * 0.5)[0];
+        // O jogador move a peça da primeira pergunta.
+        const human = i === 0 && ctx.human && ctx.players.includes(ctx.human) ? ctx.human : undefined;
+        const guesser = human ?? ctx.pick(1, (p) => p.traits.skill + p.traits.paranoia * 0.5)[0];
+        if (human) {
+          const knows = isTraitor(human);
+          const pick = ctx.ask({
+            id: 'chess-piece',
+            prompt: `"${q.text}" A peça está nas suas mãos. ${knows ? 'Você é Traidor(a): na torre, vocês responderam {user}. Acertar enche o prêmio; errar de propósito afasta a suspeita das respostas de vocês.' : 'Em que nome você coloca a peça?'}`,
+            playerIds: knows ? [answer.id] : [],
+            options: personOptions(ctx.players),
+          });
+          if (pick === answer.id) {
+            earned += perAnswer;
+            ctx.say(`"${q.text}" {user} moveu a peça para o nome de {user1}. Os Traidores tinham respondido o mesmo.`, pair(human, answer));
+            if (q.clears) for (const p of ctx.players) if (p.id !== answer.id && !isTraitor(p)) ctx.matrix.adjust(p.id, answer.id, { trust: 6 });
+          } else {
+            const wrong = ctx.players.find((p) => p.id === pick) ?? answer;
+            ctx.say(`"${q.text}" {user} colocou a peça em {user1}. Errou: a resposta dos Traidores era {user2}.`, [human, wrong, answer]);
+            if (knows) ctx.secret('{user} sabia a resposta e errou de propósito.', [human]);
+          }
+          continue;
+        }
         // Um Traidor na mesa pode "errar" de propósito.
         const sabotage = isTraitor(guesser) && ctx.happens(0.3);
         if (!sabotage && ctx.attempt(guesser, 58)) {
@@ -708,6 +1024,36 @@ function chess(origin: string, prizeAvailable: number, perAnswer: number): Missi
 // O poder do Vidente
 // ---------------------------------------------------------------------------------------------
 
+/**
+ * Os palhaços, para o jogador: estourar balão por balão. Cada um tem ouro ou uma caveira, que leva
+ * tudo o que ele juntou na rodada. Parar a tempo guarda o ouro.
+ */
+function clownsForHuman(ctx: MissionContext, player: SimPlayer, piece: (factor: number) => number): number {
+  let gold = 0;
+  for (let balloon = 1; balloon <= 4; balloon++) {
+    const choice = ctx.ask({
+      id: 'seer-balloon',
+      prompt:
+        balloon === 1
+          ? 'Os palhaços seguram balões: cada um tem ouro ou uma caveira. A caveira leva todo o ouro desta rodada. Estourar o primeiro?'
+          : `Você já tem ${ctx.money(gold)} nesta rodada. Estourar o balão ${balloon} ou parar e guardar?`,
+      playerIds: [],
+      options: [
+        { id: 'pop', label: `Estourar o balão ${balloon}` },
+        { id: 'stop', label: balloon === 1 ? 'Não arriscar' : 'Parar e guardar o ouro' },
+      ],
+    });
+    if (choice === 'stop') break;
+    if (chance(ctx.rng, 0.22 + balloon * 0.05)) {
+      ctx.say(`{user} estourou o balão ${balloon} e caiu uma caveira. ${gold ? `Os ${ctx.money(gold)} da rodada foram embora.` : 'Nada a perder, mas nada ganho.'}`, [player]);
+      return 0;
+    }
+    gold += piece(0.5 + ctx.rng() * 0.5);
+  }
+  ctx.say(gold ? `{user} saiu dos palhaços com ${ctx.money(gold)}.` : '{user} não estourou nenhum balão.', [player]);
+  return gold;
+}
+
 /** Missão do Vidente: sai uma vez, perto da final (ver finale.ts); não entra na sequência normal. */
 function seer(origin: string, prizeAvailable: number): MissionDefinition {
   const step = origin === US ? 100 : 50;
@@ -726,7 +1072,14 @@ function seer(origin: string, prizeAvailable: number): MissionDefinition {
 
       // 1. Palhaços: cada balão estourado tem ouro ou uma caveira.
       let round = 0;
+      const piece = (factor: number) => roundMoney((cap / ctx.players.length) * factor, step);
       for (const p of ctx.players) {
+        if (ctx.isHuman(p)) {
+          const gold = Math.min(clownsForHuman(ctx, p, piece), cap - round);
+          round += gold;
+          add(p, gold);
+          continue;
+        }
         if (!ctx.attempt(p, 50)) continue;
         if (ctx.happens(0.2)) {
           ctx.say('{user} estourou o balão e caiu uma caveira. O ouro da rodada foi embora.', [p]);
@@ -742,7 +1095,14 @@ function seer(origin: string, prizeAvailable: number): MissionDefinition {
       // 2. Cordas da boneca: cada corda puxada revela um valor (às vezes nada).
       round = 0;
       for (const p of ctx.players) {
-        const pulled = ctx.oneOf([0, 0.5, 1, 1, 1.5, 2]);
+        let pulled = ctx.oneOf([0, 0.5, 1, 1, 1.5, 2]);
+        if (ctx.isHuman(p)) {
+          // As seis cordas escondem valores diferentes; o jogador escolhe uma.
+          const cords = shuffle(ctx.rng, [0, 0.5, 1, 1, 1.5, 2]);
+          const cord = Number(ctx.ask({ id: 'seer-cord', prompt: 'A boneca tem seis cordas. Uma vale o maior prêmio; outra, nada. Qual você puxa?', playerIds: [], options: cords.map((_, i) => ({ id: String(i), label: `Corda ${i + 1}` })) }));
+          pulled = cords[cord] ?? 0;
+          ctx.say(pulled ? `{user} puxou a corda ${cord + 1}: ${ctx.money(piece(pulled))}.` : `{user} puxou a corda ${cord + 1} e a boneca só riu. Nada.`, [p]);
+        }
         const gold = Math.min(roundMoney((cap / ctx.players.length) * pulled, step), cap - round);
         round += gold;
         add(p, gold);
@@ -820,6 +1180,20 @@ function helicopter(origin: string, prizeAvailable: number): MissionDefinition {
           break;
         }
         const team = teams[i % teams.length];
+        const human = ctx.human && team.includes(ctx.human) && i < teams.length ? ctx.human : undefined;
+        if (human) {
+          // A primeira charada da equipe do jogador é dele.
+          const riddle = ctx.oneOf(RIDDLES);
+          const guess = ctx.ask({
+            id: 'helicopter-riddle',
+            prompt: `A charada que leva ao saco de dinheiro da sua equipe: ${riddle.text}`,
+            playerIds: [],
+            options: shuffle(ctx.rng, [riddle.answer, ...riddle.wrong]).map((a) => ({ id: a, label: a })),
+          });
+          if (guess === riddle.answer) bags++;
+          ctx.say(guess === riddle.answer ? `{user} matou a charada ("${riddle.answer}") e achou o saco.` : `{user} apostou em "${guess}" e correu para o lugar errado.`, [human]);
+          continue;
+        }
         const solver = ctx.pick(1, (p) => p.traits.skill + p.traits.insight * 0.3, team)[0];
         if (ctx.attempt(solver, 55, team)) bags++;
       }
@@ -828,7 +1202,22 @@ function helicopter(origin: string, prizeAvailable: number): MissionDefinition {
       const bag = prizeAvailable / 20;
       ctx.say('Parte 2: o helicóptero decola. Cada saco solto dentro do anel de fogo vale o dobro.');
       let earned = 0;
-      const pairs = ctx.pairs();
+      let pairs = ctx.pairs();
+      const human = ctx.human && ctx.players.includes(ctx.human) ? ctx.human : undefined;
+      const flies =
+        human &&
+        bags > 0 &&
+        ctx.ask({
+          id: 'helicopter-volunteer',
+          prompt: `O grupo achou ${bags} saco(s). Voluntários se penduram no helicóptero, em duplas, e soltam os sacos no anel de fogo. Você sobe?`,
+          playerIds: [],
+          options: [
+            { id: 'fly', label: 'Subir no helicóptero' },
+            { id: 'ground', label: 'Ficar em terra' },
+          ],
+        }) === 'fly';
+      if (human && !flies) pairs = pairs.filter((d) => !d.includes(human));
+      if (human && flies) pairs = [...pairs.filter((d) => d.includes(human)), ...pairs.filter((d) => !d.includes(human))];
       for (let i = 0; i < bags; i++) {
         const duo = pairs[i % Math.max(1, pairs.length)];
         if (!duo) {
@@ -836,6 +1225,28 @@ function helicopter(origin: string, prizeAvailable: number): MissionDefinition {
           continue;
         }
         const [a, b] = duo;
+        if (human && flies && i === 0 && duo.includes(human)) {
+          const partner = a === human ? b : a;
+          const wind = ctx.oneOf(['now', 'wait']);
+          const drop = ctx.ask({
+            id: 'helicopter-drop',
+            prompt: 'Pendurado(a) sob o helicóptero, o anel de fogo passa lá embaixo. O vento sopra forte. Quando você solta o saco?',
+            playerIds: [],
+            options: [
+              { id: 'now', label: 'Soltar agora' },
+              { id: 'wait', label: 'Esperar o vento acalmar' },
+            ],
+          });
+          if (chance(ctx.rng, drop === wind ? 0.85 : 0.3)) {
+            earned += bag * 2;
+            ctx.applaud(human, 4);
+            ctx.say('{user} soltou o saco na hora certa: direto no centro do fogo, com {user1} gritando de alegria.', [human, partner]);
+          } else {
+            earned += bag;
+            ctx.say('{user} errou o tempo e o vento levou o saco para fora do anel.', [human]);
+          }
+          continue;
+        }
         if (!ctx.happens(0.08) && ctx.attempt(a, 58, [b])) {
           earned += bag * 2;
           ctx.say('{user} soltou o saco no centro do fogo enquanto {user1} gritava a direção.', [a, b]);

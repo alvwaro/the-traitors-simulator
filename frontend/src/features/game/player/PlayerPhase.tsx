@@ -8,6 +8,7 @@ import { EventFeed } from '../auto/EventFeed';
 import { EliminationReveal, type Elimination } from '../components/EliminationReveal';
 import { useGame } from '../context/GameContext';
 import { InvitesPanel } from './panels/InvitesPanel';
+import { MissionPanel } from './panels/MissionPanel';
 import { OfferPanel } from './panels/OfferPanel';
 import { SeerAnnouncePanel, SeerPanel } from './panels/SeerPanels';
 import { TalkPanel } from './panels/TalkPanel';
@@ -43,6 +44,7 @@ const DECISION_PANELS: Record<PlayerNeed, (me: PlayerView, onResult: OnResult) =
   FINAL_TABLE: (me, onResult) => <FireOfTruthPanel me={me} onResult={onResult} />,
   TOWER: (me, onResult) => <TowerPanel me={me} onResult={onResult} />,
   SEER: (me, onResult) => <SeerPanel me={me} onResult={onResult} />,
+  MISSION: (me, onResult) => <MissionPanel me={me} onResult={onResult} />,
 };
 
 /** Tela do modo Jogador: o usuário é um participante e só vê o que um participante veria. */
@@ -71,7 +73,7 @@ export function PlayerPhase() {
   // respostas vêm depois, como as conversas de quem ficou.
   const breakfast = phase === 'BREAKFAST';
   const finalRounds = today?.roundTables.filter((t) => t.kind === 'ENDGAME') ?? [];
-  const storyFeed = <StoryFeed phase={phase} story={story} rounds={finalRounds} playersById={playersById} prompt={!simulated && talk.length === 0} />;
+  const storyFeed = <StoryFeed phase={phase} story={story} rounds={finalRounds} playersById={playersById} prompt={!simulated && talk.length === 0 && me.need !== 'MISSION'} />;
 
   return (
     <>

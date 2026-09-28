@@ -159,9 +159,11 @@ export async function buildPlayerView(repos: Repositories, season: Season, playe
   const towerNeed = night && human.isTraitor() && faithful.length > 0 && !murdersOver(active.length) && flags.noMurderDay !== today;
   const seerPending = night && flags.seer?.seerId === human.id && seerDinnerTonight(flags, today);
   const coffinNight = towerNeed && isCoffinNight(flags, today, active.length, editionFor(season.missionPool).coffins);
+  const missionPending = playing && phase === GamePhase.MISSION && flags.pendingMission?.day === today ? flags.pendingMission : undefined;
   let need: PlayerNeed | null = null;
   if (playing) {
     if (offer) need = 'OFFER';
+    else if (missionPending) need = 'MISSION';
     else if (tie) need = 'REVOTE';
     else if (phase === GamePhase.BREAKFAST && !simulated && flags.seer?.seerId === human.id && seerNewsToday(flags, today)) need = 'SEER_ANNOUNCE';
     else if (phase === GamePhase.ROUND_TABLE && !simulated) need = 'VOTE';
@@ -211,10 +213,19 @@ export async function buildPlayerView(repos: Repositories, season: Season, playe
     spectator: !viewer.hide,
     interactionLimit: season.interactionLimit,
     interactionsLeft: left,
-    canTalk: talkWindow && left > 0 && !tie,
+    canTalk: talkWindow && left > 0 && !tie && !missionPending,
     towerTalk,
     allowedActions: actionsFor(phase, towerTalk),
     need,
+    mission: missionPending
+      ? {
+          ...missionPending.question,
+          preview: visibleEvents(
+            missionPending.preview.map((e) => ({ ...e, phase: GamePhase.MISSION }) as SimulationEventProps),
+            viewer,
+          ).map((e) => ({ kind: e.kind, tone: e.tone, text: e.text, playerIds: e.playerIds })),
+        }
+      : null,
     pendingOffer: offer ? { ultimatum: offer.ultimatum } : null,
     canRecruit: need === 'TOWER' && !tonight && !recruitedLastNight && (traitors.length < originals || traitors.length === 1) && faithful.length >= 2,
     canUltimatum: need === 'TOWER' && !tonight && !recruitedLastNight && traitors.length === 1 && active.length >= 4,

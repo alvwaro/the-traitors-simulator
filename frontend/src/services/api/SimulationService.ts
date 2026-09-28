@@ -22,6 +22,8 @@ export interface HumanDecision {
   seerGuestId?: string | null;
   seerAnnouncement?: 'TRUTH' | 'LIE' | 'SECRET' | null;
   coffinIds?: string[] | null;
+  /** Missão interativa: a opção escolhida. */
+  missionAnswer?: string | null;
 }
 
 /** Temporadas automáticas: simular fases e ver/ajustar relacionamentos. */

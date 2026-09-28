@@ -175,7 +175,18 @@ export interface GameState {
   player: PlayerView | null;
 }
 
-export type PlayerNeed = 'VOTE' | 'REVOTE' | 'FINAL_TABLE' | 'TOWER' | 'OFFER' | 'SEER' | 'SEER_ANNOUNCE';
+export type PlayerNeed = 'VOTE' | 'REVOTE' | 'FINAL_TABLE' | 'TOWER' | 'OFFER' | 'SEER' | 'SEER_ANNOUNCE' | 'MISSION';
+
+/** Missão interativa parada numa escolha do jogador. */
+export interface PendingMissionView {
+  /** Enunciado com {user}, {user1}... na ordem de playerIds. */
+  prompt: string;
+  playerIds: string[];
+  /** Opções; as que têm playerId são pessoas (mostradas pelo retrato). */
+  options: { id: string; label: string; playerId?: string }[];
+  /** O que já aconteceu na missão até a pergunta. */
+  preview: { kind: SimulationEventKind; tone: PhraseTone | null; text: string; playerIds: string[] }[];
+}
 
 export interface PlayerView {
   playerId: string;
@@ -194,6 +205,7 @@ export interface PlayerView {
   /** O que dá para dizer neste momento. */
   allowedActions: HumanAction[];
   need: PlayerNeed | null;
+  mission: PendingMissionView | null;
   pendingOffer: { ultimatum: boolean } | null;
   canRecruit: boolean;
   canUltimatum: boolean;

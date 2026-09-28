@@ -4,7 +4,7 @@ import { GameStateOutput, HumanDecision, SimulateInput } from '../../dtos/GameDT
 import { Day, SimulationEvent } from '../../../domain/entities';
 import { GamePhase, RoundTableKind, SeasonStatus } from '../../../domain/enums';
 import { DomainError } from '../../../domain/errors/DomainError';
-import { editionFor, gameRng, SimulationEngine, SimulationFlags } from '../../../domain/simulation';
+import { editionFor, gameRng, seededRng, SimulationEngine, SimulationFlags } from '../../../domain/simulation';
 import { loadActiveGame } from '../../services/gameGuards';
 import { readGameState } from '../../services/gameState';
 import { activeSim, ensureRelationships, moneyFormatter } from '../../services/simulation';
@@ -58,6 +58,8 @@ export class SimulatePhaseUseCase implements IUseCase<SimulateInput, GameStateOu
     if (phase === GamePhase.FINALE) throw new DomainError('A temporada já terminou');
 
     const flags: SimulationFlags = { ...(season.simState as SimulationFlags) };
+    // Cópia intocada: se a missão parar para perguntar ao jogador, nada do que ela mexeu é gravado.
+    const before = structuredClone(season.simState) as SimulationFlags;
     const offer = flags.pendingOffer?.day === day.number ? flags.pendingOffer : undefined;
     // Empate esperando o voto do jogador: a mesa continua de onde parou.
     const tie = flags.pendingRevote?.day === day.number;
@@ -70,9 +72,11 @@ export class SimulatePhaseUseCase implements IUseCase<SimulateInput, GameStateOu
     const state = await ensureRelationships(repos, season.id, rng);
     const mode = simulationModeFor(season, state);
 
-    const phrases = (await repos.phrases.findAll()).map((p) => p.toJSON());
+    const phrases = (await repos.phrases.findAll()).map((p) => p.toJSON()).sort((a, b) => a.id.localeCompare(b.id));
+    // Missão com o jogador: sorteio com semente fixa, para cada resposta reproduzir o que já aconteceu.
+    const interactive = phase === GamePhase.MISSION && mode.playing;
     const engine = new SimulationEngine({
-      rng,
+      rng: interactive ? seededRng(`${season.id}:${day.number}:mission`) : rng,
       matrix: state.matrix,
       everyone: state.sim,
       activeIds: activeSim(state).map((p) => p.id),
@@ -90,6 +94,16 @@ export class SimulatePhaseUseCase implements IUseCase<SimulateInput, GameStateOu
     if (!strategy) throw new DomainError('Não há o que simular neste momento');
     mode.prepare(engine, state.matrix, day, phase);
     await strategy.run({ repos, recorders: this.recorders, season, day, state, engine, flags, offer, decision, mode });
+
+    if (interactive && flags.pendingMission?.day === day.number) {
+      // Missão parada na escolha do jogador: só a pergunta (e o que já foi narrado) fica guardada.
+      const paused = await repos.seasons.findById(season.id, { forUpdate: true });
+      if (paused) {
+        paused.recordSimState({ ...before, pendingMission: flags.pendingMission });
+        await repos.seasons.update(paused);
+      }
+      return;
+    }
 
     await repos.relationships.saveMany(season.id, state.matrix.changed());
     // Recarrega: registrar a fase pode ter mudado a temporada (final, vencedores...).

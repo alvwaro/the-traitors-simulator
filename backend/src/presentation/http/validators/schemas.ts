@@ -146,6 +146,7 @@ export const humanDecision = z.object({
   seerGuestId: id.nullable().optional(),
   seerAnnouncement: z.enum(['TRUTH', 'LIE', 'SECRET']).nullable().optional(),
   coffinIds: z.array(id).max(3).nullable().optional(),
+  missionAnswer: z.string().trim().min(1).max(64).nullable().optional(),
 });
 export const simulateBody = z.object({ untilEnd: z.boolean().optional(), decision: humanDecision.optional() }).default({});
 export const inviteAnswerBody = z.object({ inviterId: id, groupId: z.string().max(20).nullable().optional(), accept: z.boolean() });

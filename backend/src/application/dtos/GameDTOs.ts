@@ -31,7 +31,7 @@ export interface GameStateOutput {
 }
 
 /** O que o jogador humano precisa decidir para a fase atual andar. */
-export type PlayerNeed = 'VOTE' | 'REVOTE' | 'FINAL_TABLE' | 'TOWER' | 'OFFER' | 'SEER' | 'SEER_ANNOUNCE';
+export type PlayerNeed = 'VOTE' | 'REVOTE' | 'FINAL_TABLE' | 'TOWER' | 'OFFER' | 'SEER' | 'SEER_ANNOUNCE' | 'MISSION';
 
 export interface PlayerView {
   playerId: string;
@@ -51,6 +51,8 @@ export interface PlayerView {
   /** O que dá para dizer neste momento (na chegada, só primeiras impressões; na torre, só o plano da noite). */
   allowedActions: string[];
   need: PlayerNeed | null;
+  /** Missão interativa parada: a pergunta da vez e o que já aconteceu na missão até ela. */
+  mission: { prompt: string; playerIds: string[]; options: { id: string; label: string; playerId?: string }[]; preview: { kind: string; tone: string | null; text: string; playerIds: string[] }[] } | null;
   pendingOffer: { ultimatum: boolean } | null;
   canRecruit: boolean;
   canUltimatum: boolean;
@@ -199,6 +201,8 @@ export interface HumanDecision {
   seerAnnouncement?: 'TRUTH' | 'LIE' | 'SECRET' | null;
   /** Noite dos caixões (traidor): os três nomes (a vítima, murderTargetId, é um deles). */
   coffinIds?: string[] | null;
+  /** Missão interativa: a opção escolhida para a pergunta da vez. */
+  missionAnswer?: string | null;
 }
 
 export interface InteractInput {

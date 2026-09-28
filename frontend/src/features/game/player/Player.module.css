@@ -385,3 +385,18 @@
   border-color: var(--gold);
   background: color-mix(in srgb, var(--gold) 7%, transparent);
 }
+
+/* ---------- missão interativa ---------- */
+.mission {
+  border-color: var(--frame-gold);
+  box-shadow: inset 4px 0 0 var(--gold);
+}
+
+.missionPrompt {
+  line-height: 1.55;
+  color: var(--text);
+}
+
+.missionPrompt strong {
+  color: var(--gold);
+}

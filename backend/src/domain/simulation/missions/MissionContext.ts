@@ -23,6 +23,39 @@ export interface MissionTwists {
   noMurderTonight?: boolean;
 }
 
+/** Uma opção de escolha do jogador numa missão. */
+export interface MissionOption {
+  id: string;
+  /** Texto do botão; pode usar {user}, {user1}... de `playerIds` da pergunta. */
+  label: string;
+  /** Opção que é uma pessoa (a tela mostra o retrato). */
+  playerId?: string;
+}
+
+/** Pergunta que a missão faz ao jogador humano (modo Jogador). */
+export interface MissionQuestion {
+  /** Tipo da escolha (a mesma pergunta repetida tem o mesmo id). */
+  id: string;
+  /** Enunciado com {user}, {user1}... na ordem de `playerIds`. */
+  prompt: string;
+  playerIds: string[];
+  options: MissionOption[];
+}
+
+/**
+ * A missão parou para perguntar algo ao jogador. Como o sorteio da missão tem semente fixa,
+ * rodar de novo com as mesmas respostas reproduz tudo até aqui e segue com a nova resposta.
+ */
+export class MissionPause extends Error {
+  constructor(
+    readonly question: MissionQuestion,
+    /** Quantas das respostas guardadas continuam valendo (as seguintes são descartadas). */
+    readonly answered: number,
+  ) {
+    super('A missão espera a escolha do jogador');
+  }
+}
+
 /** Missão jogável: roteiro com a ordem dos acontecimentos e as regras de dinheiro e escudos. */
 export interface MissionDefinition {
   key: string;
@@ -47,7 +80,36 @@ export class MissionContext {
     readonly money: (amount: number) => string,
     /** Loucura (0 a 1): resultados que fogem da habilidade. */
     private readonly chaos = 0,
+    /** Modo Jogador: o participante do usuário, se está na missão. */
+    readonly human: SimPlayer | undefined = undefined,
+    /** Respostas que o jogador já deu nesta missão, na ordem das perguntas. */
+    private readonly answers: readonly string[] = [],
   ) {}
+
+  private asked = 0;
+
+  /** É o jogador humano. */
+  isHuman(p: SimPlayer | undefined): boolean {
+    return !!p && !!this.human && p.id === this.human.id;
+  }
+
+  /**
+   * Pergunta ao jogador. Se ele já respondeu (numa rodada anterior da mesma missão), devolve a resposta;
+   * senão, a missão para aqui até a resposta chegar.
+   */
+  ask(question: MissionQuestion): string {
+    const answer = this.answers[this.asked];
+    if (answer !== undefined && question.options.some((o) => o.id === answer)) {
+      this.asked++;
+      return answer;
+    }
+    throw new MissionPause(question, this.asked);
+  }
+
+  /** Quantas perguntas já foram respondidas nesta rodada. */
+  get answered(): number {
+    return this.asked;
+  }
 
   /** Preenchido pelo roteiro; lido depois da missão. */
   readonly twists: MissionTwists = {};

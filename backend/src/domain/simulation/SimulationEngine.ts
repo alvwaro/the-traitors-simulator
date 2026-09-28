@@ -15,7 +15,7 @@ import {
   VoteResult,
 } from './decisions';
 import { isCoffinNight, murdersOver } from './finale';
-import { MissionContext, MissionDefinition, MissionOutcome } from './missions/MissionContext';
+import { MissionContext, MissionDefinition, MissionOutcome, MissionPause, MissionQuestion } from './missions/MissionContext';
 import { DialogueScene, NarratedEvent, Narrator, PhraseTemplate } from './narration';
 import { RelationshipMatrix } from './RelationshipMatrix';
 import { chance, clamp, pickOne, Rng, shuffle, softmaxPick, weightedPick } from './random';
@@ -75,6 +75,16 @@ export interface SimulationFlags {
   hiddenRoles?: string[];
   /** Dia em que a missão fechou a torre: não há assassinato nesta noite. */
   noMurderDay?: number;
+  /** Modo Jogador: missão parada esperando uma escolha do usuário. */
+  pendingMission?: PendingMission;
+}
+
+/** Missão interativa parada: as respostas já dadas, a pergunta atual e o que já foi narrado até ela. */
+export interface PendingMission {
+  day: number;
+  answers: string[];
+  question: MissionQuestion;
+  preview: NarratedEvent[];
 }
 
 export interface SeerState {
@@ -659,10 +669,21 @@ export class SimulationEngine {
     return leaving.id;
   }
 
-  mission(def: MissionDefinition): MissionOutcome {
+  /**
+   * Joga a missão. No modo Jogador, as missões interativas perguntam ao usuário: sem a resposta,
+   * devolve `pending` (a pergunta) e nada do que aconteceu deve ser gravado.
+   */
+  mission(def: MissionDefinition, answers: readonly string[] = []): MissionOutcome & { pending?: { question: MissionQuestion; answered: number } } {
     this.say(SimulationEventKind.MISSION_STEP, `${def.name}. ${def.description}`);
-    const ctx = new MissionContext(this.rng, this.matrix, shuffle(this.rng, this.active), this.narrator, this.social, this.options.money, this.chaos);
-    const outcome = def.play(ctx);
+    const human = this.active.find((p) => this.isHuman(p));
+    const ctx = new MissionContext(this.rng, this.matrix, shuffle(this.rng, this.active), this.narrator, this.social, this.options.money, this.chaos, human, answers);
+    let outcome: MissionOutcome;
+    try {
+      outcome = def.play(ctx);
+    } catch (err) {
+      if (err instanceof MissionPause) return { prizeEarned: 0, shieldIds: [], pending: { question: err.question, answered: err.answered } };
+      throw err;
+    }
     let prizeEarned = Math.max(0, Math.min(def.prizeAvailable, Math.round(outcome.prizeEarned)));
     const shieldIds = [...new Set(outcome.shieldIds)];
 
