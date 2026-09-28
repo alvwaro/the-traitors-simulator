@@ -4,7 +4,7 @@ import styles from './Form.module.css';
 
 interface FieldProps {
   label: string;
-  hint?: string;
+  hint?: ReactNode;
   className?: string;
   children: (id: string) => ReactNode;
 }

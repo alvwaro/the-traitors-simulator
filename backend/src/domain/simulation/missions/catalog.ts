@@ -164,6 +164,20 @@ const MIX: Edition = {
 
 export const EDITIONS: readonly Edition[] = [...REAL, MIX];
 
+/** O que acontece em qualquer temporada simulada, seja qual for a escolhida. */
+export const COMMON_EVENTS: readonly GameEvent[] = [
+  { name: 'A Chegada', description: 'Primeiras impressões, conversas de canto e as primeiras alianças antes de o jogo começar.' },
+  { name: 'O Toque no Ombro', description: 'À meia-noite, os Traidores são escolhidos em segredo. Só o público sabe quem são.' },
+  { name: 'O Café da Manhã', description: 'Quem entra pela porta sobreviveu à noite; quem não entra foi assassinado(a). Um escudo pode ter salvado alguém.' },
+  { name: 'A Missão', description: 'Uma prova por dia para encher o prêmio e, às vezes, ganhar escudos. Cada missão tem imprevistos e relógio: pode render tudo ou nada.' },
+  { name: 'A Tentação', description: 'Uma vez por temporada, no fim de uma missão, alguém recebe a oferta de um escudo só seu em troca de um quarto do dinheiro do grupo.' },
+  { name: 'A Mesa Redonda', description: 'Debate, acusações e votos. O mais votado é banido(a) e revela o papel; empate leva a uma revotação.' },
+  { name: 'A Torre', description: 'Os Traidores escolhem quem assassinar. Com poucos Traidores, podem recrutar um Fiel ou dar um ultimato: juntar-se a eles ou morrer.' },
+  { name: 'Segredos e Confissões', description: 'Duplas que se conheciam antes do jogo podem ser descobertas, e um Traidor sob pressão pode confessar na mesa.' },
+  { name: 'Desistências', description: 'Raramente, alguém deixa o castelo por motivos pessoais. Pode ser desligado nas configurações da temporada.' },
+  { name: 'A Reta Final', description: 'Com cinco jogadores ou menos, os assassinatos acabam: missão final, última mesa redonda e o Fogo da Verdade (encerrar o jogo ou banir de novo). Os banidos da reta final saem sem revelar o papel.' },
+];
+
 /** Temporadas criadas antes da separação EUA/Reino Unido guardavam só o número. */
 const LEGACY: Record<string, MissionPool> = { S1: 'US_S1', S2: 'US_S2', S3: 'US_S3' };
 

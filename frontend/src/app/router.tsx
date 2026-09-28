@@ -12,6 +12,7 @@ import { PhrasesPage } from '../features/library/pages/PhrasesPage';
 import { NewSeasonPage } from '../features/seasons/pages/NewSeasonPage';
 import { SeasonPage } from '../features/seasons/pages/SeasonPage';
 import { HistoryPage } from '../features/history/pages/HistoryPage';
+import { GuidePage } from '../features/guide/GuidePage';
 import { NotFoundPage } from './NotFoundPage';
 import { RequireAuth } from './RequireAuth';
 
@@ -45,6 +46,8 @@ export const router = createBrowserRouter([
           { path: 'frases', element: <PhrasesPage /> },
         ],
       },
+      { path: '/guia', element: <GuidePage /> },
+      { path: '/guia/:pool', element: <GuidePage /> },
       { path: '/temporadas/nova', element: <NewSeasonPage /> },
       { path: '/temporadas/:seasonId', element: <SeasonPage /> },
       { path: '/temporadas/:seasonId/cronica', element: <HistoryPage /> },

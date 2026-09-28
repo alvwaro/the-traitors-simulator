@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { Check, Field, Select } from '../../../components/ui/Form';
 import { chaosLabel, missionPoolLabel } from '../../../domain/labels';
 import type { MissionPool } from '../../../domain/models';
@@ -33,7 +34,12 @@ export function SimulationFields({ value, onChange }: Readonly<{ value: Simulati
       </label>
       <Field
         label="Temporada do programa"
-        hint="Missões, valores e reviravoltas mudam entre EUA e Reino Unido. As missões seguem a ordem em que foram ao ar; depois da última, voltam como revanche."
+        hint={
+          <>
+            Missões, valores e reviravoltas mudam entre EUA e Reino Unido. As missões seguem a ordem em que foram ao ar; depois da última, voltam como revanche.{' '}
+            <Link to={`/guia/${value.missionPool}`}>Ver no guia</Link>
+          </>
+        }
       >
         {(id) => (
           <Select id={id} value={value.missionPool} onChange={(e) => onChange({ ...value, missionPool: e.target.value as MissionPool })}>

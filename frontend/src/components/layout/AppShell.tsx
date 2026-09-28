@@ -7,6 +7,7 @@ import styles from './AppShell.module.css';
 const LINKS = [
   { to: '/', label: 'Início', end: true },
   { to: '/biblioteca', label: 'Biblioteca', end: false },
+  { to: '/guia', label: 'Guia das temporadas', end: false },
 ];
 
 export function AppShell() {

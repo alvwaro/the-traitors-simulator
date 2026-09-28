@@ -1,0 +1,156 @@
+.page {
+  max-width: var(--page);
+  margin: 0 auto;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: var(--gap);
+  align-items: start;
+}
+
+.main,
+.side {
+  display: grid;
+  gap: var(--gap);
+}
+
+@media (max-width: 860px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.summary {
+  margin: 0 0 1rem;
+  line-height: 1.55;
+  color: var(--text);
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
+  gap: 0.75rem;
+  margin: 0 0 0.75rem;
+}
+
+.facts div {
+  padding: 0.6rem 0.8rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+
+.facts dt {
+  font-size: 0.8rem;
+  color: var(--text-faint);
+}
+
+.facts dd {
+  margin: 0.2rem 0 0;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--gold);
+}
+
+.note {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-faint);
+}
+
+.missions {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mission {
+  display: grid;
+  grid-template-columns: 2.25rem minmax(0, 1fr);
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+
+.number {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--gold);
+  border: 1px solid var(--frame-gold);
+  border-radius: 50%;
+}
+
+.missionBody {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.missionName {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--text);
+}
+
+.badge,
+.origin {
+  padding: 0.1rem 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border-radius: 999px;
+}
+
+.badge {
+  color: var(--bg);
+  background: var(--gold);
+}
+
+.origin {
+  color: var(--text-muted);
+  border: 1px solid var(--border-strong);
+}
+
+.missionText {
+  margin: 0;
+  line-height: 1.5;
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+.prize {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--gold);
+}
+
+.events {
+  display: grid;
+  gap: 0.9rem;
+  margin: 0;
+}
+
+.event dt {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.event dd {
+  margin: 0.2rem 0 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}

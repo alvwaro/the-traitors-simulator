@@ -13,6 +13,7 @@ import { BehaviorService, type IBehaviorService } from '../services/api/Behavior
 import { SimulationService, type ISimulationService } from '../services/api/SimulationService';
 import { PublicationService, type IPublicationService } from '../services/api/PublicationService';
 import { AuthService, type IAuthService } from '../services/api/AuthService';
+import { EditionService, type IEditionService } from '../services/api/EditionService';
 
 /** Tudo que os componentes podem usar para falar com a API (só interfaces). */
 export interface Services {
@@ -27,6 +28,7 @@ export interface Services {
   simulation: ISimulationService;
   publications: IPublicationService;
   auth: IAuthService;
+  editions: IEditionService;
 }
 
 // Composition root do frontend.
@@ -43,6 +45,7 @@ export function createServices(http: IHttpClient = new FetchHttpClient(config.ap
     simulation: new SimulationService(http),
     publications: new PublicationService(http),
     auth: new AuthService(http),
+    editions: new EditionService(http),
   };
 }
 

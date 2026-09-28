@@ -366,6 +366,39 @@ export interface Standing {
 /** Temporada do programa (país + número) de onde vêm as missões e reviravoltas; MIX = todas. */
 export type MissionPool = 'US_S1' | 'UK_S1' | 'US_S2' | 'UK_S2' | 'US_S3' | 'UK_S3' | 'MIX';
 
+/** Um acontecimento ou reviravolta, como aparece no guia das temporadas. */
+export interface GameEvent {
+  name: string;
+  description: string;
+}
+
+export interface EditionMission {
+  key: string;
+  origin: string;
+  name: string;
+  description: string;
+  /** Valor máximo, na moeda da versão (dólar nos EUA, libra no Reino Unido). */
+  prizeAvailable: number;
+  kind: 'REGULAR' | 'SEER' | 'FINALE';
+}
+
+/** Uma temporada do programa: missões na ordem da exibição e reviravoltas próprias. */
+export interface Edition {
+  pool: MissionPool;
+  country: 'US' | 'UK' | 'MIX';
+  season: number | null;
+  label: string;
+  summary: string;
+  currency: 'USD' | 'GBP';
+  twists: GameEvent[];
+  missions: EditionMission[];
+}
+
+export interface EditionsGuide {
+  commonEvents: GameEvent[];
+  editions: Edition[];
+}
+
 export interface CharacterStats {
   characterId: string;
   seasons: number;

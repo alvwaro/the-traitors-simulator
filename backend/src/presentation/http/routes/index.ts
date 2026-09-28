@@ -11,6 +11,7 @@ import { BehaviorController } from '../controllers/BehaviorController';
 import { SimulationController } from '../controllers/SimulationController';
 import { AuthController } from '../controllers/AuthController';
 import { PublicationController } from '../controllers/PublicationController';
+import { EditionController } from '../controllers/EditionController';
 import { AccessGuards } from '../middlewares/access';
 import { rateLimit } from '../middlewares/rateLimit';
 import { requireSiteOwner, requireUser } from '../middlewares/session';
@@ -28,6 +29,7 @@ export interface Controllers {
   imageProxy: ImageProxyController;
   behavior: BehaviorController;
   simulation: SimulationController;
+  edition: EditionController;
 }
 
 /** Tentativas de login/cadastro por IP a cada 15 minutos. */
@@ -87,6 +89,9 @@ export function buildRouter(c: Controllers, guard: AccessGuards): Router {
   router.post('/behaviors', requireSiteOwner, c.behavior.create);
   router.patch('/behaviors/:behaviorId', requireSiteOwner, c.behavior.update);
   router.delete('/behaviors/:behaviorId', requireSiteOwner, c.behavior.remove);
+
+  // Guia das temporadas do programa: missões e reviravoltas de cada versão
+  router.get('/editions', requireUser, c.edition.list);
 
   // Imagens externas com a mesma origem (arte do Instagram)
   router.get('/image-proxy', requireUser, c.imageProxy.get);

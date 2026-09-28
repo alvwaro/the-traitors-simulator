@@ -65,6 +65,8 @@ import { CastController } from '../presentation/http/controllers/CastController'
 import { RandomizeCastBehaviorsUseCase } from '../application/use-cases/cast/RandomizeCastBehaviorsUseCase';
 import { PhraseController } from '../presentation/http/controllers/PhraseController';
 import { BehaviorController } from '../presentation/http/controllers/BehaviorController';
+import { EditionController } from '../presentation/http/controllers/EditionController';
+import { ListEditionsUseCase } from '../application/use-cases/edition/ListEditionsUseCase';
 import { SimulationController } from '../presentation/http/controllers/SimulationController';
 import { AuthController } from '../presentation/http/controllers/AuthController';
 import { PublicationController } from '../presentation/http/controllers/PublicationController';
@@ -166,6 +168,7 @@ export function buildContainer(): Container {
       registerTraitorsMeeting,
       registerEndgameRoundTable,
     ),
+    edition: new EditionController(new ListEditionsUseCase()),
     behavior: new BehaviorController(
       new CreateBehaviorUseCase(repos),
       new ListBehaviorsUseCase(repos),
