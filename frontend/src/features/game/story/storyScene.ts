@@ -50,6 +50,20 @@ function roundTableScene(players: Player[], votes: VoteDraft[]): StoryScene {
   return { kind: 'roundTable', players, votes: counts, ballots };
 }
 
+/**
+ * A votação de hoje já registrada: todos que estavam à mesa, com os votos. Quem saiu banido(a)
+ * aparece ainda sentado(a), como no momento da votação. Null se ainda não há votos registrados.
+ */
+export function recordedVotesScene(game: GameContextValue): StoryScene | null {
+  const table = game.today?.roundTables.findLast((t) => t.votes.length > 0);
+  if (!table) return null;
+  const atTable = new Set([...game.state.activePlayers.map((p) => p.id), ...table.votes.flatMap((v) => [v.voterId, v.targetId])]);
+  const players = game.history.players
+    .filter((p) => atTable.has(p.id))
+    .map((p) => (p.id === table.banishedPlayerId ? { ...p, status: 'ACTIVE' as const, eliminatedDayId: null } : p));
+  return roundTableScene(players, table.votes);
+}
+
 /** Elenco completo com os mortos e banidos atualizados (serve para qualquer dia). */
 export function castScene(game: GameContextValue): StoryScene {
   return { kind: 'wall', players: game.history.players };

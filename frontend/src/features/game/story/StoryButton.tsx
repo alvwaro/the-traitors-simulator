@@ -9,7 +9,7 @@ import { toRoman } from '../../../lib/format';
 import { useGame } from '../context/GameContext';
 import { refitLines, STORY_SIZE, StoryCard } from './StoryCard';
 import { useStoryShared } from './StoryContext';
-import { castScene, shieldedToday, shieldScene, storyScene, type StoryScene } from './storyScene';
+import { castScene, recordedVotesScene, shieldedToday, shieldScene, storyScene, type StoryScene } from './storyScene';
 import styles from './StoryButton.module.css';
 
 /** Fontes usadas só na arte: são carregadas antes de desenhar. */
@@ -65,6 +65,8 @@ export function StoryButton() {
   const phaseName = state.phase ? ` · ${phaseLabel[state.phase]}` : '';
   const moment = `${day}${phaseName}`;
   const hasShields = shieldedToday(game, draft.shieldIds).length > 0;
+  const atTable = state.phase === 'ROUND_TABLE' || state.phase === 'ENDGAME_ROUND_TABLE';
+  const votesScene = atTable ? recordedVotesScene(game) : null;
 
   useEffect(() => {
     const node = cardRef.current;
@@ -110,6 +112,12 @@ export function StoryButton() {
           <Button variant="ghost" pending={request?.label === `Elenco · ${day}`} disabled={!!request} onClick={() => generate({ scene: castScene(game), label: `Elenco · ${day}` })}>
             Estilizar elenco atualizado
           </Button>
+          {/* Depois de confirmar a votação, a arte principal vira a do banimento; os votos continuam disponíveis. */}
+          {votesScene && draft.votes.length === 0 && (
+            <Button variant="ghost" pending={request?.label === `Votos · ${moment}`} disabled={!!request} onClick={() => generate({ scene: votesScene, label: `Votos · ${moment}` })}>
+              Estilizar votos
+            </Button>
+          )}
           {state.phase === 'TRAITORS_MEETING' && (
             <Button variant="ghost" pending={request?.label === `Torre · ${day}`} disabled={!!request} onClick={() => generate({ scene: { kind: 'tower' }, label: `Torre · ${day}` })}>
               Estilizar torre
