@@ -74,7 +74,7 @@ export function PlayerPhase() {
   // respostas vêm depois, como as conversas de quem ficou.
   const breakfast = phase === 'BREAKFAST';
   const finalRounds = today?.roundTables.filter((t) => t.kind === 'ENDGAME') ?? [];
-  const storyFeed = <StoryFeed phase={phase} story={story} rounds={finalRounds} playersById={playersById} prompt={!simulated && talk.length === 0 && me.need !== 'MISSION'} />;
+  const storyFeed = <StoryFeed phase={phase} story={story} rounds={finalRounds} playersById={playersById} focus={me.finalStage} prompt={!simulated && talk.length === 0 && me.need !== 'MISSION'} />;
 
   return (
     <>
@@ -119,9 +119,10 @@ function StoryFeed({
   story,
   rounds,
   playersById,
+  focus,
   prompt,
-}: Readonly<{ phase: GamePhase; story: SimulationEventRecord[]; rounds: RoundTableRecord[]; playersById: Map<string, Player>; prompt: boolean }>) {
+}: Readonly<{ phase: GamePhase; story: SimulationEventRecord[]; rounds: RoundTableRecord[]; playersById: Map<string, Player>; focus: PlayerView['finalStage']; prompt: boolean }>) {
   if (story.length === 0) return prompt ? <p className={styles.prompt}>{PROMPT[phase]}</p> : null;
-  if (phase === 'ENDGAME_ROUND_TABLE') return <EndgameFeed events={story} rounds={rounds} playersById={playersById} />;
+  if (phase === 'ENDGAME_ROUND_TABLE') return <EndgameFeed events={story} rounds={rounds} playersById={playersById} focus={focus ?? undefined} key={focus ?? 'none'} />;
   return <EventFeed events={story} playersById={playersById} />;
 }

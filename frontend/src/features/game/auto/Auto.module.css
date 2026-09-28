@@ -360,3 +360,38 @@
 .stage .feed {
   margin-top: 0;
 }
+
+/* reta final: a última mesa e o Fogo da Verdade em páginas separadas */
+.stageTabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-top: 2rem;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--border);
+}
+
+.stageTab {
+  padding: 0.6rem 1rem;
+  font: inherit;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -1px;
+  cursor: pointer;
+}
+
+.stageTab:hover {
+  color: var(--text);
+}
+
+.stageTabOn {
+  color: var(--text);
+  border-bottom-color: var(--gold);
+}
+
+.stageTabs + .stage {
+  margin-top: 1rem;
+}
