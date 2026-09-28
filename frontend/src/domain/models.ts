@@ -175,7 +175,7 @@ export interface GameState {
   player: PlayerView | null;
 }
 
-export type PlayerNeed = 'VOTE' | 'REVOTE' | 'FINAL_TABLE' | 'TOWER' | 'OFFER' | 'SEER' | 'SEER_ANNOUNCE' | 'MISSION';
+export type PlayerNeed = 'VOTE' | 'REVOTE' | 'FINAL_TABLE' | 'TOWER' | 'OFFER' | 'SEER' | 'SEER_ANNOUNCE' | 'MISSION' | 'FIRE_VOTE';
 
 /** Missão interativa parada numa escolha do jogador. */
 export interface PendingMissionView {

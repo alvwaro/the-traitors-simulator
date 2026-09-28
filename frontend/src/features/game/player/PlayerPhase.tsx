@@ -42,6 +42,7 @@ const DECISION_PANELS: Record<PlayerNeed, (me: PlayerView, onResult: OnResult) =
   VOTE: (me, onResult) => <VotePanel me={me} onResult={onResult} kind={me.finalStage === 'TABLE' ? 'FINAL_TABLE' : 'REGULAR'} />,
   REVOTE: (me, onResult) => <VotePanel me={me} onResult={onResult} kind="TIE" />,
   FINAL_TABLE: (me, onResult) => <FireOfTruthPanel me={me} onResult={onResult} />,
+  FIRE_VOTE: (me, onResult) => <VotePanel me={me} onResult={onResult} kind="FIRE" />,
   TOWER: (me, onResult) => <TowerPanel me={me} onResult={onResult} />,
   SEER: (me, onResult) => <SeerPanel me={me} onResult={onResult} />,
   MISSION: (me, onResult) => <MissionPanel me={me} onResult={onResult} />,

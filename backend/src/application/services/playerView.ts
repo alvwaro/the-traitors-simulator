@@ -167,6 +167,7 @@ export async function buildPlayerView(repos: Repositories, season: Season, playe
     else if (tie) need = 'REVOTE';
     else if (phase === GamePhase.BREAKFAST && !simulated && flags.seer?.seerId === human.id && seerNewsToday(flags, today)) need = 'SEER_ANNOUNCE';
     else if (phase === GamePhase.ROUND_TABLE && !simulated) need = 'VOTE';
+    else if (phase === GamePhase.ENDGAME_ROUND_TABLE && finalOpen && flags.pendingFire?.day === today) need = 'FIRE_VOTE';
     else if (phase === GamePhase.ENDGAME_ROUND_TABLE && finalOpen) need = finalStage === 'TABLE' ? 'VOTE' : 'FINAL_TABLE';
     else if (towerNeed) need = 'TOWER';
     else if (seerPending) need = 'SEER';

@@ -136,12 +136,14 @@ export class EndgameSimulation implements PhaseSimulation {
   async run({ engine, recorders, repos, season, day, state, flags, decision, mode }: PhaseContext): Promise<void> {
     // Continuando um empate, o jogador só escolhe em quem vota na revotação.
     const tie = pendingTie(flags, day, 'ENDGAME');
+    // Fogo da Verdade já revelado, sem unanimidade: falta só o voto do jogador no banimento.
+    const fire = flags.pendingFire?.day === day.number ? flags.pendingFire : undefined;
     const revote = tie ? mode.revote(decision, tie.tiedIds) : undefined;
     const played = (await repos.roundTables.findByDay(day.id)).filter((t) => t.kind === RoundTableKind.ENDGAME).length;
-    // A última mesa redonda é um voto simples; o Fogo da Verdade pede "encerrar ou banir" e o voto.
-    const lastTable = !tie && isFinalTableRound(played + 1, activeSim(state).length);
-    const vote = lastTable ? mode.vote(decision) : revote;
-    const choice = this.humanChoice(vote, !!tie || lastTable, () => mode.finalChoice(decision));
+    // A última mesa redonda é um voto simples; o Fogo da Verdade pede primeiro "encerrar ou banir" e, se preciso, o voto.
+    const lastTable = !tie && !fire && isFinalTableRound(played + 1, activeSim(state).length);
+    const vote = lastTable || fire ? mode.vote(decision) : revote;
+    const choice = this.humanChoice(vote, !!tie || lastTable || !!fire, () => mode.finalChoice(decision));
     for (const round of engine.endgame(choice, played + 1)) {
       await recorders.endgameRoundTable.record(repos, {
         seasonId: season.id,

@@ -77,6 +77,17 @@ export interface SimulationFlags {
   noMurderDay?: number;
   /** Modo Jogador: missão parada esperando uma escolha do usuário. */
   pendingMission?: PendingMission;
+  /** Modo Jogador: Fogo da Verdade sem unanimidade, esperando o voto do usuário no banimento. */
+  pendingFire?: PendingFire;
+}
+
+/** Rodada do Fogo da Verdade já revelada (as escolhas), esperando o voto do jogador. */
+export interface PendingFire {
+  day: number;
+  round: number;
+  endgameVotes: { voterId: string; choice: EndgameChoice }[];
+  confessorId?: string;
+  stances: Record<string, Record<string, number>>;
 }
 
 /** Missão interativa parada: as respostas já dadas, a pergunta atual e o que já foi narrado até ela. */
@@ -160,7 +171,8 @@ export interface HumanTowerChoice {
 /** Escolhas do jogador humano numa rodada da mesa final. */
 export interface HumanEndgameChoice {
   choice: EndgameChoice;
-  voteTargetId: string;
+  /** No Fogo da Verdade, o voto só vem depois de revelar as escolhas (se alguém quiser banir). */
+  voteTargetId?: string;
 }
 
 /** O que a torre precisa saber sobre recrutamentos anteriores. */
@@ -760,6 +772,18 @@ export class SimulationEngine {
       if (humanPlaying && this.active.some((p) => this.isHuman(p))) return rounds;
       firstRound = (pending.round ?? firstRound) + 1;
     }
+    // Continuação do Fogo da Verdade: as escolhas já foram reveladas; agora o banimento com o voto do jogador.
+    const fire = this.flags.pendingFire?.day === this.day ? this.flags.pendingFire : undefined;
+    if (fire) {
+      delete this.flags.pendingFire;
+      this.stances.clear();
+      for (const [speaker, targets] of Object.entries(fire.stances)) this.stances.set(speaker, new Map(Object.entries(targets)));
+      const result = this.banishmentVote({ table: 'ENDGAME', round: fire.round, endgameVotes: fire.endgameVotes }, fire.confessorId, this.humanVote(human?.voteTargetId));
+      if (!result) return rounds;
+      rounds.push({ endgameVotes: fire.endgameVotes, ...result });
+      if (humanPlaying && this.active.some((p) => this.isHuman(p))) return rounds;
+      firstRound = fire.round + 1;
+    }
     for (let round = firstRound; ; round++) {
       if (isFinalTableRound(round, this.active.length)) {
         this.say(SimulationEventKind.NARRATION, `A última mesa redonda. Restam ${this.active.length}. Hoje alguém sai, e sai levando o segredo: não haverá revelação.`);
@@ -797,6 +821,17 @@ export class SimulationEngine {
       }
       const against = endgameVotes.filter((v) => v.choice === EndgameChoice.BANISH_AGAIN).length;
       this.say(SimulationEventKind.NARRATION, `${against} ${against === 1 ? 'pessoa não confia' : 'pessoas não confiam'} em todos à volta do fogo. Mais um banimento, também sem revelação.`);
+      // O jogador viu as escolhas; agora decide em quem vota (a rodada espera por ele).
+      if (this.active.some((p) => this.isHuman(p)) && !human?.voteTargetId) {
+        this.flags.pendingFire = {
+          day: this.day,
+          round,
+          endgameVotes,
+          confessorId: confessor?.id,
+          stances: Object.fromEntries([...this.stances].map(([k, v]) => [k, Object.fromEntries(v)])),
+        };
+        return rounds;
+      }
       const result = this.banishmentVote({ table: 'ENDGAME', round, endgameVotes }, confessor?.id, this.humanVote(human?.voteTargetId));
       // Empate: a rodada fica em suspenso até o jogador votar na revotação.
       if (!result) return rounds;

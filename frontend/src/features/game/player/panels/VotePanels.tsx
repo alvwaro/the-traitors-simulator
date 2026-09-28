@@ -10,7 +10,7 @@ import { othersThan, toggleOne, useDecision, type OnResult } from '../useDecisio
 import styles from '../Player.module.css';
 
 /** Tipo de votação: mesa comum, revotação de empate ou a última mesa redonda (sem revelação). */
-export type VoteKind = 'REGULAR' | 'TIE' | 'FINAL_TABLE';
+export type VoteKind = 'REGULAR' | 'TIE' | 'FINAL_TABLE' | 'FIRE';
 
 const VOTE_TEXT: Record<VoteKind, { title: string; hint: string }> = {
   REGULAR: { title: 'Seu voto', hint: 'Escolha quem você quer banir. Os outros votam ao mesmo tempo; você vê o resultado na hora.' },
@@ -18,6 +18,10 @@ const VOTE_TEXT: Record<VoteKind, { title: string; hint: string }> = {
   FINAL_TABLE: {
     title: 'A última mesa redonda',
     hint: 'Sem assassinatos, sem revelação: quem sair hoje leva o segredo. Depois desta mesa vem o Fogo da Verdade.',
+  },
+  FIRE: {
+    title: 'O Fogo da Verdade: banimento',
+    hint: 'Nem todos quiseram encerrar. Mais alguém sai (sem revelar o papel) e todos voltam ao fogo. Em quem você vota?',
   },
 };
 
@@ -44,17 +48,18 @@ export function VotePanel({ me, onResult, kind }: Readonly<{ me: PlayerView; onR
   );
 }
 
-/** O Fogo da Verdade: encerrar o jogo (só com todos de acordo) ou continuar, e o voto se houver banimento. */
-export function FireOfTruthPanel({ me, onResult }: Readonly<{ me: PlayerView; onResult: OnResult }>) {
-  const { state } = useGame();
+/**
+ * O Fogo da Verdade: primeiro só a escolha (encerrar o jogo ou banir mais alguém). As escolhas de todos
+ * são reveladas; se alguém quiser banir, o voto vem depois, num painel próprio.
+ */
+export function FireOfTruthPanel({ onResult }: Readonly<{ me: PlayerView; onResult: OnResult }>) {
   const [choice, setChoice] = useState<EndgameChoice | null>(null);
-  const [target, setTarget] = useState<string | null>(null);
   const { send, pending } = useDecision(onResult);
   return (
     <section className={styles.panel}>
       <h3 className={styles.panelTitle}>O Fogo da Verdade</h3>
       <p className={styles.panelHint}>
-        Todos precisam concordar para encerrar o jogo. Se alguém quiser continuar, há mais um banimento (sem revelação) e todos voltam ao fogo; por isso escolha também o seu voto.
+        Todos precisam concordar para encerrar o jogo. Se alguém quiser continuar, as escolhas são reveladas e só então você vota em quem banir.
       </p>
       <div className={styles.choice}>
         <button type="button" aria-pressed={choice === 'END_GAME'} className={cx(styles.choiceButton, choice === 'END_GAME' && styles.choiceEnd)} onClick={() => setChoice('END_GAME')}>
@@ -64,11 +69,9 @@ export function FireOfTruthPanel({ me, onResult }: Readonly<{ me: PlayerView; on
           Continuar e banir mais alguém
         </button>
       </div>
-      <p className={styles.panelHint}>Se houver banimento, você vota em:</p>
-      <PortraitGrid items={othersThan(state, me)} size="sm" selectedIds={target ? [target] : []} onToggle={(id) => setTarget(toggleOne(target, id))} />
       <div className={styles.panelActions}>
-        <Button pending={pending} disabled={!choice || !target} onClick={fireAndForget(() => send({ endgameChoice: choice, voteTargetId: target }))}>
-          Confirmar
+        <Button pending={pending} disabled={!choice} onClick={fireAndForget(() => send({ endgameChoice: choice }))}>
+          Jogar no fogo
         </Button>
       </div>
     </section>

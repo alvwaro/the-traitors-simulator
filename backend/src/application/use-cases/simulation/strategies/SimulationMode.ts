@@ -104,7 +104,8 @@ export class PlayerMode implements SimulationMode {
     if (decision.endgameChoice !== EndgameChoice.END_GAME && decision.endgameChoice !== EndgameChoice.BANISH_AGAIN) {
       throw new DomainError('Escolha entre encerrar o jogo ou banir mais alguém');
     }
-    return { choice: decision.endgameChoice, voteTargetId: this.vote(decision)! };
+    // O voto vem depois, se alguém escolher banir (ver EndgameSimulation).
+    return { choice: decision.endgameChoice };
   }
 
   /** Vidente: o convidado precisa estar no jogo (e não ser você). */

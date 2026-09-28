@@ -31,7 +31,7 @@ export interface GameStateOutput {
 }
 
 /** O que o jogador humano precisa decidir para a fase atual andar. */
-export type PlayerNeed = 'VOTE' | 'REVOTE' | 'FINAL_TABLE' | 'TOWER' | 'OFFER' | 'SEER' | 'SEER_ANNOUNCE' | 'MISSION';
+export type PlayerNeed = 'VOTE' | 'REVOTE' | 'FINAL_TABLE' | 'TOWER' | 'OFFER' | 'SEER' | 'SEER_ANNOUNCE' | 'MISSION' | 'FIRE_VOTE';
 
 export interface PlayerView {
   playerId: string;
