@@ -106,6 +106,12 @@ export class MissionContext {
     throw new MissionPause(question, this.asked);
   }
 
+  /** Pergunta cuja resposta é uma pessoa da lista (a tela mostra os retratos). */
+  askPerson(question: Omit<MissionQuestion, 'options'>, people: readonly SimPlayer[]): SimPlayer {
+    const id = this.ask({ ...question, options: people.map((p) => ({ id: p.id, label: '', playerId: p.id })) });
+    return people.find((p) => p.id === id) ?? people[0];
+  }
+
   /** Quantas perguntas já foram respondidas nesta rodada. */
   get answered(): number {
     return this.asked;

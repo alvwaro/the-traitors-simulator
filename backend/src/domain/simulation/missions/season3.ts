@@ -364,7 +364,7 @@ function cages(origin: string, prizeAvailable: number, release: number): Mission
           // Quem sai não fica com o escudo: entrega a alguém de confiança (o jogador escolhe a quem).
           const candidates = ctx.players.filter((p) => p !== prisoner && !shieldIds.includes(p.id));
           const chosen = ctx.isHuman(prisoner) && candidates.length
-            ? candidates.find((p) => p.id === ctx.ask({ id: 'cages-shield', prompt: 'Sua gaiola se abriu! Você não pode ficar com o escudo: a quem vai entregá-lo?', playerIds: [], options: personOptions(candidates) }))
+            ? ctx.askPerson({ id: 'cages-shield', prompt: 'Sua gaiola se abriu! Você não pode ficar com o escudo: a quem vai entregá-lo?', playerIds: [] }, candidates)
             : top(candidates, (p) => ctx.matrix.get(prisoner.id, p.id).liking + ctx.matrix.get(prisoner.id, p.id).trust + ctx.rng() * 20, 1)[0];
           if (chosen) {
             shieldIds.push(chosen.id);
@@ -611,7 +611,7 @@ function placePortrait(ctx: MissionContext, player: SimPlayer, frames: SimPlayer
     const removable = frames.filter((p) => p !== player);
     const removed =
       ctx.isHuman(player) && removable.length > 1
-        ? (removable.find((p) => p.id === ctx.ask({ id: 'portrait-remove', prompt: `As duas molduras estão ocupadas. Para pendurar ${chosen === player ? 'o seu retrato' : 'o retrato'}, você precisa tirar alguém. Quem sai?`, playerIds: [], options: personOptions(removable) })) ?? removable[0])
+        ? ctx.askPerson({ id: 'portrait-remove', prompt: `As duas molduras estão ocupadas. Para pendurar ${chosen === player ? 'o seu retrato' : 'o retrato'}, você precisa tirar alguém. Quem sai?`, playerIds: [] }, removable)
         : top(removable, (p) => 100 - ctx.matrix.get(player.id, p.id).liking + ctx.matrix.suspicion(player.id, p.id) * 0.5 + ctx.rng() * 20, 1)[0];
     frames.splice(frames.indexOf(removed), 1);
     ctx.matrix.adjust(removed.id, player.id, { hatred: 8, trust: -5 }, 0.6 + removed.traits.volatility / 100);
