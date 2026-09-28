@@ -1,6 +1,7 @@
 import { Day, Player, PlayerProps, Season, SimulationEventProps, TraitorMeetingProps } from '../../domain/entities';
 import { GamePhase, MurderOutcome, PlayerRole, PlayerStatus, RoundTableKind, SimulationEventKind } from '../../domain/enums';
 import {
+  editionFor,
   actionsFor,
   AllianceBook,
   HumanOffer,
@@ -155,9 +156,9 @@ export async function buildPlayerView(repos: Repositories, season: Season, playe
   const today = season.currentDay ?? 0;
   const tie = flags.pendingRevote?.day === today ? flags.pendingRevote : undefined;
   const night = playing && phase === GamePhase.TRAITORS_MEETING && !simulated;
-  const towerNeed = night && human.isTraitor() && faithful.length > 0 && !murdersOver(active.length);
+  const towerNeed = night && human.isTraitor() && faithful.length > 0 && !murdersOver(active.length) && flags.noMurderDay !== today;
   const seerPending = night && flags.seer?.seerId === human.id && seerDinnerTonight(flags, today);
-  const coffinNight = towerNeed && isCoffinNight(flags, today, active.length);
+  const coffinNight = towerNeed && isCoffinNight(flags, today, active.length, editionFor(season.missionPool).coffins);
   let need: PlayerNeed | null = null;
   if (playing) {
     if (offer) need = 'OFFER';

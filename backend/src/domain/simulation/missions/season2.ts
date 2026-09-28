@@ -3,18 +3,21 @@ import { chance } from '../random';
 import { isTraitor, SimPlayer } from '../traits';
 import { MissionDefinition } from './MissionContext';
 import { tokenList } from '../tokens';
-import { byInfluence, top } from './helpers';
+import { byInfluence, top, variant } from './helpers';
 
 /**
- * Missões da 2ª temporada de The Traitors, na ordem em que foram ao ar nos EUA (2024),
- * seguidas das que só apareceram na 2ª temporada britânica (2024). Valores do programa americano.
- * O cemitério arma a taça envenenada (assassinato à vista de todos) e a masmorra condena
- * quatro jogadores: os traidores só podem matar um deles naquela noite.
+ * Missões da 2ª temporada de The Traitors. EUA e Reino Unido (ambas de 2024) dividem várias provas,
+ * com ordem e valores próprios. Nas duas, o cemitério arma a taça envenenada (assassinato à vista de
+ * todos); só a britânica tem a masmorra (os traidores só podem matar um dos condenados) e o monumento
+ * (sem assassinato naquela noite).
  */
+
+const US = 'EUA T2';
+const UK = 'Reino Unido T2';
 
 const beacon: MissionDefinition = {
   key: 'beacon',
-  origin: 'EUA T2',
+  origin: US,
   name: 'O Farol',
   description: 'Amarrados a postes dentro do lago, os jogadores se soltam, montam o quebra-cabeça do farol e acendem o fogo. Os mais rápidos ganham escudo.',
   prizeAvailable: 30000,
@@ -36,7 +39,7 @@ const beacon: MissionDefinition = {
 
 const scarecrows: MissionDefinition = {
   key: 'scarecrows',
-  origin: 'EUA T2',
+  origin: US,
   name: 'Os Espantalhos',
   description: 'Perguntas sobre o próprio elenco abrem os cadeados dos espantalhos; dentro deles, moedas de ouro. Quem achar a moeda especial ganha escudo.',
   prizeAvailable: 20000,
@@ -61,7 +64,7 @@ const scarecrows: MissionDefinition = {
 
 const cemetery: MissionDefinition = {
   key: 'cemetery',
-  origin: 'EUA T2',
+  origin: US,
   name: 'O Cemitério',
   description: 'À noite, os jogadores abrem túmulos e criptas atrás de ouro enquanto holofotes caçam quem se mexe. Nesta noite, os traidores podem matar à vista de todos.',
   prizeAvailable: 20000,
@@ -87,7 +90,7 @@ const cemetery: MissionDefinition = {
 
 const funeral: MissionDefinition = {
   key: 'funeral',
-  origin: 'EUA T2',
+  origin: US,
   name: 'O Funeral',
   description: 'Um cortejo fúnebre: quem acerta as perguntas vai de carruagem, o resto caminha. No fim, os três últimos precisam adivinhar quem os traidores querem matar.',
   prizeAvailable: 20000,
@@ -122,7 +125,7 @@ const funeral: MissionDefinition = {
 
 const birdCalls: MissionDefinition = {
   key: 'bird-calls',
-  origin: 'EUA T2',
+  origin: US,
   name: 'O Canto dos Pássaros',
   description: 'Corredores imitam o canto dos pássaros pelo rádio; no castelo, o outro grupo precisa achar o pássaro empalhado certo.',
   prizeAvailable: 15000,
@@ -151,7 +154,7 @@ const birdCalls: MissionDefinition = {
 
 const catapult: MissionDefinition = {
   key: 'catapult',
-  origin: 'EUA T2',
+  origin: US,
   name: 'A Catapulta',
   description: 'Peças espalhadas pela propriedade, uma catapulta para montar e um único disparo com a bala de ouro.',
   prizeAvailable: 20000,
@@ -169,36 +172,38 @@ const catapult: MissionDefinition = {
   },
 };
 
-const bog: MissionDefinition = {
-  key: 'bog',
-  origin: 'EUA T2',
-  name: 'O Pântano',
-  description: 'Em duplas, carregando ouro por um pântano: cada resposta certa indica a corda segura; cada erro afunda o ouro.',
-  prizeAvailable: 25000,
-  play(ctx) {
-    ctx.say('Lama até o joelho, cordas que se partem e ouro pesado nas costas.');
-    let earned = 0;
-    const survivors: [SimPlayer, SimPlayer][] = [];
-    for (const [a, b] of ctx.pairs(5)) {
-      const right = ctx.attempt(a, 55, [b]) && ctx.attempt(b, 50, [a]);
-      if (right) {
-        earned += 5000;
-        survivors.push([a, b]);
-        ctx.say('{user} e {user1} escolheram a corda certa e atravessaram com o ouro.', [a, b]);
-      } else {
-        ctx.say('A corda de {user} e {user1} arrebentou. O ouro afundou no pântano.', [a, b]);
+function bog(origin: string, prizeAvailable: number, withShields: boolean): MissionDefinition {
+  return {
+    key: 'bog',
+    origin,
+    name: 'O Pântano',
+    description: `Em duplas, carregando ouro por um pântano: cada resposta certa indica a corda segura; cada erro afunda o ouro.${withShields ? ' A dupla mais rápida ganha escudos.' : ''}`,
+    prizeAvailable,
+    play(ctx) {
+      ctx.say('Lama até o joelho, cordas que se partem e ouro pesado nas costas.');
+      let earned = 0;
+      const survivors: [SimPlayer, SimPlayer][] = [];
+      for (const [a, b] of ctx.pairs(5)) {
+        const right = ctx.attempt(a, 55, [b]) && ctx.attempt(b, 50, [a]);
+        if (right) {
+          earned += prizeAvailable / 5;
+          survivors.push([a, b]);
+          ctx.say('{user} e {user1} escolheram a corda certa e atravessaram com o ouro.', [a, b]);
+        } else {
+          ctx.say('A corda de {user} e {user1} arrebentou. O ouro afundou no pântano.', [a, b]);
+        }
       }
-    }
-    const best = top(survivors, ([a, b]) => a.traits.skill + b.traits.skill + ctx.rng() * 40, 1)[0];
-    if (best) ctx.shield('Os primeiros a chegar, {user} e {user1}, ganham escudos.', best);
-    ctx.chatter(1);
-    return { prizeEarned: earned, shieldIds: best ? best.map((p) => p.id) : [] };
-  },
-};
+      const best = withShields ? top(survivors, ([a, b]) => a.traits.skill + b.traits.skill + ctx.rng() * 40, 1)[0] : undefined;
+      if (best) ctx.shield('Os primeiros a chegar, {user} e {user1}, ganham escudos.', best);
+      ctx.chatter(1);
+      return { prizeEarned: earned, shieldIds: best ? best.map((p) => p.id) : [] };
+    },
+  };
+}
 
 const tunnels: MissionDefinition = {
   key: 'tunnels',
-  origin: 'EUA T2',
+  origin: US,
   name: 'O Túnel da Fuga',
   description: 'Cinco jogadores rastejam por túneis escuros atrás de ouro; na cabana, o resto controla as luzes e guia pelo mapa.',
   prizeAvailable: 20000,
@@ -225,7 +230,7 @@ const tunnels: MissionDefinition = {
 
 const crossbows: MissionDefinition = {
   key: 'crossbows',
-  origin: 'EUA T2',
+  origin: US,
   name: 'As Bestas',
   description: 'Vitrais com o nome de cada jogador. Na vez, cada um atira com a besta no vitral de outra pessoa; o último vitral inteiro ganha escudo. Cada erro custa dinheiro.',
   prizeAvailable: 25000,
@@ -256,7 +261,7 @@ const crossbows: MissionDefinition = {
 
 const scales: MissionDefinition = {
   key: 'scales',
-  origin: 'EUA T2',
+  origin: US,
   name: 'A Balança',
   description: 'Cavar pepitas de ouro, atravessar plataformas flutuantes e depositar tudo numa balança gigante em 20 minutos.',
   prizeAvailable: 30000,
@@ -279,7 +284,7 @@ const scales: MissionDefinition = {
 
 const finalPath: MissionDefinition = {
   key: 'final-path',
-  origin: 'EUA T2',
+  origin: US,
   name: 'O Caminho Final',
   description: 'Os finalistas seguem a trilha até o barco para hastear a bandeira; desvios pelo caminho escondem bandeiras extras que valem bônus.',
   prizeAvailable: 50000,
@@ -301,7 +306,7 @@ const finalPath: MissionDefinition = {
 
 const dungeon: MissionDefinition = {
   key: 'dungeon',
-  origin: 'Reino Unido T2',
+  origin: UK,
   name: 'A Masmorra',
   description: 'O grupo condena quatro jogadores à masmorra: esta noite, os traidores só podem matar um deles. Na missão, a equipe vencedora pode libertar um condenado.',
   prizeAvailable: 10000,
@@ -337,9 +342,9 @@ const dungeon: MissionDefinition = {
 
 const monument: MissionDefinition = {
   key: 'monument',
-  origin: 'Reino Unido T2',
+  origin: UK,
   name: 'O Monumento dos Traidores',
-  description: 'Charadas destrancam o monumento dos traidores e revelam a espada sagrada. Quem a encontra pode ficar com um prêmio pessoal ou doá-lo ao pote.',
+  description: 'Charadas destrancam o monumento dos traidores e revelam a espada sagrada. Quem a encontra pode ficar com um prêmio pessoal ou doá-lo ao pote. Se o monumento se abrir, não há assassinato nesta noite.',
   prizeAvailable: 7000,
   play(ctx) {
     ctx.say('Um monumento de pedra com quatro fechaduras e uma espada cravada lá dentro.');
@@ -356,25 +361,37 @@ const monument: MissionDefinition = {
         for (const p of ctx.players) if (p.id !== finder.id) ctx.matrix.adjust(p.id, finder.id, { trust: -4 });
         ctx.say('{user} ficou com o prêmio pessoal. O silêncio na sala disse tudo.', [finder]);
       }
+      if (ctx.traitors.length) {
+        ctx.twists.noMurderTonight = true;
+        ctx.secret('Com o monumento aberto, a torre fica fechada esta noite: não haverá assassinato.');
+      }
     }
     ctx.chatter(1);
     return { prizeEarned: Math.min(7000, earned), shieldIds: [] };
   },
 };
 
-/** Ordem das missões da 2ª temporada: as dos EUA e, depois, as exclusivas do Reino Unido. */
-export const SEASON_2_MISSIONS: readonly MissionDefinition[] = [
-  beacon,
-  scarecrows,
-  cemetery,
-  funeral,
-  birdCalls,
-  catapult,
-  bog,
-  tunnels,
-  crossbows,
-  scales,
-  finalPath,
+/** EUA T2 (2024), na ordem da exibição; o caminho final é a última missão. */
+export const US_SEASON_2_MISSIONS: readonly MissionDefinition[] = [beacon, scarecrows, cemetery, funeral, birdCalls, catapult, bog(US, 25000, true), tunnels, crossbows, scales];
+export const US_SEASON_2_FINALE = finalPath;
+
+/** Reino Unido T2 (2024), na ordem da exibição. */
+export const UK_SEASON_2_MISSIONS: readonly MissionDefinition[] = [
+  variant(beacon, { origin: UK, prizeAvailable: 15000 }),
+  variant(birdCalls, { origin: UK, prizeAvailable: 6000 }),
+  variant(scarecrows, { origin: UK, prizeAvailable: 10000 }),
   dungeon,
+  variant(catapult, { origin: UK, prizeAvailable: 10000 }),
+  variant(cemetery, { origin: UK, prizeAvailable: 10000 }),
+  variant(funeral, { origin: UK, prizeAvailable: 7000 }),
+  variant(crossbows, { origin: UK, prizeAvailable: 7000 }),
+  variant(tunnels, { origin: UK, prizeAvailable: 8000 }),
+  { ...bog(UK, 10000, false), name: 'O Percurso da Floresta' },
   monument,
 ];
+export const UK_SEASON_2_FINALE = variant(finalPath, {
+  origin: UK,
+  prizeAvailable: 20000,
+  name: 'As Bandeiras do Barco',
+  description: 'Os finalistas seguem a trilha erguendo bandeiras até o barco em 60 minutos; desvios pelo caminho escondem bandeiras extras que valem bônus.',
+});

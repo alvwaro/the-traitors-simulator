@@ -1,4 +1,4 @@
-import { MissionPool, Season } from '../../domain/entities';
+import { normalizeMissionPool, Season } from '../../domain/entities';
 import { GamePhase, SeasonMode, SeasonStatus } from '../../domain/enums';
 import { FindOptions, ISeasonRepository } from '../../domain/repositories';
 import { Queryable } from '../database/connection';
@@ -10,7 +10,7 @@ interface SeasonRow {
   cast_id: string | null;
   mode: SeasonMode;
   chaos: number;
-  mission_pool: MissionPool;
+  mission_pool: string;
   interaction_limit: number;
   sim_state: Record<string, unknown>;
   status: SeasonStatus;
@@ -32,7 +32,7 @@ const toEntity = (r: SeasonRow): Season =>
     castId: r.cast_id,
     mode: r.mode,
     chaos: r.chaos,
-    missionPool: r.mission_pool,
+    missionPool: normalizeMissionPool(r.mission_pool),
     interactionLimit: r.interaction_limit,
     simState: r.sim_state ?? {},
     status: r.status,

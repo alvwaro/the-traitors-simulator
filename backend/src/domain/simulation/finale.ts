@@ -12,11 +12,12 @@ export function murdersOver(activeCount: number): boolean {
 }
 
 /**
- * A noite dos caixões ("Nail in a Coffin"): uma vez por temporada, na primeira noite possível,
+ * A noite dos caixões ("Nail in a Coffin", EUA T3): uma vez por temporada, na primeira noite possível,
  * os traidores escolhem três nomes e um deles é assassinado à vista de todos.
+ * `enabled` diz se a temporada escolhida teve essa reviravolta.
  */
-export function isCoffinNight(flags: SimulationFlags, day: number, activeCount: number): boolean {
-  return !flags.coffins && day >= COFFIN_FIRST_DAY && activeCount >= COFFIN_MIN_PLAYERS && flags.dungeon?.day !== day && flags.poisonArmedDay !== day;
+export function isCoffinNight(flags: SimulationFlags, day: number, activeCount: number, enabled = true): boolean {
+  return enabled && !flags.coffins && flags.noMurderDay !== day && day >= COFFIN_FIRST_DAY && activeCount >= COFFIN_MIN_PLAYERS && flags.dungeon?.day !== day && flags.poisonArmedDay !== day;
 }
 
 /** A missão de hoje é a do Vidente (uma vez, perto da final). */

@@ -1,11 +1,12 @@
 /**
  * Roda temporadas inteiras só em memória para medir o equilíbrio da simulação.
- * Uso: npm run sim:balance -- [temporadas] [loucura 0-100] [S1|S2|S3|MIX]
+ * Uso: npm run sim:balance -- [temporadas] [loucura 0-100] [US_S1|UK_S1|US_S2|UK_S2|US_S3|UK_S3|MIX]
  */
 import { BehaviorEffects } from '../src/domain/entities/Behavior';
 import { PlayerRole } from '../src/domain/enums';
 import { fillMissingRelationships, RelationshipMatrix } from '../src/domain/simulation/RelationshipMatrix';
-import { missionFor } from '../src/domain/simulation/missions/catalog';
+import { normalizeMissionPool } from '../src/domain/entities/Season';
+import { editionFor, missionFor } from '../src/domain/simulation/missions/catalog';
 import { SimulationFlags } from '../src/domain/simulation/SimulationEngine';
 import { SimulationEngine } from '../src/domain/simulation/SimulationEngine';
 import { isTraitor, SimPlayer, traitsOf } from '../src/domain/simulation/traits';
@@ -24,7 +25,8 @@ const TAGS: Record<string, BehaviorEffects> = {
 };
 const TAG_NAMES = Object.keys(TAGS);
 const CHAOS = Number(process.argv[3] ?? 0) / 100;
-const POOL = (process.argv[4] ?? 'S3') as 'S1' | 'S2' | 'S3' | 'MIX';
+const POOL = normalizeMissionPool(process.argv[4] ?? 'US_S3');
+const COFFINS = editionFor(POOL).coffins;
 
 function season(size: number): { winner: 'TRAITORS' | 'FAITHFUL'; days: number; traitorsBanished: number; faithfulBanished: number } {
   const players: SimPlayer[] = Array.from({ length: size }, (_, i) => {
@@ -36,7 +38,7 @@ function season(size: number): { winner: 'TRAITORS' | 'FAITHFUL'; days: number; 
   const flags: SimulationFlags = {};
   let day = 1;
   let active = players.map((p) => p.id);
-  const engine = () => new SimulationEngine({ rng: gameRng, matrix, everyone: players, activeIds: active, phrases: [], money: String, chaos: CHAOS, day, flags });
+  const engine = () => new SimulationEngine({ rng: gameRng, matrix, everyone: players, activeIds: active, phrases: [], money: String, chaos: CHAOS, day, flags, coffins: COFFINS });
   const byId = new Map(players.map((p) => [p.id, p]));
 
   engine().arrival();

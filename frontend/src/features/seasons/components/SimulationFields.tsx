@@ -8,8 +8,15 @@ export interface SimulationDraft {
   missionPool: MissionPool;
 }
 
+const POOL_GROUPS: readonly { label: string; pools: readonly MissionPool[] }[] = [
+  { label: 'Estados Unidos', pools: ['US_S1', 'US_S2', 'US_S3'] },
+  { label: 'Reino Unido', pools: ['UK_S1', 'UK_S2', 'UK_S3'] },
+  { label: 'Misturado', pools: ['MIX'] },
+];
+
 /**
- * Loucura (0% a 100%) e de qual temporada vêm as missões. Só valem nas temporadas automáticas.
+ * Loucura (0% a 100%) e de qual temporada do programa vêm as missões.
+ * Só valem nas temporadas automáticas.
  * Loucura 0%: todos seguem o comportamento esperado; 100%: toda decisão sai no acaso.
  */
 export function SimulationFields({ value, onChange }: Readonly<{ value: SimulationDraft; onChange: (value: SimulationDraft) => void }>) {
@@ -23,13 +30,20 @@ export function SimulationFields({ value, onChange }: Readonly<{ value: Simulati
         <input type="range" min={0} max={100} step={5} value={value.chaos} onChange={(e) => onChange({ ...value, chaos: Number(e.target.value) })} />
         <span className={styles.chaosHint}>{chaosLabel(value.chaos)}. Decide se os personagens seguem o comportamento esperado ou surpreendem.</span>
       </label>
-      <Field label="Missões" hint="As missões seguem a ordem em que foram ao ar; depois da última, voltam como revanche.">
+      <Field
+        label="Temporada do programa"
+        hint="Missões, valores e reviravoltas mudam entre EUA e Reino Unido. As missões seguem a ordem em que foram ao ar; depois da última, voltam como revanche."
+      >
         {(id) => (
           <Select id={id} value={value.missionPool} onChange={(e) => onChange({ ...value, missionPool: e.target.value as MissionPool })}>
-            {Object.entries(missionPoolLabel).map(([pool, label]) => (
-              <option key={pool} value={pool}>
-                {label}
-              </option>
+            {POOL_GROUPS.map((group) => (
+              <optgroup key={group.label} label={group.label}>
+                {group.pools.map((pool) => (
+                  <option key={pool} value={pool}>
+                    {missionPoolLabel[pool]}
+                  </option>
+                ))}
+              </optgroup>
             ))}
           </Select>
         )}

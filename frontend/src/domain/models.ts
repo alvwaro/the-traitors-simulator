@@ -361,7 +361,8 @@ export interface Standing {
   allies: string[];
 }
 
-export type MissionPool = 'S1' | 'S2' | 'S3' | 'MIX';
+/** Temporada do programa (país + número) de onde vêm as missões e reviravoltas; MIX = todas. */
+export type MissionPool = 'US_S1' | 'UK_S1' | 'US_S2' | 'UK_S2' | 'US_S3' | 'UK_S3' | 'MIX';
 
 export interface CharacterStats {
   characterId: string;

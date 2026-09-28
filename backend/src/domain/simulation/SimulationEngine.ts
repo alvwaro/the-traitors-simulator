@@ -73,6 +73,8 @@ export interface SimulationFlags {
   coffins?: { day: number; playerIds: string[]; victimId: string };
   /** Banidos na reta final: saíram sem revelar o papel (o castelo só descobre no fim). */
   hiddenRoles?: string[];
+  /** Dia em que a missão fechou a torre: não há assassinato nesta noite. */
+  noMurderDay?: number;
 }
 
 export interface SeerState {
@@ -192,6 +194,8 @@ export interface EngineOptions {
   flags?: SimulationFlags;
   /** Modo Jogador: o participante controlado pelo usuário. */
   humanId?: string;
+  /** A temporada escolhida tem a noite dos caixões (padrão: sim). */
+  coffins?: boolean;
 }
 
 /**
@@ -663,6 +667,7 @@ export class SimulationEngine {
     if (ctx.twists.poisonTonight) this.flags.poisonArmedDay = this.day;
     if (ctx.twists.seerId) this.flags.seer = { day: this.day, seerId: ctx.twists.seerId };
     if (ctx.twists.dungeonIds?.length) this.flags.dungeon = { day: this.day, playerIds: ctx.twists.dungeonIds };
+    if (ctx.twists.noMurderTonight) this.flags.noMurderDay = this.day;
 
     // A tentação: um escudo pessoal em troca de parte do dinheiro do grupo.
     if (!this.flags.temptationUsed && this.active.length >= 6 && prizeEarned > 0 && chance(this.rng, 0.15)) {
@@ -881,10 +886,15 @@ export class SimulationEngine {
       this.say(SimulationEventKind.SECRET, 'Não há mais Fiéis para assassinar.');
       return none;
     }
+    if (this.flags.noMurderDay === this.day) {
+      this.talk(PhrasePhase.TRAITORS_MEETING, 1, TOWER_TONES, { speakers: traitors, tower: true });
+      this.say(SimulationEventKind.SECRET, 'A missão de hoje fechou a torre: os Traidores só podem conversar. Ninguém morre esta noite.');
+      return none;
+    }
 
     const dungeon = this.flags.dungeon?.day === this.day ? this.flags.dungeon.playerIds.filter((id) => faithful.some((f) => f.id === id)) : [];
     const poison = this.flags.poisonArmedDay === this.day && this.flags.poisonDay === undefined;
-    const coffinNight = isCoffinNight(this.flags, this.day, this.active.length);
+    const coffinNight = isCoffinNight(this.flags, this.day, this.active.length, this.options.coffins ?? true);
     if (coffinNight) this.say(SimulationEventKind.SECRET, 'Esta noite é diferente: o assassinato será à vista de todos. Os Traidores escrevem três nomes para os caixões; um deles será pregado.');
 
     const human = traitors.find((p) => this.isHuman(p));
@@ -899,7 +909,7 @@ export class SimulationEngine {
     }
 
     if (dungeon.length) {
-      this.say(SimulationEventKind.SECRET, `A masmorra limita a escolha: só ${tokenList(dungeon.length)} podem morrer esta noite.`, dungeon.map((id) => this.byId.get(id)!));
+      this.say(SimulationEventKind.SECRET, `A missão limitou a escolha: só ${tokenList(dungeon.length)} podem morrer esta noite.`, dungeon.map((id) => this.byId.get(id)!));
     }
     this.talk(PhrasePhase.TRAITORS_MEETING, Math.min(4, traitors.length + 1), TOWER_TONES, { speakers: traitors, tower: true });
     const decision = decideMurder(this.rng, this.matrix, traitors, this.active, this.chaos, dungeon);

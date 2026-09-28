@@ -19,6 +19,8 @@ export interface MissionTwists {
   poisonTonight?: boolean;
   /** Quem ganhou o poder do Vidente (janta com alguém esta noite e descobre o papel). */
   seerId?: string;
+  /** A missão impediu o assassinato desta noite (a estátua dos Traidores explodiu, o monumento se abriu...). */
+  noMurderTonight?: boolean;
 }
 
 /** Missão jogável: roteiro com a ordem dos acontecimentos e as regras de dinheiro e escudos. */
@@ -145,6 +147,29 @@ export class MissionContext {
     return this.matrix.toward(p.id, this.players.map((x) => x.id)).liking;
   }
 
+  /**
+   * Imprevisto: acontece com a chance dada (a loucura deixa tudo mais provável).
+   * Serve para quebrar a ordem fixa dos acontecimentos de uma missão.
+   */
+  happens(probability: number): boolean {
+    return chance(this.rng, clamp(probability * (1 + this.chaos * 1.5), 0, 0.95));
+  }
+
+  /** Um item qualquer da lista, sorteado. */
+  oneOf<T>(items: readonly T[]): T {
+    return items[Math.floor(this.rng() * items.length)];
+  }
+
+  /** Número inteiro entre `min` e `max` (inclusive). */
+  between(min: number, max: number): number {
+    return min + Math.floor(this.rng() * (max - min + 1));
+  }
+
+  /** Relógio da missão: quando o tempo acaba, o que faltava não conta. */
+  clock(limitMinutes: number): MissionClock {
+    return new MissionClock(limitMinutes);
+  }
+
   /** Todos passam a gostar um pouco mais de quem se destacou. */
   applaud(player: SimPlayer, amount = 3): void {
     for (const other of this.players) if (other.id !== player.id) this.matrix.adjust(other.id, player.id, { liking: amount });
@@ -153,5 +178,29 @@ export class MissionContext {
   /** O que alguém diz sobre outro chega a todos (como numa acusação). */
   spread(speaker: SimPlayer, target: SimPlayer, trust: number): void {
     this.social.broadcast(speaker, target, { trust });
+  }
+}
+
+/** Minutos de uma missão cronometrada. */
+export class MissionClock {
+  private used = 0;
+  constructor(readonly limit: number) {}
+
+  /** Gasta minutos; devolve false se o tempo estourou. */
+  spend(minutes: number): boolean {
+    this.used += Math.max(0, minutes);
+    return this.used <= this.limit;
+  }
+
+  get elapsed(): number {
+    return Math.round(this.used);
+  }
+
+  get left(): number {
+    return Math.max(0, Math.round(this.limit - this.used));
+  }
+
+  get over(): boolean {
+    return this.used > this.limit;
   }
 }

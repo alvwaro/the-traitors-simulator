@@ -4,7 +4,7 @@ import { GameStateOutput, HumanDecision, SimulateInput } from '../../dtos/GameDT
 import { Day, SimulationEvent } from '../../../domain/entities';
 import { GamePhase, RoundTableKind, SeasonStatus } from '../../../domain/enums';
 import { DomainError } from '../../../domain/errors/DomainError';
-import { gameRng, SimulationEngine, SimulationFlags } from '../../../domain/simulation';
+import { editionFor, gameRng, SimulationEngine, SimulationFlags } from '../../../domain/simulation';
 import { loadActiveGame } from '../../services/gameGuards';
 import { readGameState } from '../../services/gameState';
 import { activeSim, ensureRelationships, moneyFormatter } from '../../services/simulation';
@@ -82,6 +82,7 @@ export class SimulatePhaseUseCase implements IUseCase<SimulateInput, GameStateOu
       chaos: season.chaos / 100,
       flags,
       humanId: state.players.find((p) => p.isHuman)?.id,
+      coffins: editionFor(season.missionPool).coffins,
     });
 
     const strategy = PHASE_SIMULATIONS.get(phase);

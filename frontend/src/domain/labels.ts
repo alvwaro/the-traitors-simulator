@@ -1,3 +1,4 @@
+import type { MissionPool } from './models';
 import { GamePhase, type HumanAction, type PhrasePhase, type PhraseTone, type PlayerRole, type PlayerStatus, type SeasonMode, type SeasonStatus } from './enums';
 
 export const phaseLabel: Record<GamePhase, string> = {
@@ -79,10 +80,13 @@ export const phraseToneHint: Record<PhraseTone, string> = {
   HUMOR: 'Piada de {user}; {user1} passa a gostar mais dele(a).',
 };
 
-export const missionPoolLabel: Record<'S1' | 'S2' | 'S3' | 'MIX', string> = {
-  S1: '1ª temporada',
-  S2: '2ª temporada',
-  S3: '3ª temporada',
+export const missionPoolLabel: Record<MissionPool, string> = {
+  US_S1: 'EUA · 1ª temporada',
+  UK_S1: 'Reino Unido · 1ª temporada',
+  US_S2: 'EUA · 2ª temporada',
+  UK_S2: 'Reino Unido · 2ª temporada',
+  US_S3: 'EUA · 3ª temporada',
+  UK_S3: 'Reino Unido · 3ª temporada',
   MIX: 'Todas, embaralhadas',
 };
 

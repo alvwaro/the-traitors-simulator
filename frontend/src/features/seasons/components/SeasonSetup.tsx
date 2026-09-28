@@ -77,6 +77,6 @@ export function SeasonSetup({ season, onChanged }: Readonly<SeasonSetupProps>) {
 /** Resumo da temporada no cabeçalho: modo, loucura e missões (se simulada), elenco e prêmio inicial. */
 function seasonLead(season: SeasonDetails): string {
   const mode = `Temporada ${seasonModeLabel[season.mode].toLowerCase()}`;
-  const simulation = season.mode === 'MANUAL' ? '' : ` (loucura ${season.chaos}%, missões da ${missionPoolLabel[season.missionPool].toLowerCase()})`;
+  const simulation = season.mode === 'MANUAL' ? '' : ` (loucura ${season.chaos}%, missões: ${missionPoolLabel[season.missionPool]})`;
   return `${mode}${simulation} · ${season.players.length} jogadores · prêmio inicial ${formatMoney(season.initialPrizePot, season.currency)}`;
 }

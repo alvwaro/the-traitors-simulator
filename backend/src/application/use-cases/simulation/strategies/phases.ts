@@ -1,7 +1,7 @@
 import { Day, Season } from '../../../../domain/entities';
 import { EndgameChoice, GamePhase, MurderOutcome, PlayerStatus, RecruitmentOutcome, RoundTableKind, SeasonStatus } from '../../../../domain/enums';
 import {
-  FINAL_MISSION,
+  finaleFor,
   HumanEndgameChoice,
   isFinalTableRound,
   isSeerMissionDay,
@@ -10,7 +10,7 @@ import {
   murdersOver,
   NightNews,
   RecruitmentContext,
-  SEER_MISSION,
+  seerMissionFor,
   SimulationFlags,
 } from '../../../../domain/simulation';
 import { Repositories } from '../../../ports/IUnitOfWork';
@@ -68,11 +68,12 @@ export class BreakfastSimulation implements PhaseSimulation {
 export class MissionSimulation implements PhaseSimulation {
   readonly phase = GamePhase.MISSION;
   async run({ engine, recorders, repos, season, day, state, flags }: PhaseContext): Promise<void> {
-    // O último dia tem a missão final; perto dela, uma missão vale o poder do Vidente (como na 3ª temporada).
+    // O último dia tem a missão final; na 3ª temporada, perto dela, uma missão vale o poder do Vidente.
     const active = activeSim(state).length;
-    let def = FINAL_MISSION;
+    let def = finaleFor(season.missionPool, season.id);
     if (!season.isEndgame()) {
-      def = isSeerMissionDay(flags, day.number, active) ? SEER_MISSION : missionFor(await repos.missions.countBySeason(season.id), season.missionPool, season.id);
+      const seer = seerMissionFor(season.missionPool);
+      def = seer && isSeerMissionDay(flags, day.number, active) ? seer : missionFor(await repos.missions.countBySeason(season.id), season.missionPool, season.id);
     }
     const outcome = engine.mission(def);
     const pot = await repos.prizes.getPrizePot(season.id);

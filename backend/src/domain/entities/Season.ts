@@ -2,9 +2,15 @@ import { randomUUID } from 'node:crypto';
 import { GamePhase, SeasonMode, SeasonStatus } from '../enums';
 import { DomainError } from '../errors/DomainError';
 
-/** De qual temporada do programa vêm as missões simuladas (MIX = todas, embaralhadas). */
-export type MissionPool = 'S1' | 'S2' | 'S3' | 'MIX';
-export const MISSION_POOLS: readonly MissionPool[] = ['S1', 'S2', 'S3', 'MIX'];
+/** De qual temporada do programa (país + número) vêm as missões e reviravoltas simuladas (MIX = todas, embaralhadas). */
+export const MISSION_POOLS = ['US_S1', 'UK_S1', 'US_S2', 'UK_S2', 'US_S3', 'UK_S3', 'MIX'] as const;
+export type MissionPool = (typeof MISSION_POOLS)[number];
+
+/** Temporadas criadas antes da separação EUA/Reino Unido guardavam só o número (S1, S2, S3). */
+export function normalizeMissionPool(value: string): MissionPool {
+  if (value === 'S1' || value === 'S2' || value === 'S3') return `US_${value}`;
+  return (MISSION_POOLS as readonly string[]).includes(value) ? (value as MissionPool) : 'US_S3';
+}
 
 export interface SimulationSettings {
   /** Loucura, de 0 a 100: chance de cada decisão fugir do comportamento esperado. */
@@ -54,7 +60,7 @@ export class Season {
       castId: input.castId ?? null,
       mode: input.mode ?? SeasonMode.MANUAL,
       chaos: 0,
-      missionPool: 'S3',
+      missionPool: 'US_S3',
       interactionLimit: 3,
       simState: {},
       status: SeasonStatus.SETUP,

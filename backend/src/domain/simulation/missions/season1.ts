@@ -2,16 +2,36 @@ import { chance } from '../random';
 import { SimPlayer } from '../traits';
 import { MissionDefinition } from './MissionContext';
 import { tokenList } from '../tokens';
-import { byInfluence, top } from './helpers';
+import { byInfluence, top, variant } from './helpers';
 
 /**
- * Missões da 1ª temporada de The Traitors, na ordem em que foram ao ar nos EUA (2023),
- * seguidas das que só apareceram na 1ª temporada britânica (2022). Valores do programa americano.
+ * Missões da 1ª temporada de The Traitors. As duas versões dividem boa parte das provas, mas não a ordem
+ * nem os valores (dólares nos EUA, libras no Reino Unido). Na versão britânica, a equipe mais rápida
+ * de várias missões entrava no arsenal e disputava um escudo.
  */
+
+const US = 'EUA T1';
+const UK = 'Reino Unido T1';
+
+/** Versão britânica: além do dinheiro, quem se destaca entra no arsenal e sai com um escudo. */
+function withArmoury(def: MissionDefinition): MissionDefinition {
+  return {
+    ...def,
+    description: `${def.description} A equipe mais rápida entra no arsenal, onde um escudo espera por alguém.`,
+    play(ctx) {
+      const outcome = def.play(ctx);
+      if (outcome.shieldIds.length || !outcome.prizeEarned) return outcome;
+      const winner = top(ctx.players, (p) => p.traits.skill + ctx.rng() * 60, 1)[0];
+      if (!winner) return outcome;
+      ctx.shield('No arsenal, entre caixas e armaduras, {user} achou o escudo.', [winner]);
+      return { ...outcome, shieldIds: [winner.id] };
+    },
+  };
+}
 
 const wickerMen: MissionDefinition = {
   key: 'wicker-men',
-  origin: 'EUA T1',
+  origin: US,
   name: 'Os Homens de Vime',
   description: 'Equipes remam até o meio do lago para buscar a chama, montam os pavios e incendeiam gigantes de vime. Cada gigante em chamas vale dinheiro.',
   prizeAvailable: 30000,
@@ -43,7 +63,7 @@ const wickerMen: MissionDefinition = {
 
 const buriedAlive: MissionDefinition = {
   key: 'buried-alive',
-  origin: 'EUA T1',
+  origin: US,
   name: 'Enterrados Vivos',
   description: 'Alguns jogadores são enterrados em caixões pelo terreno. O resto tem 40 minutos para encontrá-los e desenterrá-los.',
   prizeAvailable: 30000,
@@ -70,7 +90,7 @@ const buriedAlive: MissionDefinition = {
 
 const chapelBells: MissionDefinition = {
   key: 'chapel-bells',
-  origin: 'EUA T1',
+  origin: US,
   name: 'Os Sinos da Capela',
   description: 'Um grupo toca os sinos da capela; o outro precisa reconhecer cada melodia entre as caixinhas de música da coleção do castelo.',
   prizeAvailable: 25000,
@@ -96,7 +116,7 @@ const chapelBells: MissionDefinition = {
 
 const wheel: MissionDefinition = {
   key: 'wheel',
-  origin: 'EUA T1',
+  origin: US,
   name: 'A Roda da Morte',
   description: 'Presos a uma roda que gira, os jogadores respondem "quem do castelo..." e precisam acertar o que o grupo previu. Se ninguém desistir, há bônus.',
   prizeAvailable: 22000,
@@ -140,7 +160,7 @@ const wheel: MissionDefinition = {
 
 const maskedCongregation: MissionDefinition = {
   key: 'masked-congregation',
-  origin: 'EUA T1',
+  origin: US,
   name: 'A Congregação Mascarada',
   description: 'Parágrafos de um livro antigo escondem charadas. Cada charada decifrada revela qual figura mascarada da capela veste a roupa certa.',
   prizeAvailable: 20000,
@@ -163,7 +183,7 @@ const maskedCongregation: MissionDefinition = {
 
 const whiskyBarrels: MissionDefinition = {
   key: 'whisky-barrels',
-  origin: 'EUA T1',
+  origin: US,
   name: 'Os Barris de Uísque',
   description: 'Barris de uísque precisam subir a colina em 90 minutos. Quem carregar o barril marcado ganha acesso ao arsenal e ao escudo.',
   prizeAvailable: 30000,
@@ -190,7 +210,7 @@ const whiskyBarrels: MissionDefinition = {
 
 const billiards: MissionDefinition = {
   key: 'billiards',
-  origin: 'EUA T1',
+  origin: US,
   name: 'O Salão de Bilhar',
   description: 'Em 60 segundos, cada dupla precisa descobrir as três coisas que mudaram no salão de bilhar. Quem mais acerta vai ao arsenal.',
   prizeAvailable: 30000,
@@ -215,7 +235,7 @@ const billiards: MissionDefinition = {
 
 const cabins: MissionDefinition = {
   key: 'cabins',
-  origin: 'EUA T1',
+  origin: US,
   name: 'As Cabanas na Floresta',
   description: 'Equipes trancadas em cabanas de caça têm 30 minutos para resolver os enigmas e escapar.',
   prizeAvailable: 35000,
@@ -250,7 +270,7 @@ const cabins: MissionDefinition = {
 
 const lasers: MissionDefinition = {
   key: 'lasers',
-  origin: 'EUA T1',
+  origin: US,
   name: 'O Roubo dos Lasers',
   description: 'Um a um, os jogadores atravessam uma sala cruzada por lasers para roubar artefatos. Tocar num feixe dispara o alarme.',
   prizeAvailable: 25000,
@@ -274,7 +294,7 @@ const lasers: MissionDefinition = {
 
 const lochGlass: MissionDefinition = {
   key: 'loch-glass',
-  origin: 'EUA T1',
+  origin: US,
   name: 'O Lago Glass',
   description: 'A última missão: saltar de um helicóptero no lago gelado, nadar até as boias e trazer os sacos de dinheiro de lancha.',
   prizeAvailable: 68000,
@@ -299,7 +319,7 @@ const lochGlass: MissionDefinition = {
 
 const sheep: MissionDefinition = {
   key: 'sheep',
-  origin: 'Reino Unido T1',
+  origin: UK,
   name: 'As Ovelhas',
   description: 'Cada equipe descreve uma ovelha para a outra, que precisa encontrá-la no rebanho. Bééé.',
   prizeAvailable: 10000,
@@ -326,7 +346,7 @@ const sheep: MissionDefinition = {
 
 const truthRoad: MissionDefinition = {
   key: 'truth-road',
-  origin: 'Reino Unido T1',
+  origin: UK,
   name: 'A Estrada da Verdade',
   description: 'Duplas dirigem por estradas de terra; em cada bifurcação, uma pergunta de verdadeiro ou falso escolhe o caminho.',
   prizeAvailable: 6000,
@@ -348,7 +368,7 @@ const truthRoad: MissionDefinition = {
 
 const blindBridge: MissionDefinition = {
   key: 'blind-bridge',
-  origin: 'Reino Unido T1',
+  origin: UK,
   name: 'A Ponte Vendada',
   description: 'De olhos vendados, cada jogador atravessa uma ponte guiado pela voz de um parceiro para pegar o dinheiro no meio do caminho.',
   prizeAvailable: 7000,
@@ -371,19 +391,27 @@ const blindBridge: MissionDefinition = {
   },
 };
 
-/** Ordem das missões da 1ª temporada: as dos EUA e, depois, as exclusivas do Reino Unido. */
-export const SEASON_1_MISSIONS: readonly MissionDefinition[] = [
-  wickerMen,
-  buriedAlive,
-  chapelBells,
-  wheel,
-  maskedCongregation,
-  whiskyBarrels,
-  billiards,
-  cabins,
-  lasers,
-  lochGlass,
+/** EUA T1 (2023), na ordem da exibição; o Lago Glass é a missão final. */
+export const US_SEASON_1_MISSIONS: readonly MissionDefinition[] = [wickerMen, buriedAlive, chapelBells, wheel, maskedCongregation, whiskyBarrels, billiards, cabins, lasers];
+export const US_SEASON_1_FINALE = lochGlass;
+
+/** Reino Unido T1 (2022), na ordem da exibição. */
+export const UK_SEASON_1_MISSIONS: readonly MissionDefinition[] = [
+  variant(wickerMen, { origin: UK, prizeAvailable: 15000 }),
+  variant(chapelBells, { origin: UK, prizeAvailable: 10000 }),
+  variant(wheel, { origin: UK, prizeAvailable: 10000 }),
   sheep,
-  truthRoad,
+  withArmoury(variant(maskedCongregation, { origin: UK, prizeAvailable: 10000 })),
+  withArmoury(variant(buriedAlive, { origin: UK, prizeAvailable: 9000 })),
+  variant(whiskyBarrels, { origin: UK, prizeAvailable: 10000 }),
+  variant(cabins, { origin: UK, prizeAvailable: 6000 }),
+  withArmoury(truthRoad),
+  variant(lasers, { origin: UK, prizeAvailable: 10000 }),
   blindBridge,
 ];
+export const UK_SEASON_1_FINALE = variant(lochGlass, {
+  origin: UK,
+  prizeAvailable: 20000,
+  name: 'A Caça ao Tesouro da Costa',
+  description: 'A última missão: os dois melhores nadadores buscam coordenadas de helicóptero e o grupo, de lancha, vasculha dezesseis quilômetros de costa atrás dos sacos de dinheiro em 30 minutos.',
+});
