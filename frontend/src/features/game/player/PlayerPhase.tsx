@@ -70,29 +70,45 @@ export function PlayerPhase() {
   const showResult = shouldShowResult(phase, me, simulated, faithfulNight);
   const talk = events.filter((e) => MY_TALK.includes(e.kind));
   const story = events.filter((e) => !MY_TALK.includes(e.kind));
-  // No café, primeiro a história (a chegada, a revelação e as reações); as escolhas (fotos) e as
-  // respostas vêm depois, como as conversas de quem ficou.
+  // A página segue a ordem dos acontecimentos: no café, primeiro a revelação e depois as conversas;
+  // nos outros momentos, primeiro as conversas, depois o que aconteceu e, por último, a escolha da vez.
   const breakfast = phase === 'BREAKFAST';
+  const wall = WALL_PHASES.includes(phase);
   const finalRounds = today?.roundTables.filter((t) => t.kind === 'ENDGAME') ?? [];
-  const storyFeed = <StoryFeed phase={phase} story={story} rounds={finalRounds} playersById={playersById} focus={me.finalStage} prompt={!simulated && talk.length === 0 && me.need !== 'MISSION'} />;
+  const storyFeed = (
+    <StoryFeed phase={phase} story={story} rounds={finalRounds} playersById={playersById} focus={me.finalStage} prompt={!simulated && talk.length === 0 && me.need !== 'MISSION'} />
+  );
+  const decision = me.need && DECISION_PANELS[me.need](me, setRevealed);
+  const conversation = (
+    <>
+      {me.canTalk && <TalkPanel me={me} />}
+      {talk.length > 0 && <EventFeed events={talk} playersById={playersById} />}
+    </>
+  );
 
   return (
     <>
       <YouCard me={me} phase={phase} />
 
       {phase === 'TRAITOR_SELECTION' && simulated && <RoleReveal me={me} playersById={playersById} />}
-      {showResult && !breakfast && <PhaseResult phase={phase} simulated={simulated} />}
-
+      {/* A parede de fotos (chegada e café) fica sempre no topo. */}
+      {showResult && wall && <PhaseResult phase={phase} simulated={simulated} />}
       {me.pendingOffer && <OfferPanel me={me} onResult={setRevealed} />}
-      {me.need && DECISION_PANELS[me.need](me, setRevealed)}
 
-      {breakfast && storyFeed}
-      {breakfast && showResult && <PhaseResult phase={phase} simulated={simulated} />}
-      {me.canTalk && <TalkPanel me={me} />}
-
-      {/* Suas conversas logo abaixo das opções; fora do café, o resto da história vem depois. */}
-      {talk.length > 0 && <EventFeed events={talk} playersById={playersById} />}
-      {!breakfast && storyFeed}
+      {breakfast ? (
+        <>
+          {storyFeed}
+          {decision}
+          {conversation}
+        </>
+      ) : (
+        <>
+          {conversation}
+          {storyFeed}
+          {decision}
+          {showResult && !wall && <PhaseResult phase={phase} simulated={simulated} />}
+        </>
+      )}
       {faithfulNight && simulated && <p className={styles.prompt}>A noite passou. O que aconteceu na torre você só vai descobrir no café da manhã.</p>}
 
       {/* Pedidos de aliança sempre no fim da página, para não se perderem no meio da história. */}
