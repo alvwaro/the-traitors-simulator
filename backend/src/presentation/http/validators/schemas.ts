@@ -91,6 +91,7 @@ export const createSeasonBody = z.object({
   chaos: chaos.optional(),
   missionPool: missionPool.optional(),
   interactionLimit: interactionLimit.optional(),
+  withdrawals: z.boolean().optional(),
   human: z.object({ name: z.string().trim().min(1).max(80), imageUrl }).nullable().optional(),
   ...prizeSettings,
   castId: id.nullable().optional(),
@@ -102,6 +103,7 @@ export const updateSeasonBody = z.object({
   chaos: chaos.optional(),
   missionPool: missionPool.optional(),
   interactionLimit: interactionLimit.optional(),
+  withdrawals: z.boolean().optional(),
   ...prizeSettings,
 });
 export const saveAsCastBody = z.object({

@@ -83,6 +83,7 @@ export class SimulatePhaseUseCase implements IUseCase<SimulateInput, GameStateOu
       flags,
       humanId: state.players.find((p) => p.isHuman)?.id,
       coffins: editionFor(season.missionPool).coffins,
+      withdrawals: season.withdrawals,
     });
 
     const strategy = PHASE_SIMULATIONS.get(phase);

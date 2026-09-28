@@ -18,6 +18,8 @@ export interface SimulationSettings {
   missionPool?: MissionPool;
   /** Modo Jogador: quantas conversas o usuário pode ter em cada momento. */
   interactionLimit?: number;
+  /** Jogadores podem deixar o castelo por motivos pessoais durante a simulação. */
+  withdrawals?: boolean;
 }
 
 export interface SeasonProps {
@@ -28,6 +30,7 @@ export interface SeasonProps {
   chaos: number;
   missionPool: MissionPool;
   interactionLimit: number;
+  withdrawals: boolean;
   /** Memória da simulação automática entre fases (reviravoltas já usadas etc.). */
   simState: Record<string, unknown>;
   status: SeasonStatus;
@@ -62,6 +65,7 @@ export class Season {
       chaos: 0,
       missionPool: 'US_S3',
       interactionLimit: 3,
+      withdrawals: true,
       simState: {},
       status: SeasonStatus.SETUP,
       currentDay: null,
@@ -88,6 +92,7 @@ export class Season {
   get chaos(): number { return this.props.chaos; }
   get missionPool(): MissionPool { return this.props.missionPool; }
   get interactionLimit(): number { return this.props.interactionLimit; }
+  get withdrawals(): boolean { return this.props.withdrawals; }
   get simState(): Record<string, unknown> { return this.props.simState; }
   get status(): SeasonStatus { return this.props.status; }
   get currentDay(): number | null { return this.props.currentDay; }
@@ -124,9 +129,11 @@ export class Season {
     const changing =
       (settings.chaos !== undefined && settings.chaos !== this.props.chaos) ||
       (settings.missionPool !== undefined && settings.missionPool !== this.props.missionPool) ||
-      (settings.interactionLimit !== undefined && settings.interactionLimit !== this.props.interactionLimit);
+      (settings.interactionLimit !== undefined && settings.interactionLimit !== this.props.interactionLimit) ||
+      (settings.withdrawals !== undefined && settings.withdrawals !== this.props.withdrawals);
     if (!changing) return;
-    if (!this.isInSetup()) throw new DomainError('Loucura e missões só podem mudar antes do início');
+    if (!this.isInSetup()) throw new DomainError('Loucura, missões e desistências só podem mudar antes do início');
+    if (settings.withdrawals !== undefined) this.props.withdrawals = settings.withdrawals;
     if (settings.chaos !== undefined) {
       if (!Number.isInteger(settings.chaos) || settings.chaos < 0 || settings.chaos > 100) {
         throw new DomainError('A loucura vai de 0% a 100%');

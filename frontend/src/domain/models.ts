@@ -114,6 +114,8 @@ export interface Season {
   missionPool: MissionPool;
   /** Modo Jogador: conversas por momento. */
   interactionLimit: number;
+  /** A simulação pode tirar alguém do castelo por motivos pessoais. */
+  withdrawals: boolean;
   status: SeasonStatus;
   currentDay: number | null;
   currentPhase: GamePhase | null;

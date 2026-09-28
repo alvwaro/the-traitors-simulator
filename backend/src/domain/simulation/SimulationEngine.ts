@@ -196,6 +196,8 @@ export interface EngineOptions {
   humanId?: string;
   /** A temporada escolhida tem a noite dos caixões (padrão: sim). */
   coffins?: boolean;
+  /** Alguém pode deixar o castelo por motivos pessoais (padrão: sim). */
+  withdrawals?: boolean;
 }
 
 /**
@@ -649,7 +651,7 @@ export class SimulationEngine {
 
   /** Raramente alguém deixa o jogo por motivos pessoais (mais com loucura). */
   private maybeWithdraw(): string | null {
-    if (this.active.length <= 6 || !chance(this.rng, 0.012 + this.chaos * 0.04)) return null;
+    if (this.options.withdrawals === false || this.active.length <= 6 || !chance(this.rng, 0.012 + this.chaos * 0.04)) return null;
     const leaving = weightedPick(this.rng, this.npcs, (p) => 0.5 + p.traits.volatility / 100);
     if (!leaving) return null;
     this.say(SimulationEventKind.REVEAL, '{user} reuniu todos no salão e anunciou que vai deixar o castelo por motivos pessoais. Ninguém esperava.', [leaving]);

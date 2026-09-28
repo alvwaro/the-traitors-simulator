@@ -1,4 +1,4 @@
-import { Field, Select } from '../../../components/ui/Form';
+import { Check, Field, Select } from '../../../components/ui/Form';
 import { chaosLabel, missionPoolLabel } from '../../../domain/labels';
 import type { MissionPool } from '../../../domain/models';
 import styles from './ModePicker.module.css';
@@ -6,6 +6,7 @@ import styles from './ModePicker.module.css';
 export interface SimulationDraft {
   chaos: number;
   missionPool: MissionPool;
+  withdrawals: boolean;
 }
 
 const POOL_GROUPS: readonly { label: string; pools: readonly MissionPool[] }[] = [
@@ -15,7 +16,7 @@ const POOL_GROUPS: readonly { label: string; pools: readonly MissionPool[] }[] =
 ];
 
 /**
- * Loucura (0% a 100%) e de qual temporada do programa vêm as missões.
+ * Loucura (0% a 100%), de qual temporada do programa vêm as missões e se há desistências.
  * Só valem nas temporadas automáticas.
  * Loucura 0%: todos seguem o comportamento esperado; 100%: toda decisão sai no acaso.
  */
@@ -48,6 +49,11 @@ export function SimulationFields({ value, onChange }: Readonly<{ value: Simulati
           </Select>
         )}
       </Field>
+      <Check
+        label="Permitir desistências (alguém pode deixar o castelo por motivos pessoais)"
+        checked={value.withdrawals}
+        onChange={(e) => onChange({ ...value, withdrawals: e.target.checked })}
+      />
     </div>
   );
 }

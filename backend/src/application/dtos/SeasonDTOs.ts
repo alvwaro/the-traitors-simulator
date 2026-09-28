@@ -11,6 +11,8 @@ export interface CreateSeasonInput {
   missionPool?: MissionPool;
   /** Modo Jogador: conversas por momento. */
   interactionLimit?: number;
+  /** A simulação pode tirar alguém do castelo por motivos pessoais. */
+  withdrawals?: boolean;
   /** Modo Jogador: o participante que o usuário controla. */
   human?: { name: string; imageUrl?: string | null } | null;
   currency?: string;
@@ -29,6 +31,7 @@ export interface UpdateSeasonInput {
   chaos?: number;
   missionPool?: MissionPool;
   interactionLimit?: number;
+  withdrawals?: boolean;
   currency?: string;
   initialPrizePot?: number;
   maxPrizePot?: number | null;

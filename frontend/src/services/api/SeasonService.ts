@@ -12,6 +12,7 @@ export interface SimulationSettings {
   chaos?: number;
   missionPool?: MissionPool;
   interactionLimit?: number;
+  withdrawals?: boolean;
 }
 
 export interface CreateSeasonInput extends PrizeSettings, SimulationSettings {

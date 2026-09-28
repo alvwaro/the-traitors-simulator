@@ -12,6 +12,7 @@ interface SeasonRow {
   chaos: number;
   mission_pool: string;
   interaction_limit: number;
+  allow_withdrawals: boolean;
   sim_state: Record<string, unknown>;
   status: SeasonStatus;
   current_day: number | null;
@@ -34,6 +35,7 @@ const toEntity = (r: SeasonRow): Season =>
     chaos: r.chaos,
     missionPool: normalizeMissionPool(r.mission_pool),
     interactionLimit: r.interaction_limit,
+    withdrawals: r.allow_withdrawals ?? true,
     simState: r.sim_state ?? {},
     status: r.status,
     currentDay: r.current_day,
@@ -73,11 +75,11 @@ export class PgSeasonRepository implements ISeasonRepository {
       this.db,
       `INSERT INTO seasons (id, name, cast_id, status, current_day, current_phase, currency,
                             initial_prize_pot, max_prize_pot, created_at, started_at, finished_at, mode,
-                            chaos, mission_pool, sim_state, interaction_limit, owner_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)`,
+                            chaos, mission_pool, sim_state, interaction_limit, owner_id, allow_withdrawals)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)`,
       [s.id, s.name, s.castId, s.status, s.currentDay, s.currentPhase, s.currency,
        s.initialPrizePot, s.maxPrizePot, s.createdAt, s.startedAt, s.finishedAt, s.mode,
-       s.chaos, s.missionPool, JSON.stringify(s.simState), s.interactionLimit, s.ownerId],
+       s.chaos, s.missionPool, JSON.stringify(s.simState), s.interactionLimit, s.ownerId, s.withdrawals],
     );
   }
 
@@ -88,11 +90,11 @@ export class PgSeasonRepository implements ISeasonRepository {
       `UPDATE seasons
           SET name = $2, cast_id = $3, status = $4, current_day = $5, current_phase = $6, currency = $7,
               initial_prize_pot = $8, max_prize_pot = $9, started_at = $10, finished_at = $11, mode = $12,
-              chaos = $13, mission_pool = $14, sim_state = $15, interaction_limit = $16
+              chaos = $13, mission_pool = $14, sim_state = $15, interaction_limit = $16, allow_withdrawals = $17
         WHERE id = $1`,
       [s.id, s.name, s.castId, s.status, s.currentDay, s.currentPhase, s.currency,
        s.initialPrizePot, s.maxPrizePot, s.startedAt, s.finishedAt, s.mode,
-       s.chaos, s.missionPool, JSON.stringify(s.simState), s.interactionLimit],
+       s.chaos, s.missionPool, JSON.stringify(s.simState), s.interactionLimit, s.withdrawals],
     );
   }
 
