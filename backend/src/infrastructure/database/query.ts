@@ -1,6 +1,6 @@
 import { DatabaseError, QueryResultRow } from 'pg';
 import { DomainError } from '../../domain/errors/DomainError';
-import { ConflictError, DatabaseUnavailableError } from '../../shared/errors/AppError';
+import { AppError, ConflictError, DatabaseUnavailableError } from '../../shared/errors/AppError';
 import { Queryable } from './connection';
 
 const UNIQUE_VIOLATIONS: Record<string, string> = {
@@ -45,6 +45,9 @@ export function translateDbError(err: unknown): unknown {
       return new ConflictError(`Registro relacionado inexistente ou em uso (${err.constraint})`);
     case '23514':
       return new DomainError(`Dados inválidos (${err.constraint})`);
+    case '22P02':
+      // Texto no lugar de um id (ex.: /characters/abc): é um pedido inválido, não uma falha do servidor.
+      return new AppError('Identificador inválido', 400);
     case '28P01':
     case '28000':
       return new DatabaseUnavailableError('O banco recusou usuário/senha. Confira o DATABASE_URL no .env (outro Postgres pode estar usando a mesma porta).');
