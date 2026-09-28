@@ -231,7 +231,8 @@ export async function buildPlayerView(repos: Repositories, season: Season, playe
     canRecruit: need === 'TOWER' && !tonight && !recruitedLastNight && (traitors.length < originals || traitors.length === 1) && faithful.length >= 2,
     canUltimatum: need === 'TOWER' && !tonight && !recruitedLastNight && traitors.length === 1 && active.length >= 4,
     fellowTraitorIds: human.isTraitor() ? traitors.filter((p) => p.id !== human.id).map((p) => p.id) : [],
-    dungeonIds: human.isTraitor() && flags.dungeon?.day === today ? flags.dungeon.playerIds : [],
+    // Só os fiéis condenados que ainda estão no jogo (sem nenhum, a noite fica livre, como no motor).
+    dungeonIds: human.isTraitor() && flags.dungeon?.day === today ? flags.dungeon.playerIds.filter((id) => faithful.some((f) => f.id === id)) : [],
   };
 }
 
