@@ -19,6 +19,7 @@ import { PgPublicationRepository } from './PgPublicationRepository';
 import { PgSessionRepository, PgUserRepository } from './PgUserRepository';
 import { PgAccessRepository } from './PgAccessRepository';
 import { PgSeasonSnapshotRepository } from './PgSeasonSnapshotRepository';
+import { PgJobQueue } from '../queue/PgJobQueue';
 
 export function createRepositories(db: Queryable): Repositories {
   return {
@@ -42,5 +43,6 @@ export function createRepositories(db: Queryable): Repositories {
     sessions: new PgSessionRepository(db),
     access: new PgAccessRepository(db),
     snapshots: new PgSeasonSnapshotRepository(db),
+    jobs: new PgJobQueue(db),
   };
 }

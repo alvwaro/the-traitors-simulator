@@ -20,6 +20,7 @@ import {
   IAccessRepository,
   ISeasonSnapshotRepository,
 } from '../../domain/repositories';
+import { IJobQueue } from './IJobQueue';
 
 export interface Repositories {
   seasons: ISeasonRepository;
@@ -42,6 +43,8 @@ export interface Repositories {
   sessions: ISessionRepository;
   access: IAccessRepository;
   snapshots: ISeasonSnapshotRepository;
+  /** Fila de trabalhos: enfileirar dentro da transação só publica o trabalho se tudo der certo. */
+  jobs: IJobQueue;
 }
 
 /**
