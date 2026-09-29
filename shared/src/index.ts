@@ -12,3 +12,4 @@ export * from './api/routes';
 export * from './api/matcher';
 export * from './api/origin';
 export * from './api/rateLimit';
+export * from './log';

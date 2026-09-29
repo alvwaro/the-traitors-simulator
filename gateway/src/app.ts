@@ -1,6 +1,5 @@
-import { randomUUID } from 'node:crypto';
 import type { IncomingMessage, RequestListener } from 'node:http';
-import { API_PREFIX, looksLikeUuid, RATE_LIMITS, RateLimiter, REQUEST_ID_HEADER } from '@traitors/shared';
+import { API_PREFIX, errorForLog, RATE_LIMITS, RateLimiter, REQUEST_ID_HEADER, requestIdFrom, sanitizeForLog } from '@traitors/shared';
 import type { GatewayConfig } from './config';
 import { bodyGuard, ipRateLimit, originGuard, routeGuard, routeRateLimit, sessionGate } from './guards';
 import { compose, type GatewayContext } from './pipeline';
@@ -29,8 +28,21 @@ function clientIpOf(req: IncomingMessage, trustProxy: boolean): string {
 
 /** Id da requisição: o que veio do proxy confiável (se for um UUID) ou um novo. */
 function requestIdOf(req: IncomingMessage, trustProxy: boolean): string {
-  const incoming = req.headers[REQUEST_ID_HEADER];
-  return trustProxy && typeof incoming === 'string' && looksLikeUuid(incoming) ? incoming : randomUUID();
+  return requestIdFrom(trustProxy ? req.headers[REQUEST_ID_HEADER] : undefined);
+}
+
+/** Falha inesperada na cadeia, em uma linha de JSON: tudo que veio do cliente passa pelo saneamento. */
+function logFailure(ctx: GatewayContext, err: unknown): void {
+  console.error(
+    JSON.stringify({
+      level: 'error',
+      msg: 'falha ao atender a requisição',
+      requestId: sanitizeForLog(ctx.requestId),
+      method: sanitizeForLog(ctx.req.method),
+      path: sanitizeForLog(ctx.path),
+      error: errorForLog(err),
+    }),
+  );
 }
 
 /**
@@ -61,7 +73,7 @@ export function createGateway(config: GatewayConfig, pool = new UpstreamPool(con
 
     const ctx: GatewayContext = { req, res, path, search, requestId, clientIp: clientIpOf(req, config.trustProxy) };
     pipeline(ctx).catch((err: unknown) => {
-      console.error(`[gateway ${requestId}]`, err);
+      logFailure(ctx, err);
       sendError(res, 502, 'BadGateway', 'O servidor está indisponível no momento. Tente de novo em instantes.');
     });
   };

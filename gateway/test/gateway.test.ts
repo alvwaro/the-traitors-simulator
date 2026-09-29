@@ -1,7 +1,17 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { IncomingMessage, ServerResponse } from 'node:http';
+import { Socket } from 'node:net';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { createGateway } from '../src/app';
+import { loadConfig } from '../src/config';
+import { strategyFor, UpstreamPool } from '../src/upstream/pool';
 import { call, closeAll, fakeApi, ID, listen, SESSION, startGateway } from './support';
 
-afterEach(closeAll);
+afterEach(async () => {
+  vi.restoreAllMocks();
+  await closeAll();
+});
+
+const UUID = /^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i;
 
 describe('gateway: o que nem chega ao backend', () => {
   it('responde as próprias checagens de saúde e recusa o que não é da API', async () => {
@@ -202,5 +212,50 @@ describe('gateway: saúde das instâncias', () => {
     ready = false;
     await expect.poll(() => gateway.pool.hasHealthy).toBe(false);
     gateway.pool.stopHealthChecks();
+  });
+});
+
+describe('gateway: id de requisição e logs', () => {
+  it('atrás do proxy confiável, troca por um novo o id grande demais ou com caracteres inválidos', async () => {
+    const api = await fakeApi('a');
+    const { port } = await startGateway([api.url], { trustProxy: true });
+    for (const bad of ['a'.repeat(500), 'id;com<coisas>', `${ID}-x`]) {
+      const reply = await call(port, { path: '/api/auth/me', headers: { 'x-request-id': bad } });
+      const sent = reply.headers['x-request-id'];
+      expect(sent).toMatch(UUID);
+      expect(sent).not.toBe(bad);
+      // O id repassado ao backend é o mesmo devolvido na resposta.
+      expect(api.seen.at(-1)?.headers['x-request-id']).toBe(sent);
+    }
+  });
+
+
+  it('com quebra de linha no id, na query e no erro, o log sai numa linha só e com um id novo', async () => {
+    // O parser HTTP do Node já recusa CR/LF crus: a requisição forjada é entregue direto ao gateway.
+    const config = { ...loadConfig({}), upstreams: [new URL('http://127.0.0.1:1')], healthIntervalMs: 0, trustProxy: true };
+    const pool = new UpstreamPool(config.upstreams, strategyFor(config.strategy));
+    const injected = '\r\n[FAKE] linha forjada';
+    vi.spyOn(pool, 'pick').mockImplementation(() => {
+      throw new Error(`sem instância para /api/auth/me${injected}${String.fromCodePoint(0x2028)}[FAKE] outra`);
+    });
+    const logs = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    const req = new IncomingMessage(new Socket());
+    req.method = 'GET';
+    req.url = `/api/auth/me?q=${injected}`;
+    req.headers = { 'x-request-id': `${ID}${injected}` };
+    const res = new ServerResponse(req);
+    createGateway(config, pool).handle(req, res);
+
+    await vi.waitFor(() => expect(logs).toHaveBeenCalledTimes(1));
+    const [line] = logs.mock.calls[0];
+    expect(typeof line).toBe('string');
+    expect(line).not.toMatch(/[\r\n\p{Zl}\p{Zp}]/u);
+    const entry = JSON.parse(line as string);
+    expect(entry).toMatchObject({ level: 'error', method: 'GET', path: '/api/auth/me' });
+    expect(entry.error.message).toBe('sem instância para /api/auth/me[FAKE] linha forjada[FAKE] outra');
+    expect(entry.requestId).toMatch(UUID);
+    expect(entry.requestId).toBe(res.getHeader('x-request-id'));
+    expect(res.statusCode).toBe(502);
   });
 });
