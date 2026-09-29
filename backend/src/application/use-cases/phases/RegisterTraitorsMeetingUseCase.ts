@@ -1,29 +1,20 @@
-import { IUseCase } from '../../contracts/IUseCase';
-import { IUnitOfWork, Repositories } from '../../ports/IUnitOfWork';
+import { Repositories } from '../../ports/IUnitOfWork';
 import { RegisterTraitorsMeetingInput } from '../../dtos/GameDTOs';
 import { Player, TraitorMeeting, TraitorMeetingProps } from '../../../domain/entities';
 import { GamePhase, MurderOutcome, PlayerStatus } from '../../../domain/enums';
 import { DomainError } from '../../../domain/errors/DomainError';
 import { loadActiveGame } from '../../services/gameGuards';
 import { PlayerRoster } from '../../services/PlayerRoster';
-import { rememberForUndo } from '../../services/undo';
+import { UndoableRecord } from '../../services/undo';
 
 /**
  * Reunião noturna: assassinato (bloqueado se o alvo tem escudo do dia)
  * e/ou recrutamento. Ultimato recusado conta como o assassinato da noite.
  * A vítima é revelada no café da manhã seguinte.
  */
-export class RegisterTraitorsMeetingUseCase implements IUseCase<RegisterTraitorsMeetingInput, TraitorMeetingProps> {
-  constructor(private readonly uow: IUnitOfWork) {}
+export class RegisterTraitorsMeetingUseCase extends UndoableRecord<RegisterTraitorsMeetingInput, TraitorMeetingProps> {
+  protected readonly undoLabel = 'Registro da reunião dos traidores';
 
-  execute(input: RegisterTraitorsMeetingInput): Promise<TraitorMeetingProps> {
-    return this.uow.run(async (repos) => {
-      await rememberForUndo(repos, input.seasonId, 'Registro da reunião dos traidores');
-      return this.record(repos, input);
-    });
-  }
-
-  /** A mesma regra dentro de uma transação já aberta (usada também pela simulação automática). */
   async record(repos: Repositories, input: RegisterTraitorsMeetingInput): Promise<TraitorMeetingProps> {
     const { season, day } = await loadActiveGame(repos, input.seasonId, GamePhase.TRAITORS_MEETING);
     if (await repos.traitorMeetings.findByDay(day.id)) {

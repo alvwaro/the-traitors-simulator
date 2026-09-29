@@ -5,7 +5,7 @@ import { GameStateOutput } from '../../dtos/GameDTOs';
 import { DomainError } from '../../../domain/errors/DomainError';
 import { loadActiveGame, requireSeason } from '../../services/gameGuards';
 import { readGameState } from '../../services/gameState';
-import { phaseHistory } from '../../services/phaseHistory';
+import { indexOfPhase, phaseHistory } from '../../services/phaseHistory';
 
 /**
  * Botão "voltar" das temporadas manuais: desfaz o último registro (mesa redonda, missão, torre,
@@ -31,7 +31,7 @@ export class GoBackPhaseUseCase implements IUseCase<SeasonIdInput, GameStateOutp
   private async previousPhase(repos: Repositories, seasonId: string): Promise<void> {
     const { season, day, phase } = await loadActiveGame(repos, seasonId);
     const history = await phaseHistory(repos, season.id);
-    const index = history.findIndex((h) => h.day.number === day.number && h.phase.phase === phase);
+    const index = indexOfPhase(history, day.number, phase);
     const previous = index > 0 ? history[index - 1] : undefined;
     if (!previous) throw new DomainError('Não há nada para desfazer');
 

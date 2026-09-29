@@ -1,4 +1,4 @@
-import { Day, Season } from '../../domain/entities';
+import { Day, isEndgameDecided, Season } from '../../domain/entities';
 import { GamePhase, PlayerRole, PlayerStatus, RoundTableKind } from '../../domain/enums';
 import { Repositories } from '../ports/IUnitOfWork';
 import { pendingOffer } from './playerView';
@@ -40,8 +40,7 @@ export async function pendingRequirement(
       return traitors.length > 0 ? 'Registre a reunião dos traidores' : null;
     }
     case GamePhase.ENDGAME_ROUND_TABLE: {
-      const tables = (await repos.roundTables.findByDay(day.id)).filter((t) => t.kind === RoundTableKind.ENDGAME);
-      return tables.at(-1)?.isEndgameUnanimous() ? null : 'A final só termina quando todos votarem para encerrar o jogo';
+      return isEndgameDecided(await repos.roundTables.findByDay(day.id)) ? null : 'A final só termina quando todos votarem para encerrar o jogo';
     }
     case GamePhase.FINALE:
       return 'A temporada já terminou';

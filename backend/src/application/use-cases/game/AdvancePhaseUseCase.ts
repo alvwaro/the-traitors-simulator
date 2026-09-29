@@ -1,4 +1,3 @@
-import { IUseCase } from '../../contracts/IUseCase';
 import { IUnitOfWork, Repositories } from '../../ports/IUnitOfWork';
 import { SeasonIdInput } from '../../dtos/SeasonDTOs';
 import { GameStateOutput } from '../../dtos/GameDTOs';
@@ -9,8 +8,8 @@ import { PhaseFlowPolicy, WinnerPolicy } from '../../../domain/services';
 import { loadActiveGame } from '../../services/gameGuards';
 import { readGameState } from '../../services/gameState';
 import { pendingRequirement } from '../../services/phaseRequirements';
-import { phaseHistory } from '../../services/phaseHistory';
-import { rememberForUndo } from '../../services/undo';
+import { closePhase, indexOfPhase, phaseHistory } from '../../services/phaseHistory';
+import { UndoableRecord } from '../../services/undo';
 
 /**
  * Botão "avançar": fecha a fase atual e abre a próxima.
@@ -18,36 +17,28 @@ import { rememberForUndo } from '../../services/undo';
  * Ao chegar na FINALE, calcula os vencedores e a divisão do prêmio.
  * Depois de voltar fases, avançar segue o caminho que já foi registrado (reaproveitando dias e fases).
  */
-export class AdvancePhaseUseCase implements IUseCase<SeasonIdInput, GameStateOutput> {
+export class AdvancePhaseUseCase extends UndoableRecord<SeasonIdInput, GameStateOutput> {
+  protected readonly undoLabel = 'Avanço de fase';
+
   constructor(
-    private readonly uow: IUnitOfWork,
+    uow: IUnitOfWork,
     private readonly phaseFlow: PhaseFlowPolicy,
     private readonly winnerPolicy: WinnerPolicy,
-  ) {}
-
-  execute(input: SeasonIdInput): Promise<GameStateOutput> {
-    return this.uow.run(async (repos) => {
-      await rememberForUndo(repos, input.seasonId, 'Avanço de fase');
-      return this.record(repos, input);
-    });
+  ) {
+    super(uow);
   }
 
-  /** A mesma regra dentro de uma transação já aberta (usada também pela simulação automática). */
   async record(repos: Repositories, input: SeasonIdInput): Promise<GameStateOutput> {
     const { season, day, phase } = await loadActiveGame(repos, input.seasonId);
 
     const missing = await pendingRequirement(repos, season, day, phase);
     if (missing) throw new DomainError(missing);
 
-    const current = await repos.days.findPhase(day.id, phase);
-    if (current) {
-      current.end();
-      await repos.days.savePhase(current);
-    }
+    await closePhase(repos, day.id, phase);
 
     // Já existe uma fase registrada depois desta (o usuário tinha voltado): segue por ela.
     const history = await phaseHistory(repos, season.id);
-    const index = history.findIndex((h) => h.day.number === day.number && h.phase.phase === phase);
+    const index = indexOfPhase(history, day.number, phase);
     const recorded = index >= 0 ? history[index + 1] : undefined;
     const next = recorded ? { day: recorded.day.number, phase: recorded.phase.phase } : this.phaseFlow.next({ day: day.number, phase }, season.isEndgame());
 

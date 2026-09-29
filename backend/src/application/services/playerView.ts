@@ -1,5 +1,5 @@
-import { Day, Player, PlayerProps, Season, SimulationEventProps, TraitorMeetingProps } from '../../domain/entities';
-import { GamePhase, MurderOutcome, PlayerRole, PlayerStatus, RoundTableKind, SimulationEventKind } from '../../domain/enums';
+import { Day, endgameRounds, isEndgameDecided, Player, PlayerProps, Season, SimulationEventProps, TraitorMeetingProps } from '../../domain/entities';
+import { GamePhase, MurderOutcome, PlayerRole, PlayerStatus, SimulationEventKind } from '../../domain/enums';
 import {
   editionFor,
   actionsFor,
@@ -142,9 +142,9 @@ export async function buildPlayerView(repos: Repositories, season: Season, playe
   let finalOpen = false;
   let finalStage: PlayerView['finalStage'] = null;
   if (playing && phase === GamePhase.ENDGAME_ROUND_TABLE) {
-    const tables = (await repos.roundTables.findByDay(day.id)).filter((t) => t.kind === RoundTableKind.ENDGAME);
-    finalOpen = !tables.at(-1)?.isEndgameUnanimous();
-    finalStage = isFinalTableRound(tables.length + 1, active.length) ? 'TABLE' : 'FIRE';
+    const tables = await repos.roundTables.findByDay(day.id);
+    finalOpen = !isEndgameDecided(tables);
+    finalStage = isFinalTableRound(endgameRounds(tables).length + 1, active.length) ? 'TABLE' : 'FIRE';
   }
 
   const towerTalk = playing && phase === GamePhase.TRAITORS_MEETING && human.isTraitor() && traitors.length > 1 && !simulated;

@@ -1,8 +1,10 @@
-import { Player, Season } from '../../domain/entities';
+import { Player, Season, SimulationEvent } from '../../domain/entities';
+import { GamePhase } from '../../domain/enums';
 import {
   gameRng,
   computeStandings,
   fillMissingRelationships,
+  NarratedEvent,
   RelationshipMatrix,
   Rng,
   seededRng,
@@ -74,6 +76,16 @@ export async function buildRelationshipsOutput(repos: Repositories, season: Seas
     relationships: state.matrix.entries().filter((r) => ids.has(r.fromId) && ids.has(r.toId)),
     standings: computeStandings(rng, state.matrix, active, season.chaos / 100),
   };
+}
+
+/** Acrescenta a narrativa depois do que já foi contado neste momento do dia (a sequência continua de onde parou). */
+export async function appendPhaseEvents(
+  repos: Repositories,
+  moment: { seasonId: string; dayId: string; phase: GamePhase },
+  events: readonly NarratedEvent[],
+): Promise<void> {
+  const told = (await repos.simulationEvents.findByDay(moment.dayId)).filter((e) => e.phase === moment.phase).length;
+  await repos.simulationEvents.createMany(events.map((e, i) => SimulationEvent.create({ ...moment, sequence: told + i + 1, ...e })));
 }
 
 /** Formata dinheiro na moeda da temporada, para a narração. */

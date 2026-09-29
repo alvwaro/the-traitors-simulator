@@ -1,28 +1,19 @@
-import { IUseCase } from '../../contracts/IUseCase';
-import { IUnitOfWork, Repositories } from '../../ports/IUnitOfWork';
+import { Repositories } from '../../ports/IUnitOfWork';
 import { SelectTraitorsInput } from '../../dtos/GameDTOs';
 import { PlayerProps } from '../../../domain/entities';
 import { GamePhase, PlayerRole } from '../../../domain/enums';
 import { DomainError } from '../../../domain/errors/DomainError';
 import { loadActiveGame } from '../../services/gameGuards';
 import { PlayerRoster } from '../../services/PlayerRoster';
-import { rememberForUndo } from '../../services/undo';
+import { UndoableRecord } from '../../services/undo';
 
 /**
  * Fase TRAITOR_SELECTION do dia 1: define quem são os traidores originais.
  * Pode ser chamado de novo na mesma fase para corrigir a escolha.
  */
-export class SelectTraitorsUseCase implements IUseCase<SelectTraitorsInput, PlayerProps[]> {
-  constructor(private readonly uow: IUnitOfWork) {}
+export class SelectTraitorsUseCase extends UndoableRecord<SelectTraitorsInput, PlayerProps[]> {
+  protected readonly undoLabel = 'Escolha dos traidores';
 
-  execute(input: SelectTraitorsInput): Promise<PlayerProps[]> {
-    return this.uow.run(async (repos) => {
-      await rememberForUndo(repos, input.seasonId, 'Escolha dos traidores');
-      return this.record(repos, input);
-    });
-  }
-
-  /** A mesma regra dentro de uma transação já aberta (usada também pela simulação automática). */
   async record(repos: Repositories, input: SelectTraitorsInput): Promise<PlayerProps[]> {
     const { season } = await loadActiveGame(repos, input.seasonId, GamePhase.TRAITOR_SELECTION);
     const roster = await PlayerRoster.load(repos, season.id);

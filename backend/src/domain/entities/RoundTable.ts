@@ -85,3 +85,13 @@ export class RoundTable {
     return { ...this.props, votes: [...this.props.votes], endgameVotes: [...this.props.endgameVotes] };
   }
 }
+
+/** Só as rodadas da mesa final (na ordem em que aconteceram). */
+export function endgameRounds(tables: readonly RoundTable[]): RoundTable[] {
+  return tables.filter((t) => t.kind === RoundTableKind.ENDGAME);
+}
+
+/** A mesa final do dia já terminou: a última rodada foi unânime por encerrar o jogo. */
+export function isEndgameDecided(tables: readonly RoundTable[]): boolean {
+  return !!endgameRounds(tables).at(-1)?.isEndgameUnanimous();
+}

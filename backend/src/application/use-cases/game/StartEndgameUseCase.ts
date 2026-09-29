@@ -1,5 +1,4 @@
-import { IUseCase } from '../../contracts/IUseCase';
-import { IUnitOfWork, Repositories } from '../../ports/IUnitOfWork';
+import { Repositories } from '../../ports/IUnitOfWork';
 import { SeasonIdInput } from '../../dtos/SeasonDTOs';
 import { GameStateOutput } from '../../dtos/GameDTOs';
 import { DayPhase } from '../../../domain/entities';
@@ -8,24 +7,17 @@ import { DomainError } from '../../../domain/errors/DomainError';
 import { ENDGAME_MAX_ACTIVE_PLAYERS } from '../../../domain/rules';
 import { loadActiveGame } from '../../services/gameGuards';
 import { readGameState } from '../../services/gameState';
-import { rememberForUndo } from '../../services/undo';
+import { closePhase } from '../../services/phaseHistory';
+import { UndoableRecord } from '../../services/undo';
 
 /**
  * Marca a temporada como ENDGAME quando restam 6 jogadores ou menos.
  *  - Antes da mesa redonda do dia: ela vira a Mesa Final na hora.
  *  - Depois da mesa redonda (ou durante a reunião): a noite acontece e a final começa no dia seguinte.
  */
-export class StartEndgameUseCase implements IUseCase<SeasonIdInput, GameStateOutput> {
-  constructor(private readonly uow: IUnitOfWork) {}
+export class StartEndgameUseCase extends UndoableRecord<SeasonIdInput, GameStateOutput> {
+  protected readonly undoLabel = 'Início da reta final';
 
-  execute(input: SeasonIdInput): Promise<GameStateOutput> {
-    return this.uow.run(async (repos) => {
-      await rememberForUndo(repos, input.seasonId, 'Início da reta final');
-      return this.record(repos, input);
-    });
-  }
-
-  /** A mesma regra dentro de uma transação já aberta (usada também pela simulação automática). */
   async record(repos: Repositories, input: SeasonIdInput): Promise<GameStateOutput> {
     const { season, day, phase } = await loadActiveGame(repos, input.seasonId, [
       GamePhase.BREAKFAST,
@@ -46,11 +38,7 @@ export class StartEndgameUseCase implements IUseCase<SeasonIdInput, GameStateOut
       const tables = await repos.roundTables.findByDay(day.id);
       if (!tables.some((t) => t.kind === RoundTableKind.REGULAR)) {
         // A mesa redonda de hoje ainda não aconteceu: ela passa a ser a Mesa Final.
-        const current = await repos.days.findPhase(day.id, phase);
-        if (current) {
-          current.end();
-          await repos.days.savePhase(current);
-        }
+        await closePhase(repos, day.id, phase);
         await repos.days.savePhase(DayPhase.start(day.id, GamePhase.ENDGAME_ROUND_TABLE));
         season.moveTo(day.number, GamePhase.ENDGAME_ROUND_TABLE);
       }

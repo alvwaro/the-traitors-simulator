@@ -1,13 +1,13 @@
 import { IUseCase } from '../../contracts/IUseCase';
 import { IUnitOfWork, Repositories } from '../../ports/IUnitOfWork';
 import { GameStateOutput, HumanDecision, SimulateInput } from '../../dtos/GameDTOs';
-import { Day, SimulationEvent } from '../../../domain/entities';
-import { GamePhase, RoundTableKind, SeasonStatus } from '../../../domain/enums';
+import { isEndgameDecided } from '../../../domain/entities';
+import { GamePhase, SeasonStatus } from '../../../domain/enums';
 import { DomainError } from '../../../domain/errors/DomainError';
 import { editionFor, gameRng, seededRng, SimulationEngine, SimulationFlags } from '../../../domain/simulation';
 import { loadActiveGame } from '../../services/gameGuards';
 import { readGameState } from '../../services/gameState';
-import { activeSim, ensureRelationships, moneyFormatter } from '../../services/simulation';
+import { activeSim, appendPhaseEvents, ensureRelationships, moneyFormatter } from '../../services/simulation';
 import { PhaseRecorders } from './strategies/PhaseSimulation';
 import { PHASE_SIMULATIONS } from './strategies/phases';
 import { simulationModeFor } from './strategies/SimulationMode';
@@ -64,7 +64,7 @@ export class SimulatePhaseUseCase implements IUseCase<SimulateInput, GameStateOu
     // Empate esperando o voto do jogador: a mesa continua de onde parou.
     const tie = flags.pendingRevote?.day === day.number;
     if (await repos.simulationEvents.existsFor(day.id, phase)) {
-      const finalOpen = phase === GamePhase.ENDGAME_ROUND_TABLE && season.isPlayerMode() && !(await this.finalDecided(repos, day));
+      const finalOpen = phase === GamePhase.ENDGAME_ROUND_TABLE && season.isPlayerMode() && !isEndgameDecided(await repos.roundTables.findByDay(day.id));
       if (!finalOpen && !offer && !tie) throw new DomainError('Esta fase já foi simulada; avance para a próxima');
     }
 
@@ -112,14 +112,6 @@ export class SimulatePhaseUseCase implements IUseCase<SimulateInput, GameStateOu
       current.recordSimState({ ...engine.flags, pendingOffer: flags.pendingOffer });
       await repos.seasons.update(current);
     }
-    const existing = (await repos.simulationEvents.findByDay(day.id)).filter((e) => e.phase === phase).length;
-    await repos.simulationEvents.createMany(
-      engine.events.map((e, i) => SimulationEvent.create({ seasonId: season.id, dayId: day.id, phase, sequence: existing + i + 1, ...e })),
-    );
-  }
-
-  private async finalDecided(repos: Repositories, day: Day): Promise<boolean> {
-    const tables = (await repos.roundTables.findByDay(day.id)).filter((t) => t.kind === RoundTableKind.ENDGAME);
-    return !!tables.at(-1)?.isEndgameUnanimous();
+    await appendPhaseEvents(repos, { seasonId: season.id, dayId: day.id, phase }, engine.events);
   }
 }
