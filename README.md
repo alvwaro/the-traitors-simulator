@@ -67,8 +67,6 @@ npm run stack:down
 | `frontend` | Site (React + Vite) |
 | `gateway`  | API Gateway: valida as requisições pelo manifesto, limita tentativas e distribui a carga |
 
-A arquitetura, os padrões usados e como adicionar rotas, trabalhos e modos novos estão em [docs/architecture.md](docs/architecture.md).
-
 ## Scripts
 
 | Onde       | Comando                | O que faz                                        |
