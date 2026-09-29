@@ -1,5 +1,6 @@
 import { ErrorRequestHandler } from 'express';
 import { ZodError } from 'zod';
+import { errorForLog, sanitizeForLog } from '@traitors/shared';
 import { AppError } from '../../../shared/errors/AppError';
 
 /**
@@ -7,7 +8,7 @@ import { AppError } from '../../../shared/errors/AppError';
  * Validação e erros de regra viram 400/404/409; o resto vira 500 sem detalhes para o cliente,
  * só com o id da requisição (o mesmo do log) para achar o problema.
  */
-export const errorHandler: ErrorRequestHandler = (err, _req, res, next) => {
+export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
   // Resposta já começou a ser enviada: quem encerra é o Express.
   if (res.headersSent) {
     next(err);
@@ -28,6 +29,16 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, next) => {
     return;
   }
   const requestId = res.locals.requestId;
-  console.error(`[erro ${requestId ?? '-'}]`, err);
+  // Uma linha de JSON; o que pode ter vindo do cliente (caminho, mensagem do erro) passa pelo saneamento.
+  console.error(
+    JSON.stringify({
+      level: 'error',
+      msg: 'erro inesperado',
+      requestId: sanitizeForLog(requestId ?? '-'),
+      method: sanitizeForLog(req.method),
+      path: sanitizeForLog(req.path),
+      error: errorForLog(err),
+    }),
+  );
   res.status(500).json({ error: 'InternalServerError', requestId });
 };
