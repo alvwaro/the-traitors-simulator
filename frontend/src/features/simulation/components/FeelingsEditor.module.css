@@ -1,0 +1,20 @@
+.fields {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.slider {
+  display: grid;
+  grid-template-columns: 6rem 1fr 3rem;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.slider input {
+  accent-color: var(--accent-bright);
+}
+
+.slider strong {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}

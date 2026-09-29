@@ -2,19 +2,15 @@ import { useMemo, useState } from 'react';
 import { useServices } from '../../../app/services';
 import { Portrait } from '../../../components/player/Portrait';
 import { Button } from '../../../components/ui/Button';
-import { Check } from '../../../components/ui/Form';
-import { Modal } from '../../../components/ui/Modal';
 import { ErrorState, Loading } from '../../../components/ui/States';
 import type { Cast, Character, Relationship } from '../../../domain/models';
 import { useAction } from '../../../hooks/useAction';
 import { useResource } from '../../../hooks/useResource';
 import { cx } from '../../../lib/cx';
 import type { CastRelationshipPatch } from '../../../services/api/CastService';
-import { Meter } from '../../simulation/components/Meter';
+import { FeelingMeters, FeelingsEditor, NEUTRAL_FEELINGS } from '../../simulation/components/FeelingsEditor';
 import styles from './CastDetail.module.css';
 import { fireAndForget } from '../../../lib/async';
-
-const DEFAULT = { trust: 50, liking: 50, hatred: 10, allied: false };
 
 /**
  * Relacionamentos do cast: o que cada personagem sente pelos outros.
@@ -107,11 +103,7 @@ function FeelingCell({ value, divider, onEdit }: Readonly<{ value: Relationship 
     <td colSpan={3} className={divider ? styles.divider : undefined}>
       <button type="button" className={styles.feelings} onClick={onEdit} title="Ajustar">
         {value ? (
-          <>
-            <Meter value={value.trust} tone="trust" label="Confiança" />
-            <Meter value={value.liking} tone="liking" label="Simpatia" />
-            <Meter value={value.hatred} tone="hatred" label="Ódio" />
-          </>
+          <FeelingMeters feelings={value} />
         ) : (
           <span className={styles.random}>Sorteado · definir</span>
         )}
@@ -136,11 +128,6 @@ function EditModal({
   onSaved: (list: Relationship[]) => void;
 }>) {
   const { casts } = useServices();
-  const start = current ?? DEFAULT;
-  const [trust, setTrust] = useState(start.trust);
-  const [liking, setLiking] = useState(start.liking);
-  const [hatred, setHatred] = useState(start.hatred);
-  const [allied, setAllied] = useState(start.allied);
   const save = useAction((patch: CastRelationshipPatch) => casts.updateRelationship(castId, patch), { success: 'Relacionamento salvo' });
 
   async function submit(patch: Partial<CastRelationshipPatch>) {
@@ -148,41 +135,21 @@ function EditModal({
     if (result) onSaved(result.relationships);
   }
 
-  const slider = (label: string, value: number, set: (n: number) => void) => (
-    <label className={styles.slider}>
-      <span>{label}</span>
-      <input type="range" min={0} max={100} value={value} onChange={(e) => set(Number(e.target.value))} />
-      <strong>{value}%</strong>
-    </label>
-  );
-
   return (
-    <Modal
-      open
-      title={`O que ${from.name} sente por ${to.name}`}
+    <FeelingsEditor
+      from={from}
+      to={to}
+      initial={current ?? NEUTRAL_FEELINGS}
+      pending={save.pending}
       onClose={onClose}
-      footer={
-        <>
-          {current && (
-            <Button variant="danger" pending={save.pending} onClick={fireAndForget(() => submit({ clear: true }))}>
-              Voltar a sortear
-            </Button>
-          )}
-          <Button variant="quiet" onClick={onClose}>
-            Cancelar
+      onSave={submit}
+      extra={
+        current && (
+          <Button variant="danger" pending={save.pending} onClick={fireAndForget(() => submit({ clear: true }))}>
+            Voltar a sortear
           </Button>
-          <Button pending={save.pending} onClick={fireAndForget(() => submit({ trust, liking, hatred, allied }))}>
-            Salvar
-          </Button>
-        </>
+        )
       }
-    >
-      <div className={styles.editFields}>
-        {slider('Confiança', trust, setTrust)}
-        {slider('Gosta', liking, setLiking)}
-        {slider('Ódio', hatred, setHatred)}
-        <Check label={`Aliança entre ${from.name} e ${to.name} (vale para os dois)`} checked={allied} onChange={(e) => setAllied(e.target.checked)} />
-      </div>
-    </Modal>
+    />
   );
 }

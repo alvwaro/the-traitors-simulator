@@ -215,27 +215,6 @@ button.feelings:hover {
   border-color: var(--border-strong);
 }
 
-.editFields {
-  display: grid;
-  gap: 0.9rem;
-}
-
-.editSlider {
-  display: grid;
-  grid-template-columns: 6rem 1fr 3rem;
-  align-items: center;
-  gap: 0.8rem;
-}
-
-.editSlider input {
-  accent-color: var(--accent-bright);
-}
-
-.editSlider strong {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
 /* ---------- painel da preparação ---------- */
 .panelIntro {
   margin-bottom: 1rem;
