@@ -1,6 +1,6 @@
 # Site (build estático do Vite) servido pelo Nginx, que repassa /api ao gateway. Construa a partir da raiz:
 #   docker build -f frontend/Dockerfile .
-FROM node:24-alpine AS build
+FROM node:26-alpine AS build
 WORKDIR /app
 COPY shared/package.json shared/tsconfig.json shared/
 COPY shared/src shared/src
