@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useServices } from '../../../app/services';
 import { Button } from '../../../components/ui/Button';
-import { Modal } from '../../../components/ui/Modal';
+import { ConfirmModal } from '../../../components/ui/Modal';
 import { Panel } from '../../../components/ui/Panel';
 import { EmptyState, ErrorState, Loading } from '../../../components/ui/States';
 import type { Cast } from '../../../domain/models';
@@ -13,7 +13,6 @@ import { CastDetail } from '../components/CastDetail';
 import { CastEditor } from '../components/CastEditor';
 import cardStyles from '../components/Library.module.css';
 import styles from './LibraryPage.module.css';
-import { fireAndForget } from '../../../lib/async';
 import { PublishModal } from '../../publications/PublishModal';
 import { useMyPublications } from '../../publications/useMyPublications';
 import { MIN_PLAYERS_TO_START } from '../../../domain/rules';
@@ -115,23 +114,9 @@ export function CastsPage() {
         onDone={mine.reload}
       />
 
-      <Modal
-        open={!!deleting}
-        title="Remover cast"
-        onClose={() => setDeleting(null)}
-        footer={
-          <>
-            <Button variant="quiet" onClick={() => setDeleting(null)}>
-              Cancelar
-            </Button>
-            <Button variant="danger" pending={remove.pending} onClick={fireAndForget(handleDelete)}>
-              Remover
-            </Button>
-          </>
-        }
-      >
+      <ConfirmModal open={!!deleting} title="Remover cast" onClose={() => setDeleting(null)} confirmLabel="Remover" danger pending={remove.pending} onConfirm={handleDelete}>
         <p>O cast "{deleting?.name}" será apagado. Os personagens continuam na biblioteca.</p>
-      </Modal>
+      </ConfirmModal>
     </>
   );
 }

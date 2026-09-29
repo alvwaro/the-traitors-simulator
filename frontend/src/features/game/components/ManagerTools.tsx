@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useServices } from '../../../app/services';
 import { Button } from '../../../components/ui/Button';
 import { Field, Input, Select } from '../../../components/ui/Form';
-import { Modal } from '../../../components/ui/Modal';
+import { ConfirmModal } from '../../../components/ui/Modal';
 import { Panel } from '../../../components/ui/Panel';
 import { GamePhase } from '../../../domain/enums';
 import { ENDGAME_MAX_ACTIVE_PLAYERS } from '../../../domain/rules';
@@ -65,26 +65,19 @@ function EndgameControl() {
       <Button variant="danger" disabled={!allowed} onClick={() => setConfirming(true)}>
         Iniciar a final
       </Button>
-      <Modal
+      <ConfirmModal
         open={confirming}
         title="Iniciar a final?"
         onClose={() => setConfirming(false)}
-        footer={
-          <>
-            <Button variant="quiet" onClick={() => setConfirming(false)}>
-              Cancelar
-            </Button>
-            <Button pending={start.pending} onClick={fireAndForget(async () => {
-                if (await start.run()) refresh();
-                setConfirming(false);
-              })}>
-              Iniciar
-            </Button>
-          </>
-        }
+        confirmLabel="Iniciar"
+        pending={start.pending}
+        onConfirm={async () => {
+          if (await start.run()) refresh();
+          setConfirming(false);
+        }}
       >
         <p>A próxima mesa redonda passa a ser a Mesa Final.</p>
-      </Modal>
+      </ConfirmModal>
     </section>
   );
 }
@@ -159,23 +152,17 @@ function Withdrawal() {
       <Button variant="danger" disabled={!player} onClick={() => setConfirming(true)}>
         Registrar saída
       </Button>
-      <Modal
+      <ConfirmModal
         open={confirming}
         title={`${player?.name ?? ''} vai deixar o jogo?`}
         onClose={() => setConfirming(false)}
-        footer={
-          <>
-            <Button variant="quiet" onClick={() => setConfirming(false)}>
-              Cancelar
-            </Button>
-            <Button variant="danger" pending={withdraw.pending} onClick={fireAndForget(handleConfirm)}>
-              Confirmar
-            </Button>
-          </>
-        }
+        confirmLabel="Confirmar"
+        danger
+        pending={withdraw.pending}
+        onConfirm={handleConfirm}
       >
         <p>Não dá para desfazer.</p>
-      </Modal>
+      </ConfirmModal>
       <EliminationReveal elimination={revealed} onClose={() => setRevealed(null)} />
     </section>
   );

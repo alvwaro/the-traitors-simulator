@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useServices } from '../../../app/services';
 import { Button } from '../../../components/ui/Button';
-import { Modal } from '../../../components/ui/Modal';
+import { ConfirmModal } from '../../../components/ui/Modal';
 import { phaseLabel } from '../../../domain/labels';
 import type { GameState } from '../../../domain/models';
 import { nextPhase } from '../../../domain/phaseTrack';
@@ -116,21 +116,9 @@ export function AdvanceBar() {
         )}
       </div>
 
-      <Modal
-        open={confirmingAll}
-        title="Simular o resto da temporada?"
-        onClose={() => setConfirmingAll(false)}
-        footer={
-          <>
-            <Button variant="quiet" onClick={() => setConfirmingAll(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={fireAndForget(handleSimulateAll)}>Simular tudo</Button>
-          </>
-        }
-      >
+      <ConfirmModal open={confirmingAll} title="Simular o resto da temporada?" onClose={() => setConfirmingAll(false)} confirmLabel="Simular tudo" onConfirm={handleSimulateAll}>
         <p>Todas as fases serão simuladas e avançadas até a revelação final. A narrativa de cada dia fica na crônica.</p>
-      </Modal>
+      </ConfirmModal>
       <EliminationReveal elimination={revealed} onClose={() => setRevealed(null)} />
     </div>
   );

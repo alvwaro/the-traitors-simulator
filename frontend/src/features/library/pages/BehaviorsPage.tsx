@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../../../app/auth';
 import { useServices } from '../../../app/services';
 import { Button } from '../../../components/ui/Button';
-import { Modal } from '../../../components/ui/Modal';
+import { ConfirmModal } from '../../../components/ui/Modal';
 import { Panel } from '../../../components/ui/Panel';
 import { EmptyState, ErrorState, Loading } from '../../../components/ui/States';
 import { EFFECTS } from '../../../domain/behaviors';
@@ -13,7 +13,6 @@ import type { BehaviorInput } from '../../../services/api/BehaviorService';
 import { BehaviorEditor } from '../components/BehaviorEditor';
 import behaviorStyles from '../components/Behaviors.module.css';
 import styles from './LibraryPage.module.css';
-import { fireAndForget } from '../../../lib/async';
 
 /** Comportamentos: as tags de personalidade que movem a simulação automática. */
 export function BehaviorsPage() {
@@ -61,7 +60,9 @@ export function BehaviorsPage() {
           onCancel={() => setEditing(null)}
           onDelete={current ? () => setDeleting(current) : undefined}
         />
-        <DeleteModal behavior={deleting} pending={remove.pending} onCancel={() => setDeleting(null)} onConfirm={fireAndForget(handleDelete)} />
+        <ConfirmModal open={!!deleting} title="Excluir comportamento" onClose={() => setDeleting(null)} confirmLabel="Excluir" danger pending={remove.pending} onConfirm={handleDelete}>
+          <p>"{deleting?.name}" sai de todos os personagens e jogadores. As frases ligadas a ele passam a valer para qualquer um.</p>
+        </ConfirmModal>
       </Panel>
     );
   }
@@ -98,27 +99,5 @@ export function BehaviorsPage() {
         </div>
       )}
     </>
-  );
-}
-
-function DeleteModal({ behavior, pending, onCancel, onConfirm }: Readonly<{ behavior: Behavior | null; pending: boolean; onCancel: () => void; onConfirm: () => void }>) {
-  return (
-    <Modal
-      open={!!behavior}
-      title="Excluir comportamento"
-      onClose={onCancel}
-      footer={
-        <>
-          <Button variant="quiet" onClick={onCancel}>
-            Cancelar
-          </Button>
-          <Button variant="danger" pending={pending} onClick={onConfirm}>
-            Excluir
-          </Button>
-        </>
-      }
-    >
-      <p>"{behavior?.name}" sai de todos os personagens e jogadores. As frases ligadas a ele passam a valer para qualquer um.</p>
-    </Modal>
   );
 }

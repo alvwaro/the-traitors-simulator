@@ -2,12 +2,10 @@ import { useState } from 'react';
 import { useAuth } from '../../app/auth';
 import { useServices } from '../../app/services';
 import { PortraitGrid } from '../../components/player/PortraitGrid';
-import { Button } from '../../components/ui/Button';
-import { Modal } from '../../components/ui/Modal';
+import { ConfirmModal, Modal } from '../../components/ui/Modal';
 import { EmptyState } from '../../components/ui/States';
 import type { Publication } from '../../domain/models';
 import { useAction } from '../../hooks/useAction';
-import { fireAndForget } from '../../lib/async';
 import cardStyles from '../library/components/Library.module.css';
 import { CopyModal } from './CopyModal';
 import { PublicationCard } from './PublicationCard';
@@ -69,23 +67,9 @@ export function PublicationShelf({ publications, empty, onChanged, showArea }: R
 
       <CopyModal publication={copying} onClose={() => setCopying(null)} />
 
-      <Modal
-        open={!!removing}
-        title="Tirar da vitrine"
-        onClose={() => setRemoving(null)}
-        footer={
-          <>
-            <Button variant="quiet" onClick={() => setRemoving(null)}>
-              Cancelar
-            </Button>
-            <Button variant="danger" pending={remove.pending} onClick={fireAndForget(handleRemove)}>
-              Tirar da vitrine
-            </Button>
-          </>
-        }
-      >
+      <ConfirmModal open={!!removing} title="Tirar da vitrine" onClose={() => setRemoving(null)} confirmLabel="Tirar da vitrine" danger pending={remove.pending} onConfirm={handleRemove}>
         <p>"{removing?.name}" deixa de aparecer para todos. Quem já copiou continua com a cópia.</p>
-      </Modal>
+      </ConfirmModal>
     </>
   );
 }

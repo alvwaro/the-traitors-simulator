@@ -11,7 +11,21 @@
   animation: fade 0.2s var(--ease);
 }
 
+/* Fundo clicável: fecha o diálogo (o Esc faz o mesmo pelo teclado). */
+.dismiss {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: default;
+}
+
 .dialog {
+  position: relative;
+  z-index: 1;
   width: min(520px, 100%);
   min-width: 0;
   max-height: calc(100vh - 2rem);
@@ -21,6 +35,11 @@
   border: 1px solid var(--border-strong);
   border-radius: var(--radius);
   animation: rise 0.25s var(--ease);
+}
+
+/* O diálogo recebe o foco ao abrir (para o leitor de tela); o anel fica só nos controles de dentro. */
+.dialog:focus {
+  outline: none;
 }
 
 .wide {

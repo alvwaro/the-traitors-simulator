@@ -4,10 +4,9 @@ import { useServices } from '../../app/services';
 import { Button } from '../../components/ui/Button';
 import { ButtonLink } from '../../components/ui/ButtonLink';
 import { Field, Input } from '../../components/ui/Form';
-import { Modal } from '../../components/ui/Modal';
+import { Modal, ModalActions } from '../../components/ui/Modal';
 import type { CopyResult, Publication } from '../../domain/models';
 import { useAction } from '../../hooks/useAction';
-import { fireAndForget } from '../../lib/async';
 
 /**
  * Copia uma publicação para a Minha Área. Casts e temporadas viram um cast pronto para jogar;
@@ -70,16 +69,7 @@ export function CopyModal({ publication, onClose }: Readonly<{ publication: Publ
       open={!!publication}
       title={isCharacter ? 'Salvar personagem' : 'Copiar para jogar'}
       onClose={close}
-      footer={
-        <>
-          <Button variant="quiet" onClick={close}>
-            Cancelar
-          </Button>
-          <Button pending={copy.pending} onClick={fireAndForget(handleCopy)}>
-            {isCharacter ? 'Salvar na biblioteca' : 'Copiar'}
-          </Button>
-        </>
-      }
+      footer={<ModalActions onCancel={close} confirmLabel={isCharacter ? 'Salvar na biblioteca' : 'Copiar'} pending={copy.pending} onConfirm={handleCopy} />}
     >
       {!isCharacter && (
         <Field label="Nome do cast" hint="Se você já tiver um cast com esse nome, um número é acrescentado.">

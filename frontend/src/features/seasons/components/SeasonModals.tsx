@@ -1,13 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useServices } from '../../../app/services';
-import { Button } from '../../../components/ui/Button';
 import { Field, Input } from '../../../components/ui/Form';
-import { Modal } from '../../../components/ui/Modal';
+import { ConfirmModal, Modal, ModalActions } from '../../../components/ui/Modal';
 import type { Season } from '../../../domain/models';
 import { useAction } from '../../../hooks/useAction';
 import { PrizeFields, type PrizeDraft } from './PrizeFields';
 import styles from '../pages/Seasons.module.css';
-import { fireAndForget } from '../../../lib/async';
 
 interface SeasonModalProps {
   season: Season;
@@ -63,19 +61,10 @@ export function EditSeasonModal({ season, open, onClose, onDone }: Readonly<Seas
       open={open}
       title="Editar temporada"
       onClose={onClose}
-      footer={
-        <>
-          <Button variant="quiet" onClick={onClose}>
-            Cancelar
-          </Button>
-          <Button pending={save.pending} disabled={!name.trim()} onClick={fireAndForget(handleSave)}>
-            Salvar
-          </Button>
-        </>
-      }
+      footer={<ModalActions onCancel={onClose} confirmLabel="Salvar" pending={save.pending} disabled={!name.trim()} onConfirm={handleSave} />}
     >
       <div className={styles.formStack}>
-        <Field label="Nome">{(id) => <Input id={id} value={name} onChange={(e) => setName(e.target.value)} maxLength={120} autoFocus />}</Field>
+        <Field label="Nome">{(id) => <Input id={id} value={name} onChange={(e) => setName(e.target.value)} maxLength={120} data-autofocus />}</Field>
         {inSetup ? (
           <PrizeFields value={prize} onChange={setPrize} />
         ) : (
@@ -105,22 +94,8 @@ export function DeleteSeasonModal({ season, open, onClose, onDone }: Readonly<Se
   }
 
   return (
-    <Modal
-      open={open}
-      title="Apagar temporada"
-      onClose={onClose}
-      footer={
-        <>
-          <Button variant="quiet" onClick={onClose}>
-            Cancelar
-          </Button>
-          <Button variant="danger" pending={remove.pending} onClick={fireAndForget(handleDelete)}>
-            Apagar para sempre
-          </Button>
-        </>
-      }
-    >
+    <ConfirmModal open={open} title="Apagar temporada" onClose={onClose} confirmLabel="Apagar para sempre" danger pending={remove.pending} onConfirm={handleDelete}>
       <p>"{season.name}" e todo o seu registro serão apagados. Personagens e casts da biblioteca não são afetados.</p>
-    </Modal>
+    </ConfirmModal>
   );
 }

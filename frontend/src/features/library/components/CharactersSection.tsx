@@ -4,7 +4,7 @@ import { TagChips } from '../../../components/behavior/BehaviorTags';
 import { PortraitGrid } from '../../../components/player/PortraitGrid';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Form';
-import { Modal } from '../../../components/ui/Modal';
+import { ConfirmModal } from '../../../components/ui/Modal';
 import { Ornament } from '../../../components/ui/Ornament';
 import { Panel } from '../../../components/ui/Panel';
 import { EmptyState } from '../../../components/ui/States';
@@ -14,7 +14,6 @@ import { useAction } from '../../../hooks/useAction';
 import type { CharacterInput } from '../../../services/api/CharacterService';
 import { CharacterForm } from './CharacterForm';
 import styles from './Library.module.css';
-import { fireAndForget } from '../../../lib/async';
 import { PublishModal } from '../../publications/PublishModal';
 import { useMyPublications } from '../../publications/useMyPublications';
 
@@ -104,25 +103,11 @@ export function CharactersSection({ characters, behaviors, onChanged }: Readonly
         <EmptyState title={characters.length ? 'Ninguém encontrado' : 'A galeria está vazia'} />
       )}
 
-      <Modal
-        open={!!deleting}
-        title="Remover personagem"
-        onClose={() => setDeleting(null)}
-        footer={
-          <>
-            <Button variant="quiet" onClick={() => setDeleting(null)}>
-              Cancelar
-            </Button>
-            <Button variant="danger" pending={remove.pending} onClick={fireAndForget(handleDelete)}>
-              Remover
-            </Button>
-          </>
-        }
-      >
+      <ConfirmModal open={!!deleting} title="Remover personagem" onClose={() => setDeleting(null)} confirmLabel="Remover" danger pending={remove.pending} onConfirm={handleDelete}>
         <p>
           {deleting?.name} sairá da biblioteca e de todos os casts. Jogadores já registrados em temporadas continuam existindo.
         </p>
-      </Modal>
+      </ConfirmModal>
       <PublishModal
         target={publishing ? { kind: 'CHARACTER', id: publishing.id, name: publishing.name } : null}
         current={publishing ? mine.find('CHARACTER', publishing.id) : null}

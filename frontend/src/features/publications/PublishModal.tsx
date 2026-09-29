@@ -3,7 +3,7 @@ import { useAuth } from '../../app/auth';
 import { useServices } from '../../app/services';
 import { Button } from '../../components/ui/Button';
 import { Field, TextArea } from '../../components/ui/Form';
-import { Modal } from '../../components/ui/Modal';
+import { Modal, ModalActions } from '../../components/ui/Modal';
 import type { Publication, PublicationKind } from '../../domain/models';
 import { useAction } from '../../hooks/useAction';
 import { fireAndForget } from '../../lib/async';
@@ -59,19 +59,20 @@ export function PublishModal({ target, current, blockedReason, onClose, onDone }
       title={current ? 'Publicação' : `Publicar ${kindLabel[target?.kind ?? 'CAST']}`}
       onClose={onClose}
       footer={
-        <>
-          {current && (
-            <Button variant="danger" pending={unpublish.pending} onClick={fireAndForget(() => run(unpublish))}>
-              Tirar da vitrine
-            </Button>
-          )}
-          <Button variant="quiet" onClick={onClose}>
-            Cancelar
-          </Button>
-          <Button pending={publish.pending} disabled={!!blockedReason} onClick={fireAndForget(() => run(publish))}>
-            {current ? 'Atualizar publicação' : 'Publicar'}
-          </Button>
-        </>
+        <ModalActions
+          onCancel={onClose}
+          confirmLabel={current ? 'Atualizar publicação' : 'Publicar'}
+          pending={publish.pending}
+          disabled={!!blockedReason}
+          onConfirm={() => run(publish)}
+          extra={
+            current && (
+              <Button variant="danger" pending={unpublish.pending} onClick={fireAndForget(() => run(unpublish))}>
+                Tirar da vitrine
+              </Button>
+            )
+          }
+        />
       }
     >
       {blockedReason ? (

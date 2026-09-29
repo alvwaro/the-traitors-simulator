@@ -3,13 +3,12 @@ import { useServices } from '../../../app/services';
 import { TagChips } from '../../../components/behavior/BehaviorTags';
 import { Portrait } from '../../../components/player/Portrait';
 import { Button } from '../../../components/ui/Button';
-import { Modal } from '../../../components/ui/Modal';
+import { ConfirmModal } from '../../../components/ui/Modal';
 import { behaviorNames } from '../../../domain/behaviors';
 import type { Cast } from '../../../domain/models';
 import { useAction } from '../../../hooks/useAction';
 import { useResource } from '../../../hooks/useResource';
 import styles from './CastDetail.module.css';
-import { fireAndForget } from '../../../lib/async';
 
 /** Comportamentos de cada personagem do cast, com a opção de sortear novos para todos. */
 export function CastBehaviors({ cast, onChanged }: Readonly<{ cast: Cast; onChanged: () => void }>) {
@@ -45,26 +44,12 @@ export function CastBehaviors({ cast, onChanged }: Readonly<{ cast: Cast; onChan
           </li>
         ))}
       </ul>
-      <Modal
-        open={confirming}
-        title="Sortear comportamentos?"
-        onClose={() => setConfirming(false)}
-        footer={
-          <>
-            <Button variant="quiet" onClick={() => setConfirming(false)}>
-              Cancelar
-            </Button>
-            <Button pending={randomize.pending} onClick={fireAndForget(confirm)}>
-              Sortear
-            </Button>
-          </>
-        }
-      >
+      <ConfirmModal open={confirming} title="Sortear comportamentos?" onClose={() => setConfirming(false)} confirmLabel="Sortear" pending={randomize.pending} onConfirm={confirm}>
         <p>
           Cada um dos {cast.characters.length} personagens recebe de 1 a 3 comportamentos que combinam entre si. Os comportamentos atuais são substituídos,
           inclusive nos outros casts em que o personagem aparece. Temporadas já criadas não mudam.
         </p>
-      </Modal>
+      </ConfirmModal>
     </div>
   );
 }
