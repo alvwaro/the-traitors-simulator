@@ -30,4 +30,4 @@ Thumbs.db
 .claude/settings.local.json
 
 #Docs de anotação
-.docs\architecture.md
+docs/architecture.md
