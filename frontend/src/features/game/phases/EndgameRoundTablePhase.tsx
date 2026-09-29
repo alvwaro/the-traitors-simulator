@@ -1,18 +1,15 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useServices } from '../../../app/services';
 import { Portrait } from '../../../components/player/Portrait';
-import { PortraitGrid } from '../../../components/player/PortraitGrid';
 import { Button } from '../../../components/ui/Button';
 import type { EndgameChoice } from '../../../domain/enums';
 import type { RoundTableRecord } from '../../../domain/models';
-import { tally } from '../../../domain/votes';
 import { useAction } from '../../../hooks/useAction';
-import type { EndgameRoundTableInput, VoteDraft } from '../../../services/api/PhaseService';
+import type { EndgameRoundTableInput } from '../../../services/api/PhaseService';
 import { BanishedRole } from '../components/BanishedRole';
 import { EliminationReveal, type Elimination } from '../components/EliminationReveal';
 import { useGame } from '../context/GameContext';
-import { useShareVotes } from '../story/StoryContext';
-import { VoteBoard } from './shared/VoteBoard';
+import { BanishmentPicker, banishmentOf, useBallot } from './shared/Banishment';
 import styles from './shared/Shared.module.css';
 import { fireAndForget } from '../../../lib/async';
 import { gameRng } from '../../../lib/random';
@@ -75,15 +72,12 @@ function EndgameRoundForm({ roundNumber, onBanished }: Readonly<{ roundNumber: n
   const { phases } = useServices();
   const players = state.activePlayers;
   const [choices, setChoices] = useState<Record<string, EndgameChoice>>({});
-  const [votes, setVotes] = useState<VoteDraft[]>([]);
-  useShareVotes(votes);
-  const [chosen, setChosen] = useState<string | null>(null);
+  const ballot = useBallot();
 
   const everyoneVoted = players.every((p) => choices[p.id]);
   const unanimous = everyoneVoted && players.every((p) => choices[p.id] === 'END_GAME');
   const needsBanishment = everyoneVoted && !unanimous;
-  const leaders = useMemo(() => tally(votes).leaders, [votes]);
-  const banishedId = chosen ?? (leaders.length === 1 ? leaders[0] : null);
+  const { banishedId } = ballot;
 
   const save = useAction((input: EndgameRoundTableInput) => phases.endgameRoundTable(seasonId, input), {
     success: (r) => (r.banishedPlayerId ? 'Rodada registrada' : 'Jogo encerrado'),
@@ -97,14 +91,13 @@ function EndgameRoundForm({ roundNumber, onBanished }: Readonly<{ roundNumber: n
     const record = await save.run({
       endgameVotes: players.map((p) => ({ voterId: p.id, choice: choices[p.id] })),
       banishedPlayerId: needsBanishment ? banishedId : null,
-      votes: needsBanishment ? votes : [],
+      votes: needsBanishment ? ballot.votes : [],
     });
     if (!record) return;
     const banished = players.find((p) => p.id === record.banishedPlayerId);
-    if (banished) onBanished({ player: banished, kind: 'BANISHED', role: record.revealedRole ?? banished.role });
+    if (banished) onBanished(banishmentOf(banished, record));
     setChoices({});
-    setVotes([]);
-    setChosen(null);
+    ballot.reset();
     refresh();
   }
 
@@ -135,15 +128,7 @@ function EndgameRoundForm({ roundNumber, onBanished }: Readonly<{ roundNumber: n
         ))}
       </ul>
 
-      {needsBanishment && (
-        <>
-          <VoteBoard players={players} value={votes} onChange={setVotes} />
-          <div className={styles.section}>
-            <h3 className={styles.sectionTitle}>Banido(a)</h3>
-            <PortraitGrid items={players} size="sm" selectedIds={banishedId ? [banishedId] : []} onToggle={(id) => setChosen(id === banishedId ? null : id)} />
-          </div>
-        </>
-      )}
+      {needsBanishment && <BanishmentPicker players={players} ballot={ballot} />}
 
       <div className={styles.submitRow}>
         <span className={styles.muted}>{everyoneVoted ? '' : `${Object.keys(choices).length}/${players.length} votaram`}</span>
