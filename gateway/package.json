@@ -1,0 +1,28 @@
+{
+  "name": "the-traitors-gateway",
+  "version": "0.1.0",
+  "private": true,
+  "description": "API Gateway: valida as requisições pelo manifesto da API, limita tentativas e distribui a carga entre as instâncias do backend",
+  "scripts": {
+    "dev": "tsx watch --conditions=source src/server.ts",
+    "prebuild": "tsc -p ../shared/tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/server.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@traitors/shared": "file:../shared"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.2",
+    "@vitest/coverage-v8": "^5.0.2",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.2"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}
