@@ -1,34 +1,23 @@
-import { Request, Response } from 'express';
 import { CreatePhraseUseCase } from '../../../application/use-cases/phrase/CreatePhraseUseCase';
 import { DeletePhraseUseCase } from '../../../application/use-cases/phrase/DeletePhraseUseCase';
 import { ListPhrasesUseCase } from '../../../application/use-cases/phrase/ListPhrasesUseCase';
 import { UpdatePhraseUseCase } from '../../../application/use-cases/phrase/UpdatePhraseUseCase';
+import { endpoint, Handlers, RoutesOf } from '../endpoint';
 import { createPhraseBody, listPhrasesQuery, phraseIdParams, updatePhraseBody } from '../validators/schemas';
 
-/** Frases das conversas simuladas. */
-export class PhraseController {
-  constructor(
-    private readonly createPhrase: CreatePhraseUseCase,
-    private readonly listPhrases: ListPhrasesUseCase,
-    private readonly updatePhrase: UpdatePhraseUseCase,
-    private readonly deletePhrase: DeletePhraseUseCase,
-  ) {}
+export interface PhraseUseCases {
+  create: CreatePhraseUseCase;
+  list: ListPhrasesUseCase;
+  update: UpdatePhraseUseCase;
+  remove: DeletePhraseUseCase;
+}
 
-  create = async (req: Request, res: Response) => {
-    res.status(201).json(await this.createPhrase.execute(createPhraseBody.parse(req.body)));
-  };
-
-  list = async (req: Request, res: Response) => {
-    res.json(await this.listPhrases.execute(listPhrasesQuery.parse(req.query)));
-  };
-
-  update = async (req: Request, res: Response) => {
-    const input = { ...phraseIdParams.parse(req.params), ...updatePhraseBody.parse(req.body) };
-    res.json(await this.updatePhrase.execute(input));
-  };
-
-  remove = async (req: Request, res: Response) => {
-    await this.deletePhrase.execute(phraseIdParams.parse(req.params));
-    res.status(204).end();
+/** Frases das conversas simuladas (valem para todos; só os donos do site alteram). */
+export function phraseController(p: PhraseUseCases): Handlers<RoutesOf<'phrases'>> {
+  return {
+    'phrases.list': endpoint(p.list, { query: listPhrasesQuery }),
+    'phrases.create': endpoint(p.create, { body: createPhraseBody, status: 201 }),
+    'phrases.update': endpoint(p.update, { params: phraseIdParams, body: updatePhraseBody }),
+    'phrases.remove': endpoint(p.remove, { params: phraseIdParams, status: 204 }),
   };
 }

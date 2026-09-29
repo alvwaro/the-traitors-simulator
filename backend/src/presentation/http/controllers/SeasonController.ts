@@ -1,4 +1,3 @@
-import { Request, Response } from 'express';
 import { CreateSeasonUseCase } from '../../../application/use-cases/season/CreateSeasonUseCase';
 import { DeleteSeasonUseCase } from '../../../application/use-cases/season/DeleteSeasonUseCase';
 import { GetSeasonUseCase } from '../../../application/use-cases/season/GetSeasonUseCase';
@@ -6,55 +5,28 @@ import { ListSeasonsUseCase } from '../../../application/use-cases/season/ListSe
 import { RegisterPrizeAdjustmentUseCase } from '../../../application/use-cases/season/RegisterPrizeAdjustmentUseCase';
 import { SaveSeasonAsCastUseCase } from '../../../application/use-cases/season/SaveSeasonAsCastUseCase';
 import { UpdateSeasonUseCase } from '../../../application/use-cases/season/UpdateSeasonUseCase';
-import {
-  createSeasonBody,
-  prizeAdjustmentBody,
-  saveAsCastBody,
-  seasonIdParams,
-  updateSeasonBody,
-} from '../validators/schemas';
-import { actorOf } from '../middlewares/session';
+import { endpoint, Handlers, RoutesOf } from '../endpoint';
+import { createSeasonBody, prizeAdjustmentBody, saveAsCastBody, seasonIdParams, updateSeasonBody } from '../validators/schemas';
 
-export class SeasonController {
-  constructor(
-    private readonly createSeason: CreateSeasonUseCase,
-    private readonly listSeasons: ListSeasonsUseCase,
-    private readonly getSeason: GetSeasonUseCase,
-    private readonly updateSeason: UpdateSeasonUseCase,
-    private readonly deleteSeason: DeleteSeasonUseCase,
-    private readonly saveSeasonAsCast: SaveSeasonAsCastUseCase,
-    private readonly registerPrizeAdjustment: RegisterPrizeAdjustmentUseCase,
-  ) {}
+export interface SeasonUseCases {
+  create: CreateSeasonUseCase;
+  list: ListSeasonsUseCase;
+  get: GetSeasonUseCase;
+  update: UpdateSeasonUseCase;
+  remove: DeleteSeasonUseCase;
+  saveAsCast: SaveSeasonAsCastUseCase;
+  prizeAdjustment: RegisterPrizeAdjustmentUseCase;
+}
 
-  create = async (req: Request, res: Response) => {
-    res.status(201).json(await this.createSeason.execute({ ...createSeasonBody.parse(req.body), ownerId: actorOf(res).id }));
-  };
-
-  list = async (_req: Request, res: Response) => {
-    res.json(await this.listSeasons.execute({ ownerId: actorOf(res).id }));
-  };
-
-  get = async (req: Request, res: Response) => {
-    res.json(await this.getSeason.execute(seasonIdParams.parse(req.params)));
-  };
-
-  update = async (req: Request, res: Response) => {
-    const input = { ...seasonIdParams.parse(req.params), ...updateSeasonBody.parse(req.body) };
-    res.json(await this.updateSeason.execute(input));
-  };
-
-  remove = async (req: Request, res: Response) => {
-    await this.deleteSeason.execute(seasonIdParams.parse(req.params));
-    res.status(204).end();
-  };
-
-  saveAsCast = async (req: Request, res: Response) => {
-    const input = { ...seasonIdParams.parse(req.params), ...saveAsCastBody.parse(req.body), ownerId: actorOf(res).id };
-    res.status(201).json(await this.saveSeasonAsCast.execute(input));
-  };
-
-  prizeAdjustment = async (req: Request, res: Response) => {
-    const input = { ...seasonIdParams.parse(req.params), ...prizeAdjustmentBody.parse(req.body) };
-    res.status(201).json(await this.registerPrizeAdjustment.execute(input));
+/** Temporadas da Minha Área (as publicadas podem ser lidas por qualquer pessoa logada). */
+export function seasonController(s: SeasonUseCases): Handlers<RoutesOf<'seasons'>> {
+  return {
+    'seasons.create': endpoint(s.create, { body: createSeasonBody, identity: 'ownerId', status: 201 }),
+    'seasons.list': endpoint(s.list, { identity: 'ownerId' }),
+    'seasons.get': endpoint(s.get, { params: seasonIdParams }),
+    'seasons.update': endpoint(s.update, { params: seasonIdParams, body: updateSeasonBody }),
+    'seasons.remove': endpoint(s.remove, { params: seasonIdParams, status: 204 }),
+    'seasons.saveAsCast': endpoint(s.saveAsCast, { params: seasonIdParams, body: saveAsCastBody, identity: 'ownerId', status: 201 }),
+    'seasons.prizeAdjustment': endpoint(s.prizeAdjustment, { params: seasonIdParams, body: prizeAdjustmentBody, status: 201 }),
   };
 }

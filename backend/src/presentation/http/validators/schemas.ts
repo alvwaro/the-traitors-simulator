@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { BEHAVIOR_NAME_MAX_LENGTH, USERNAME_MAX_LENGTH } from '@traitors/shared';
 import { EndgameChoice, PhrasePhase, PhraseTone, PlayerRole, PrizeTransactionType, SeasonMode } from '../../../domain/enums';
 import { BEHAVIOR_EFFECT_KEYS, BEHAVIOR_EFFECT_LIMIT } from '../../../domain/entities/Behavior';
 import { PHRASE_MAX_LENGTH } from '../../../domain/entities/Phrase';
@@ -11,6 +12,11 @@ const money = z.number().nonnegative();
 const imageUrl = z.url({ protocol: /^https?$/ }).nullable().optional();
 const notes = z.string().nullable().optional();
 const vote = z.object({ voterId: id, targetId: id, round: z.number().int().min(1).optional() });
+/** Nome de temporada, cast ou missão. */
+const title = z.string().trim().min(1).max(120);
+/** Nome de personagem ou jogador. */
+const personName = z.string().trim().min(1).max(80);
+const behaviorIds = z.array(id);
 
 // ---------- params ----------
 export const seasonIdParams = z.object({ seasonId: id });
@@ -20,11 +26,21 @@ export const castIdParams = z.object({ castId: id });
 export const phraseIdParams = z.object({ phraseId: id });
 export const behaviorIdParams = z.object({ behaviorId: id });
 export const publicationIdParams = z.object({ publicationId: id });
-const behaviorIds = z.array(id);
+
+// ---------- relacionamentos (do cast ou da temporada) ----------
+const feeling = z.number().int().min(0).max(100);
+const relationshipPatch = {
+  fromId: id,
+  toId: id,
+  trust: feeling.optional(),
+  liking: feeling.optional(),
+  hatred: feeling.optional(),
+  allied: z.boolean().optional(),
+};
 
 // ---------- biblioteca ----------
 export const createCharacterBody = z.object({
-  name: z.string().trim().min(1).max(80),
+  name: personName,
   imageUrl,
   behaviorIds: behaviorIds.optional(),
 });
@@ -32,28 +48,19 @@ export const updateCharacterBody = createCharacterBody.partial();
 export const listCharactersQuery = z.object({ search: z.string().optional() });
 
 export const createCastBody = z.object({
-  name: z.string().trim().min(1).max(120),
+  name: title,
   description: notes,
   imageUrl,
   characterIds: z.array(id).default([]),
 });
-const feelingValue = z.number().int().min(0).max(100);
-export const updateCastRelationshipBody = z.object({
-  fromId: id,
-  toId: id,
-  trust: feelingValue.optional(),
-  liking: feelingValue.optional(),
-  hatred: feelingValue.optional(),
-  allied: z.boolean().optional(),
-  clear: z.boolean().optional(),
-});
-
 export const updateCastBody = z.object({
-  name: z.string().trim().min(1).max(120).optional(),
+  name: title.optional(),
   description: notes,
   imageUrl,
   characterIds: z.array(id).optional(),
 });
+/** `clear`: apaga o par (volta a ser sorteado nas temporadas). */
+export const updateCastRelationshipBody = z.object({ ...relationshipPatch, clear: z.boolean().optional() });
 
 export const createPhraseBody = z.object({
   phase: z.enum(PhrasePhase),
@@ -67,49 +74,34 @@ export const listPhrasesQuery = z.object({ phase: z.enum(PhrasePhase).optional()
 const effect = z.number().int().min(-BEHAVIOR_EFFECT_LIMIT).max(BEHAVIOR_EFFECT_LIMIT);
 const effects = z.partialRecord(z.enum(BEHAVIOR_EFFECT_KEYS), effect);
 export const createBehaviorBody = z.object({
-  name: z.string().trim().min(1).max(40),
+  name: z.string().trim().min(1).max(BEHAVIOR_NAME_MAX_LENGTH),
   description: notes,
   effects: effects.optional(),
 });
 export const updateBehaviorBody = createBehaviorBody.partial();
 
 // ---------- temporadas ----------
-const prizeSettings = {
+/** Configurações que podem ser escolhidas ao criar e alteradas depois (o prêmio, só antes do início). */
+const seasonSettings = {
+  mode: z.enum(SeasonMode).optional(),
+  chaos: z.number().int().min(0).max(100).optional(),
+  missionPool: z.enum(MISSION_POOLS).optional(),
+  interactionLimit: z.number().int().min(0).max(20).optional(),
+  withdrawals: z.boolean().optional(),
   currency: z.string().length(3).optional(),
   initialPrizePot: money.optional(),
   maxPrizePot: money.nullable().optional(),
 };
 
-const chaos = z.number().int().min(0).max(100);
-const missionPool = z.enum(MISSION_POOLS);
-
-const interactionLimit = z.number().int().min(0).max(20);
-
 export const createSeasonBody = z.object({
-  name: z.string().trim().min(1).max(120),
-  mode: z.enum(SeasonMode).optional(),
-  chaos: chaos.optional(),
-  missionPool: missionPool.optional(),
-  interactionLimit: interactionLimit.optional(),
-  withdrawals: z.boolean().optional(),
-  human: z.object({ name: z.string().trim().min(1).max(80), imageUrl }).nullable().optional(),
-  ...prizeSettings,
+  name: title,
+  ...seasonSettings,
+  human: z.object({ name: personName, imageUrl }).nullable().optional(),
   castId: id.nullable().optional(),
   characterIds: z.array(id).optional(),
 });
-export const updateSeasonBody = z.object({
-  name: z.string().trim().min(1).max(120).optional(),
-  mode: z.enum(SeasonMode).optional(),
-  chaos: chaos.optional(),
-  missionPool: missionPool.optional(),
-  interactionLimit: interactionLimit.optional(),
-  withdrawals: z.boolean().optional(),
-  ...prizeSettings,
-});
-export const saveAsCastBody = z.object({
-  name: z.string().trim().min(1).max(120),
-  description: notes,
-});
+export const updateSeasonBody = z.object({ name: title.optional(), ...seasonSettings });
+export const saveAsCastBody = z.object({ name: title, description: notes });
 export const prizeAdjustmentBody = z.object({
   type: z.enum([PrizeTransactionType.PENALTY, PrizeTransactionType.ADJUSTMENT]),
   amount: z.number().refine((n) => n !== 0, 'O valor não pode ser zero'),
@@ -120,7 +112,7 @@ export const prizeAdjustmentBody = z.object({
 export const addPlayerBody = z
   .object({
     characterId: id.nullable().optional(),
-    name: z.string().trim().min(1).max(80).optional(),
+    name: personName.optional(),
     imageUrl,
     role: z.enum(PlayerRole).optional(),
     saveToLibrary: z.boolean().optional(),
@@ -129,7 +121,7 @@ export const addPlayerBody = z
   .refine((b) => b.characterId || b.name, { message: 'Informe name ou characterId' });
 
 export const updatePlayerBody = z.object({
-  name: z.string().trim().min(1).max(80).optional(),
+  name: personName.optional(),
   imageUrl,
   role: z.enum(PlayerRole).optional(),
   behaviorIds: behaviorIds.optional(),
@@ -151,16 +143,7 @@ export const humanDecision = z.object({
 export const simulateBody = z.object({ untilEnd: z.boolean().optional(), decision: humanDecision.optional() }).default({});
 export const inviteAnswerBody = z.object({ inviterId: id, groupId: z.string().max(20).nullable().optional(), accept: z.boolean() });
 export const interactBody = z.object({ targetId: id, action: z.enum(HUMAN_ACTIONS), subjectId: id.nullable().optional() });
-
-const feeling = z.number().int().min(0).max(100);
-export const updateRelationshipBody = z.object({
-  fromId: id,
-  toId: id,
-  trust: feeling.optional(),
-  liking: feeling.optional(),
-  hatred: feeling.optional(),
-  allied: z.boolean().optional(),
-});
+export const updateRelationshipBody = z.object(relationshipPatch);
 
 // ---------- fases ----------
 export const phaseNotesBody = z.object({ notes: z.string().nullable() });
@@ -204,7 +187,7 @@ export const imageProxyQuery = z.object({ url: z.url().max(2048) });
 // ---------- contas ----------
 // o formato do usuário e o tamanho mínimo da senha são regras do domínio (User)
 export const credentialsBody = z.object({
-  username: z.string().trim().min(1).max(30),
+  username: z.string().trim().min(1).max(USERNAME_MAX_LENGTH),
   password: z.string().min(1).max(PASSWORD_MAX_LENGTH),
 });
 
@@ -221,4 +204,4 @@ export const publicationsQuery = z.object({
   /** "true": só as publicações de quem está logado. */
   mine: z.enum(['true', 'false']).optional(),
 });
-export const copyPublicationBody = z.object({ name: z.string().trim().min(1).max(120).optional() });
+export const copyPublicationBody = z.object({ name: title.optional() });

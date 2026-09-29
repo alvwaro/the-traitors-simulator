@@ -1,46 +1,26 @@
-import { Request, Response } from 'express';
 import { CreateCharacterUseCase } from '../../../application/use-cases/character/CreateCharacterUseCase';
 import { DeleteCharacterUseCase } from '../../../application/use-cases/character/DeleteCharacterUseCase';
 import { GetCharacterUseCase } from '../../../application/use-cases/character/GetCharacterUseCase';
 import { ListCharactersUseCase } from '../../../application/use-cases/character/ListCharactersUseCase';
 import { UpdateCharacterUseCase } from '../../../application/use-cases/character/UpdateCharacterUseCase';
-import {
-  characterIdParams,
-  createCharacterBody,
-  listCharactersQuery,
-  updateCharacterBody,
-} from '../validators/schemas';
-import { actorOf } from '../middlewares/session';
+import { endpoint, Handlers, RoutesOf } from '../endpoint';
+import { characterIdParams, createCharacterBody, listCharactersQuery, updateCharacterBody } from '../validators/schemas';
 
-/** Biblioteca de personagens salvos. */
-export class CharacterController {
-  constructor(
-    private readonly createCharacter: CreateCharacterUseCase,
-    private readonly listCharacters: ListCharactersUseCase,
-    private readonly getCharacter: GetCharacterUseCase,
-    private readonly updateCharacter: UpdateCharacterUseCase,
-    private readonly deleteCharacter: DeleteCharacterUseCase,
-  ) {}
+export interface CharacterUseCases {
+  create: CreateCharacterUseCase;
+  list: ListCharactersUseCase;
+  get: GetCharacterUseCase;
+  update: UpdateCharacterUseCase;
+  remove: DeleteCharacterUseCase;
+}
 
-  create = async (req: Request, res: Response) => {
-    res.status(201).json(await this.createCharacter.execute({ ...createCharacterBody.parse(req.body), ownerId: actorOf(res).id }));
-  };
-
-  list = async (req: Request, res: Response) => {
-    res.json(await this.listCharacters.execute({ ...listCharactersQuery.parse(req.query), ownerId: actorOf(res).id }));
-  };
-
-  get = async (req: Request, res: Response) => {
-    res.json(await this.getCharacter.execute(characterIdParams.parse(req.params)));
-  };
-
-  update = async (req: Request, res: Response) => {
-    const input = { ...characterIdParams.parse(req.params), ...updateCharacterBody.parse(req.body) };
-    res.json(await this.updateCharacter.execute(input));
-  };
-
-  remove = async (req: Request, res: Response) => {
-    await this.deleteCharacter.execute(characterIdParams.parse(req.params));
-    res.status(204).end();
+/** Biblioteca de personagens salvos (Minha Área). */
+export function characterController(c: CharacterUseCases): Handlers<RoutesOf<'characters'>> {
+  return {
+    'characters.create': endpoint(c.create, { body: createCharacterBody, identity: 'ownerId', status: 201 }),
+    'characters.list': endpoint(c.list, { query: listCharactersQuery, identity: 'ownerId' }),
+    'characters.get': endpoint(c.get, { params: characterIdParams }),
+    'characters.update': endpoint(c.update, { params: characterIdParams, body: updateCharacterBody }),
+    'characters.remove': endpoint(c.remove, { params: characterIdParams, status: 204 }),
   };
 }

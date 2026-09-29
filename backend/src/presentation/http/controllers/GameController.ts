@@ -1,44 +1,30 @@
-import { Request, Response } from 'express';
 import { AdvancePhaseUseCase } from '../../../application/use-cases/game/AdvancePhaseUseCase';
 import { GetGameStateUseCase } from '../../../application/use-cases/game/GetGameStateUseCase';
 import { GetSeasonHistoryUseCase } from '../../../application/use-cases/game/GetSeasonHistoryUseCase';
 import { GoBackPhaseUseCase } from '../../../application/use-cases/game/GoBackPhaseUseCase';
 import { StartEndgameUseCase } from '../../../application/use-cases/game/StartEndgameUseCase';
 import { StartSeasonUseCase } from '../../../application/use-cases/game/StartSeasonUseCase';
+import { endpoint, Handlers, RoutesOf } from '../endpoint';
 import { seasonIdParams } from '../validators/schemas';
 
-/** Controle do fluxo da temporada (iniciar, avançar ou voltar fase, final). */
-export class GameController {
-  constructor(
-    private readonly startSeason: StartSeasonUseCase,
-    private readonly getGameState: GetGameStateUseCase,
-    private readonly advancePhase: AdvancePhaseUseCase,
-    private readonly startEndgame: StartEndgameUseCase,
-    private readonly getSeasonHistory: GetSeasonHistoryUseCase,
-    private readonly goBackPhase: GoBackPhaseUseCase,
-  ) {}
+export interface GameUseCases {
+  start: StartSeasonUseCase;
+  state: GetGameStateUseCase;
+  history: GetSeasonHistoryUseCase;
+  advance: AdvancePhaseUseCase;
+  back: GoBackPhaseUseCase;
+  endgame: StartEndgameUseCase;
+}
 
-  start = async (req: Request, res: Response) => {
-    res.json(await this.startSeason.execute(seasonIdParams.parse(req.params)));
-  };
-
-  state = async (req: Request, res: Response) => {
-    res.json(await this.getGameState.execute(seasonIdParams.parse(req.params)));
-  };
-
-  advance = async (req: Request, res: Response) => {
-    res.json(await this.advancePhase.execute(seasonIdParams.parse(req.params)));
-  };
-
-  back = async (req: Request, res: Response) => {
-    res.json(await this.goBackPhase.execute(seasonIdParams.parse(req.params)));
-  };
-
-  endgame = async (req: Request, res: Response) => {
-    res.json(await this.startEndgame.execute(seasonIdParams.parse(req.params)));
-  };
-
-  history = async (req: Request, res: Response) => {
-    res.json(await this.getSeasonHistory.execute(seasonIdParams.parse(req.params)));
+/** Fluxo da temporada: iniciar, consultar, avançar ou voltar fase, final. */
+export function gameController(g: GameUseCases): Handlers<RoutesOf<'game'>> {
+  const bySeason = { params: seasonIdParams };
+  return {
+    'game.start': endpoint(g.start, bySeason),
+    'game.state': endpoint(g.state, bySeason),
+    'game.history': endpoint(g.history, bySeason),
+    'game.advance': endpoint(g.advance, bySeason),
+    'game.back': endpoint(g.back, bySeason),
+    'game.endgame': endpoint(g.endgame, bySeason),
   };
 }

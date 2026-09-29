@@ -1,3 +1,4 @@
+import type { Express } from 'express';
 import request from 'supertest';
 import { buildApp } from '../src/main/app';
 import { pool } from '../src/infrastructure/database/connection';
@@ -13,8 +14,8 @@ let counter = 0;
 export const TEST_SECRET = `t-${Math.floor(Date.now() / 1000).toString(36)}-segredo`;
 
 /** Cria uma conta nova e devolve um cliente já logado (o cookie de sessão fica no agente). */
-export async function signUp(prefix = 'user', owner = false): Promise<{ agent: Agent; username: string }> {
-  const agent = request.agent(app);
+export async function signUp(prefix = 'user', owner = false, target: Express = app): Promise<{ agent: Agent; username: string }> {
+  const agent = request.agent(target);
   const username = `${prefix}${Date.now().toString(36)}${counter++}`.slice(0, 30);
   const res = await agent.post('/api/auth/register').send({ username, password: TEST_SECRET });
   if (res.status >= 300) throw new Error(`cadastro falhou: ${res.status} ${JSON.stringify(res.body)}`);

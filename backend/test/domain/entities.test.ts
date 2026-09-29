@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { Behavior, Cast, Character, DayPhase, Mission, Phrase, Player, PrizeTransaction, RoundTable, Season, TraitorMeeting, User, normalizeMissionPool } from '../../src/domain/entities';
 import { EndgameChoice, GamePhase, PhrasePhase, PhraseTone, PlayerRole, PlayerStatus, PrizeTransactionType, RoundTableKind, SeasonMode } from '../../src/domain/enums';
-import { PhaseFlowPolicy, VoteTallyService, WinnerPolicy } from '../../src/domain/services';
+import { PhaseFlowPolicy, WinnerPolicy } from '../../src/domain/services';
+import { ensureBanishedMatchesVotes } from '../../src/application/services/roundTableVotes';
 
 describe('regras das entidades', () => {
   it('temporada: configurações só antes do início e validação de cada uma', () => {
@@ -119,11 +120,13 @@ describe('regras das entidades', () => {
     expect(() => flow.next({ day: 3, phase: GamePhase.FINALE }, true)).toThrow();
     expect(() => flow.next({ day: 2, phase: GamePhase.ARRIVAL }, false)).toThrow();
 
-    const tally = new VoteTallyService().tallyFinalRound([
-      { id: '1', roundTableId: 'r', voterId: 'a', targetId: 'b', round: 1 },
-      { id: '2', roundTableId: 'r', voterId: 'b', targetId: 'a', round: 2 },
-    ] as never);
-    expect(tally.round).toBe(2);
+    // O banido tem de estar entre os mais votados da última rodada (a revotação, se houve).
+    const [ana, bia] = ['Ana', 'Bia'].map((name) => Player.create({ seasonId: 's', name }));
+    const table = RoundTable.create({ dayId: 'd', kind: RoundTableKind.REGULAR, sequence: 1 });
+    table.castVote(ana.id, bia.id, 1);
+    table.castVote(bia.id, ana.id, 2);
+    expect(() => ensureBanishedMatchesVotes(table, ana)).not.toThrow();
+    expect(() => ensureBanishedMatchesVotes(table, bia)).toThrow(/rodada 2/);
 
     const players = ['A', 'B', 'C'].map((name) => Player.create({ seasonId: 's', name }));
     const faithful = new WinnerPolicy().determine('s', players, 100);

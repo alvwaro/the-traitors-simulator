@@ -1,8 +1,11 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { createServer } from 'node:http';
+import type { AddressInfo } from 'node:net';
+import { describe, expect, it } from 'vitest';
+import { RemoteImageFetcher } from '../../src/infrastructure/http/RemoteImageFetcher';
+import { buildApp } from '../../src/main/app';
 import { createCharacters, ok, signUp } from '../helpers';
 
 describe('biblioteca: personagens, casts, comportamentos e frases', () => {
-  afterEach(() => vi.unstubAllGlobals());
 
   it('cria, busca, edita e apaga personagens', async () => {
     const { agent } = await signUp('lib');
@@ -75,20 +78,29 @@ describe('biblioteca: personagens, casts, comportamentos e frases', () => {
   });
 
   it('repassa imagens externas pelo proxy e recusa o que não é imagem', async () => {
-    const { agent } = await signUp('proxy');
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async () => new Response(new Uint8Array([137, 80, 78, 71]), { status: 200, headers: { 'content-type': 'image/png' } })),
-    );
-    const image = await agent.get('/api/image-proxy').query({ url: 'https://example.com/foto.png' });
-    expect(image.status).toBe(200);
-    expect(image.headers['content-type']).toContain('image/png');
+    // O "site externo" é um servidor local; só este app de teste pode acessar a própria máquina.
+    const site = createServer((req, res) => {
+      if (req.url === '/foto.png') res.writeHead(200, { 'content-type': 'image/png' }).end(Buffer.from([137, 80, 78, 71]));
+      else res.writeHead(200, { 'content-type': 'text/html' }).end('<html></html>');
+    });
+    await new Promise<void>((resolve) => site.listen(0, '127.0.0.1', resolve));
+    const base = `http://127.0.0.1:${(site.address() as AddressInfo).port}`;
+    try {
+      const proxyApp = buildApp({ imageFetcher: new RemoteImageFetcher({ allowAddress: () => true }) });
+      const { agent } = await signUp('proxy', false, proxyApp);
+      const image = await agent.get('/api/image-proxy').query({ url: `${base}/foto.png` });
+      expect(image.status).toBe(200);
+      expect(image.headers['content-type']).toContain('image/png');
+      expect(image.headers['content-security-policy']).toContain('sandbox');
+      expect((await agent.get('/api/image-proxy').query({ url: `${base}/pagina` })).status).toBe(415);
 
-    vi.stubGlobal('fetch', vi.fn(async () => new Response('<html></html>', { status: 200, headers: { 'content-type': 'text/html' } })));
-    expect((await agent.get('/api/image-proxy').query({ url: 'https://example.com/pagina' })).status).toBeGreaterThanOrEqual(400);
-
-    vi.stubGlobal('fetch', vi.fn(async () => { throw new Error('offline'); }));
-    expect((await agent.get('/api/image-proxy').query({ url: 'https://example.com/foto.png' })).status).toBeGreaterThanOrEqual(400);
-    expect((await agent.get('/api/image-proxy').query({ url: 'http://localhost/foto.png' })).status).toBeGreaterThanOrEqual(400);
+      // O app de verdade nunca busca endereços da própria máquina ou da rede interna.
+      const { agent: plain } = await signUp('proxy');
+      expect((await plain.get('/api/image-proxy').query({ url: `${base}/foto.png` })).status).toBe(400);
+      expect((await plain.get('/api/image-proxy').query({ url: 'http://localhost/foto.png' })).status).toBe(400);
+      expect((await plain.get('/api/image-proxy').query({ url: 'não é link' })).status).toBe(400);
+    } finally {
+      await new Promise((resolve) => site.close(resolve));
+    }
   });
 });
