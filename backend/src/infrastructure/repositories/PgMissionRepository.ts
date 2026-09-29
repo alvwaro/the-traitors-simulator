@@ -1,8 +1,8 @@
-import { Mission, MissionRewardProps } from '../../domain/entities';
+import { Mission } from '../../domain/entities';
 import { RewardType } from '../../domain/enums';
 import { IMissionRepository } from '../../domain/repositories';
 import { Queryable } from '../database/connection';
-import { query } from '../database/query';
+import { groupBy, insertMany, query } from '../database/query';
 
 interface MissionRow {
   id: string;
@@ -51,13 +51,7 @@ export class PgMissionRepository implements IMissionRepository {
        VALUES ($1, $2, $3, $4, $5, $6)`,
       [m.id, m.dayId, m.name, m.description, m.prizeAvailable, m.createdAt],
     );
-    for (const r of m.rewards) {
-      await query(
-        this.db,
-        'INSERT INTO mission_rewards (id, mission_id, player_id, reward_type) VALUES ($1, $2, $3, $4)',
-        [r.id, r.missionId, r.playerId, r.rewardType],
-      );
-    }
+    await insertMany(this.db, 'mission_rewards', ['id', 'mission_id', 'player_id', 'reward_type'], m.rewards.map((r) => [r.id, r.missionId, r.playerId, r.rewardType]));
   }
 
   async findShieldedPlayerIds(dayId: string): Promise<string[]> {
@@ -74,11 +68,12 @@ export class PgMissionRepository implements IMissionRepository {
 
   private async hydrate(rows: MissionRow[]): Promise<Mission[]> {
     if (rows.length === 0) return [];
-    const rewardRows = await query<RewardRow>(
+    const rewards = await query<RewardRow>(
       this.db,
       'SELECT * FROM mission_rewards WHERE mission_id = ANY($1::uuid[]) ORDER BY created_at',
       [rows.map((r) => r.id)],
     );
+    const byMission = groupBy(rewards, (w) => w.mission_id);
     return rows.map(
       (r) =>
         new Mission({
@@ -88,9 +83,7 @@ export class PgMissionRepository implements IMissionRepository {
           description: r.description,
           prizeAvailable: r.prize_available === null ? null : Number(r.prize_available),
           createdAt: r.created_at,
-          rewards: rewardRows
-            .filter((w) => w.mission_id === r.id)
-            .map<MissionRewardProps>((w) => ({ id: w.id, missionId: w.mission_id, playerId: w.player_id, rewardType: w.reward_type })),
+          rewards: (byMission.get(r.id) ?? []).map((w) => ({ id: w.id, missionId: w.mission_id, playerId: w.player_id, rewardType: w.reward_type })),
         }),
     );
   }

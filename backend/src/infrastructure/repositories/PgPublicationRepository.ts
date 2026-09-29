@@ -1,7 +1,7 @@
 import { Publication, PublicationArea, PublicationKind, PublicationSource, PublishedSnapshot } from '../../domain/entities';
 import { IPublicationRepository, PublicationFilter } from '../../domain/repositories';
 import { Queryable } from '../database/connection';
-import { query } from '../database/query';
+import { query, queryOne } from '../database/query';
 
 interface PublicationRow {
   id: string;
@@ -51,15 +51,12 @@ function sourceId(source: PublicationSource): string {
 export class PgPublicationRepository implements IPublicationRepository {
   constructor(private readonly db: Queryable) {}
 
-  async findById(id: string): Promise<Publication | null> {
-    const [row] = await query<PublicationRow>(this.db, 'SELECT * FROM publications WHERE id = $1', [id]);
-    return row ? toEntity(row) : null;
+  findById(id: string): Promise<Publication | null> {
+    return queryOne(this.db, 'SELECT * FROM publications WHERE id = $1', [id], toEntity);
   }
 
-  async findBySource(source: PublicationSource): Promise<Publication | null> {
-    const column = SOURCE_COLUMN[source.kind];
-    const [row] = await query<PublicationRow>(this.db, `SELECT * FROM publications WHERE ${column} = $1`, [sourceId(source)]);
-    return row ? toEntity(row) : null;
+  findBySource(source: PublicationSource): Promise<Publication | null> {
+    return queryOne(this.db, `SELECT * FROM publications WHERE ${SOURCE_COLUMN[source.kind]} = $1`, [sourceId(source)], toEntity);
   }
 
   async findAll(filter: PublicationFilter = {}): Promise<Publication[]> {

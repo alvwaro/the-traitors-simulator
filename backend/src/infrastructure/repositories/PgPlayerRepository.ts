@@ -2,7 +2,8 @@ import { Player } from '../../domain/entities';
 import { PlayerRole, PlayerStatus } from '../../domain/enums';
 import { IPlayerRepository, PlayerFilter } from '../../domain/repositories';
 import { Queryable } from '../database/connection';
-import { query } from '../database/query';
+import { query, queryOne } from '../database/query';
+import { PLAYER_BEHAVIORS } from './rows';
 
 interface PlayerRow {
   id: string;
@@ -35,19 +36,13 @@ const toEntity = (r: PlayerRow): Player =>
     createdAt: r.created_at,
   });
 
-const SELECT = `
-  SELECT p.*,
-         COALESCE(ARRAY(SELECT pb.behavior_id FROM player_behaviors pb
-                         JOIN behaviors b ON b.id = pb.behavior_id
-                        WHERE pb.player_id = p.id ORDER BY lower(b.name)), '{}') AS behavior_ids
-    FROM players p`;
+const SELECT = `SELECT p.*, ${PLAYER_BEHAVIORS.column('p')} FROM players p`;
 
 export class PgPlayerRepository implements IPlayerRepository {
   constructor(private readonly db: Queryable) {}
 
-  async findById(id: string): Promise<Player | null> {
-    const [row] = await query<PlayerRow>(this.db, `${SELECT} WHERE p.id = $1`, [id]);
-    return row ? toEntity(row) : null;
+  findById(id: string): Promise<Player | null> {
+    return queryOne(this.db, `${SELECT} WHERE p.id = $1`, [id], toEntity);
   }
 
   async findByIds(ids: string[]): Promise<Player[]> {
@@ -79,7 +74,7 @@ export class PgPlayerRepository implements IPlayerRepository {
       [p.id, p.seasonId, p.characterId, p.name, p.imageUrl, p.role, p.isOriginalTraitor,
        p.status, p.eliminatedDayId, p.createdAt, p.isHuman],
     );
-    await this.saveBehaviors(p.id, p.behaviorIds);
+    await PLAYER_BEHAVIORS.replace(this.db, p.id, p.behaviorIds);
   }
 
   async update(player: Player): Promise<void> {
@@ -92,7 +87,7 @@ export class PgPlayerRepository implements IPlayerRepository {
         WHERE id = $1`,
       [p.id, p.characterId, p.name, p.imageUrl, p.role, p.isOriginalTraitor, p.status, p.eliminatedDayId],
     );
-    await this.saveBehaviors(p.id, p.behaviorIds);
+    await PLAYER_BEHAVIORS.replace(this.db, p.id, p.behaviorIds);
   }
 
   async updateMany(players: Player[]): Promise<void> {
@@ -101,11 +96,5 @@ export class PgPlayerRepository implements IPlayerRepository {
 
   async delete(id: string): Promise<void> {
     await query(this.db, 'DELETE FROM players WHERE id = $1', [id]);
-  }
-
-  private async saveBehaviors(playerId: string, behaviorIds: string[]): Promise<void> {
-    await query(this.db, 'DELETE FROM player_behaviors WHERE player_id = $1', [playerId]);
-    if (behaviorIds.length === 0) return;
-    await query(this.db, 'INSERT INTO player_behaviors (player_id, behavior_id) SELECT $1, unnest($2::uuid[])', [playerId, behaviorIds]);
   }
 }

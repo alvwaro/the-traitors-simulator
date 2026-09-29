@@ -1,7 +1,7 @@
 import { Behavior, BehaviorEffects } from '../../domain/entities';
 import { IBehaviorRepository } from '../../domain/repositories';
 import { Queryable } from '../database/connection';
-import { query } from '../database/query';
+import { inOrder, query, queryOne } from '../database/query';
 
 interface BehaviorRow {
   id: string;
@@ -17,16 +17,14 @@ const toEntity = (r: BehaviorRow): Behavior =>
 export class PgBehaviorRepository implements IBehaviorRepository {
   constructor(private readonly db: Queryable) {}
 
-  async findById(id: string): Promise<Behavior | null> {
-    const [row] = await query<BehaviorRow>(this.db, 'SELECT * FROM behaviors WHERE id = $1', [id]);
-    return row ? toEntity(row) : null;
+  findById(id: string): Promise<Behavior | null> {
+    return queryOne(this.db, 'SELECT * FROM behaviors WHERE id = $1', [id], toEntity);
   }
 
   async findByIds(ids: readonly string[]): Promise<Behavior[]> {
     if (ids.length === 0) return [];
     const rows = await query<BehaviorRow>(this.db, 'SELECT * FROM behaviors WHERE id = ANY($1::uuid[])', [ids]);
-    const byId = new Map(rows.map((r) => [r.id, toEntity(r)]));
-    return ids.flatMap((id) => byId.get(id) ?? []);
+    return inOrder(ids, rows.map(toEntity));
   }
 
   async findAll(): Promise<Behavior[]> {

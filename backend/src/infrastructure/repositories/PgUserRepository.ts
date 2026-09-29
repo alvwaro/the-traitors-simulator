@@ -1,7 +1,7 @@
 import { User, UserRole } from '../../domain/entities';
 import { ISessionRepository, IUserRepository } from '../../domain/repositories';
 import { Queryable } from '../database/connection';
-import { query } from '../database/query';
+import { query, queryOne } from '../database/query';
 
 interface UserRow {
   id: string;
@@ -17,14 +17,12 @@ const toEntity = (r: UserRow): User =>
 export class PgUserRepository implements IUserRepository {
   constructor(private readonly db: Queryable) {}
 
-  async findById(id: string): Promise<User | null> {
-    const [row] = await query<UserRow>(this.db, 'SELECT * FROM users WHERE id = $1', [id]);
-    return row ? toEntity(row) : null;
+  findById(id: string): Promise<User | null> {
+    return queryOne(this.db, 'SELECT * FROM users WHERE id = $1', [id], toEntity);
   }
 
-  async findByUsername(username: string): Promise<User | null> {
-    const [row] = await query<UserRow>(this.db, 'SELECT * FROM users WHERE lower(username) = lower($1)', [username.trim()]);
-    return row ? toEntity(row) : null;
+  findByUsername(username: string): Promise<User | null> {
+    return queryOne(this.db, 'SELECT * FROM users WHERE lower(username) = lower($1)', [username.trim()], toEntity);
   }
 
   async create(user: User): Promise<void> {
@@ -51,14 +49,14 @@ export class PgSessionRepository implements ISessionRepository {
     await query(this.db, 'INSERT INTO user_sessions (token_hash, user_id, expires_at) VALUES ($1, $2, $3)', [tokenHash, userId, expiresAt]);
   }
 
-  async findUser(tokenHash: string): Promise<User | null> {
-    const [row] = await query<UserRow>(
+  findUser(tokenHash: string): Promise<User | null> {
+    return queryOne(
       this.db,
       `SELECT u.* FROM user_sessions s JOIN users u ON u.id = s.user_id
         WHERE s.token_hash = $1 AND s.expires_at > now()`,
       [tokenHash],
+      toEntity,
     );
-    return row ? toEntity(row) : null;
   }
 
   async delete(tokenHash: string): Promise<void> {

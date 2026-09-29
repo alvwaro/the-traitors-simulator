@@ -21,14 +21,49 @@ const CONNECTION_CODES = new Set(['ECONNREFUSED', 'ECONNRESET', 'ENOTFOUND', 'ET
 export async function query<R extends QueryResultRow = QueryResultRow>(
   db: Queryable,
   text: string,
-  values: unknown[] = [],
+  values: readonly unknown[] = [],
 ): Promise<R[]> {
   try {
-    const result = await db.query<R>(text, values);
+    const result = await db.query<R>(text, [...values]);
     return result.rows;
   } catch (err) {
     throw translateDbError(err);
   }
+}
+
+/** A primeira linha, já convertida (null se a consulta não achou nada). */
+export async function queryOne<R extends QueryResultRow, T>(db: Queryable, text: string, values: readonly unknown[], map: (row: R) => T): Promise<T | null> {
+  const [row] = await query<R>(db, text, values);
+  return row ? map(row) : null;
+}
+
+/**
+ * Várias linhas num único INSERT (em vez de uma ida ao banco por linha). Tabela e colunas vêm sempre do
+ * código, nunca do usuário; os valores vão como parâmetros. `suffix` aceita, por exemplo, um ON CONFLICT.
+ */
+export async function insertMany(db: Queryable, table: string, columns: readonly string[], rows: readonly (readonly unknown[])[], suffix = ''): Promise<void> {
+  if (rows.length === 0) return;
+  const width = columns.length;
+  const tuples = rows.map((_, r) => `(${columns.map((_, c) => `$${r * width + c + 1}`).join(', ')})`);
+  await query(db, `INSERT INTO ${table} (${columns.join(', ')}) VALUES ${tuples.join(', ')}${suffix}`, rows.flat());
+}
+
+/** Agrupa pela chave (ex.: os votos de cada mesa), mantendo a ordem em que vieram. */
+export function groupBy<T, K>(items: readonly T[], key: (item: T) => K): Map<K, T[]> {
+  const groups = new Map<K, T[]>();
+  for (const item of items) {
+    const k = key(item);
+    const group = groups.get(k);
+    if (group) group.push(item);
+    else groups.set(k, [item]);
+  }
+  return groups;
+}
+
+/** As entidades na ordem dos ids pedidos (as que não existem ficam de fora). */
+export function inOrder<T extends { id: string }>(ids: readonly string[], items: readonly T[]): T[] {
+  const byId = new Map(items.map((item) => [item.id, item]));
+  return ids.flatMap((id) => byId.get(id) ?? []);
 }
 
 export function translateDbError(err: unknown): unknown {

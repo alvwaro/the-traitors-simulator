@@ -2,7 +2,7 @@ import { normalizeMissionPool, Season } from '../../domain/entities';
 import { GamePhase, SeasonMode, SeasonStatus } from '../../domain/enums';
 import { FindOptions, ISeasonRepository } from '../../domain/repositories';
 import { Queryable } from '../database/connection';
-import { query } from '../database/query';
+import { query, queryOne } from '../database/query';
 
 interface SeasonRow {
   id: string;
@@ -52,10 +52,10 @@ const toEntity = (r: SeasonRow): Season =>
 export class PgSeasonRepository implements ISeasonRepository {
   constructor(private readonly db: Queryable) {}
 
-  async findById(id: string, options: FindOptions = {}): Promise<Season | null> {
-    const lock = options.forUpdate ? ' FOR UPDATE' : '';
-    const [row] = await query<SeasonRow>(this.db, `SELECT * FROM seasons WHERE id = $1${lock}`, [id]);
-    return row ? toEntity(row) : null;
+  findById(id: string, options: FindOptions = {}): Promise<Season | null> {
+    // FOR UPDATE: trava a linha até o fim da transação (duas ações na mesma temporada não se atropelam).
+    const sql = options.forUpdate ? 'SELECT * FROM seasons WHERE id = $1 FOR UPDATE' : 'SELECT * FROM seasons WHERE id = $1';
+    return queryOne(this.db, sql, [id], toEntity);
   }
 
   async findAll(ownerId: string): Promise<Season[]> {

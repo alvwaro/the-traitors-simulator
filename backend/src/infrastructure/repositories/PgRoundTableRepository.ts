@@ -2,7 +2,7 @@ import { RoundTable } from '../../domain/entities';
 import { EndgameChoice, RoundTableKind } from '../../domain/enums';
 import { IRoundTableRepository } from '../../domain/repositories';
 import { Queryable } from '../database/connection';
-import { query } from '../database/query';
+import { groupBy, insertMany, query } from '../database/query';
 
 interface RoundTableRow {
   id: string;
@@ -63,34 +63,20 @@ export class PgRoundTableRepository implements IRoundTableRepository {
        VALUES ($1, $2, $3, $4, $5, $6, $7)`,
       [rt.id, rt.dayId, rt.kind, rt.sequence, rt.banishedPlayerId, rt.notes, rt.createdAt],
     );
-    for (const v of rt.votes) {
-      await query(
-        this.db,
-        'INSERT INTO round_table_votes (id, round_table_id, round, voter_id, target_id) VALUES ($1, $2, $3, $4, $5)',
-        [v.id, rt.id, v.round, v.voterId, v.targetId],
-      );
-    }
-    for (const v of rt.endgameVotes) {
-      await query(
-        this.db,
-        'INSERT INTO endgame_votes (id, round_table_id, voter_id, choice) VALUES ($1, $2, $3, $4)',
-        [v.id, rt.id, v.voterId, v.choice],
-      );
-    }
+    await insertMany(this.db, 'round_table_votes', ['id', 'round_table_id', 'round', 'voter_id', 'target_id'], rt.votes.map((v) => [v.id, rt.id, v.round, v.voterId, v.targetId]));
+    await insertMany(this.db, 'endgame_votes', ['id', 'round_table_id', 'voter_id', 'choice'], rt.endgameVotes.map((v) => [v.id, rt.id, v.voterId, v.choice]));
   }
 
   private async hydrate(rows: RoundTableRow[]): Promise<RoundTable[]> {
     if (rows.length === 0) return [];
     const ids = rows.map((r) => r.id);
-    const votes = await query<VoteRow>(
-      this.db,
-      'SELECT * FROM round_table_votes WHERE round_table_id = ANY($1::uuid[]) ORDER BY round, created_at',
-      [ids],
+    const votes = groupBy(
+      await query<VoteRow>(this.db, 'SELECT * FROM round_table_votes WHERE round_table_id = ANY($1::uuid[]) ORDER BY round, created_at', [ids]),
+      (v) => v.round_table_id,
     );
-    const endgameVotes = await query<EndgameVoteRow>(
-      this.db,
-      'SELECT * FROM endgame_votes WHERE round_table_id = ANY($1::uuid[]) ORDER BY created_at',
-      [ids],
+    const endgameVotes = groupBy(
+      await query<EndgameVoteRow>(this.db, 'SELECT * FROM endgame_votes WHERE round_table_id = ANY($1::uuid[]) ORDER BY created_at', [ids]),
+      (v) => v.round_table_id,
     );
     return rows.map(
       (r) =>
@@ -102,12 +88,8 @@ export class PgRoundTableRepository implements IRoundTableRepository {
           banishedPlayerId: r.banished_player_id,
           notes: r.notes,
           createdAt: r.created_at,
-          votes: votes
-            .filter((v) => v.round_table_id === r.id)
-            .map((v) => ({ id: v.id, round: v.round, voterId: v.voter_id, targetId: v.target_id })),
-          endgameVotes: endgameVotes
-            .filter((v) => v.round_table_id === r.id)
-            .map((v) => ({ id: v.id, voterId: v.voter_id, choice: v.choice })),
+          votes: (votes.get(r.id) ?? []).map((v) => ({ id: v.id, round: v.round, voterId: v.voter_id, targetId: v.target_id })),
+          endgameVotes: (endgameVotes.get(r.id) ?? []).map((v) => ({ id: v.id, voterId: v.voter_id, choice: v.choice })),
         }),
     );
   }

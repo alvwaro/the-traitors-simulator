@@ -2,7 +2,7 @@ import { Day, DayPhase } from '../../domain/entities';
 import { GamePhase } from '../../domain/enums';
 import { IDayRepository } from '../../domain/repositories';
 import { Queryable } from '../database/connection';
-import { query } from '../database/query';
+import { query, queryOne } from '../database/query';
 
 interface DayRow {
   id: string;
@@ -30,14 +30,12 @@ const toPhase = (r: DayPhaseRow): DayPhase =>
 export class PgDayRepository implements IDayRepository {
   constructor(private readonly db: Queryable) {}
 
-  async findById(id: string): Promise<Day | null> {
-    const [row] = await query<DayRow>(this.db, 'SELECT * FROM days WHERE id = $1', [id]);
-    return row ? toDay(row) : null;
+  findById(id: string): Promise<Day | null> {
+    return queryOne(this.db, 'SELECT * FROM days WHERE id = $1', [id], toDay);
   }
 
-  async findBySeasonAndNumber(seasonId: string, number: number): Promise<Day | null> {
-    const [row] = await query<DayRow>(this.db, 'SELECT * FROM days WHERE season_id = $1 AND number = $2', [seasonId, number]);
-    return row ? toDay(row) : null;
+  findBySeasonAndNumber(seasonId: string, number: number): Promise<Day | null> {
+    return queryOne(this.db, 'SELECT * FROM days WHERE season_id = $1 AND number = $2', [seasonId, number], toDay);
   }
 
   async findBySeason(seasonId: string): Promise<Day[]> {
@@ -54,9 +52,8 @@ export class PgDayRepository implements IDayRepository {
     );
   }
 
-  async findPhase(dayId: string, phase: GamePhase): Promise<DayPhase | null> {
-    const [row] = await query<DayPhaseRow>(this.db, 'SELECT * FROM day_phases WHERE day_id = $1 AND phase = $2', [dayId, phase]);
-    return row ? toPhase(row) : null;
+  findPhase(dayId: string, phase: GamePhase): Promise<DayPhase | null> {
+    return queryOne(this.db, 'SELECT * FROM day_phases WHERE day_id = $1 AND phase = $2', [dayId, phase], toPhase);
   }
 
   async findPhases(dayId: string): Promise<DayPhase[]> {

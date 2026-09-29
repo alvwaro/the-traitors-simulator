@@ -2,7 +2,8 @@ import { Cast } from '../../domain/entities';
 import { ICastRepository } from '../../domain/repositories';
 import { RelationshipProps } from '../../domain/simulation/RelationshipMatrix';
 import { Queryable } from '../database/connection';
-import { query } from '../database/query';
+import { groupBy, insertMany, query } from '../database/query';
+import { RELATIONSHIP_FEELINGS, RelationshipRow, toRelationship } from './rows';
 
 interface CastRow {
   id: string;
@@ -44,12 +45,7 @@ export class PgCastRepository implements ICastRepository {
 
   async update(cast: Cast): Promise<void> {
     const c = cast.toJSON();
-    await query(this.db, 'UPDATE casts SET name = $2, description = $3, image_url = $4 WHERE id = $1', [
-      c.id,
-      c.name,
-      c.description,
-      c.imageUrl,
-    ]);
+    await query(this.db, 'UPDATE casts SET name = $2, description = $3, image_url = $4 WHERE id = $1', [c.id, c.name, c.description, c.imageUrl]);
     await query(this.db, 'DELETE FROM cast_members WHERE cast_id = $1', [c.id]);
     await this.insertMembers(c.id, c.characterIds);
   }
@@ -59,12 +55,12 @@ export class PgCastRepository implements ICastRepository {
   }
 
   async findRelationships(castId: string): Promise<RelationshipProps[]> {
-    const rows = await query<{ from_character_id: string; to_character_id: string; trust: number; liking: number; hatred: number; allied: boolean }>(
+    const rows = await query<RelationshipRow>(
       this.db,
-      'SELECT * FROM cast_relationships WHERE cast_id = $1',
+      `SELECT from_character_id AS from_id, to_character_id AS to_id, ${RELATIONSHIP_FEELINGS} FROM cast_relationships WHERE cast_id = $1`,
       [castId],
     );
-    return rows.map((r) => ({ fromId: r.from_character_id, toId: r.to_character_id, trust: r.trust, liking: r.liking, hatred: r.hatred, allied: r.allied }));
+    return rows.map(toRelationship);
   }
 
   async saveRelationship(castId: string, r: RelationshipProps): Promise<void> {
@@ -82,14 +78,9 @@ export class PgCastRepository implements ICastRepository {
     await query(this.db, 'DELETE FROM cast_relationships WHERE cast_id = $1 AND from_character_id = $2 AND to_character_id = $3', [castId, fromId, toId]);
   }
 
-  private async insertMembers(castId: string, characterIds: string[]): Promise<void> {
-    for (const [index, characterId] of characterIds.entries()) {
-      await query(
-        this.db,
-        'INSERT INTO cast_members (cast_id, character_id, position) VALUES ($1, $2, $3)',
-        [castId, characterId, index + 1],
-      );
-    }
+  /** O elenco na ordem dada (position 1, 2, 3...). */
+  private insertMembers(castId: string, characterIds: readonly string[]): Promise<void> {
+    return insertMany(this.db, 'cast_members', ['cast_id', 'character_id', 'position'], characterIds.map((characterId, i) => [castId, characterId, i + 1]));
   }
 
   private async hydrate(rows: CastRow[]): Promise<Cast[]> {
@@ -99,6 +90,7 @@ export class PgCastRepository implements ICastRepository {
       'SELECT cast_id, character_id FROM cast_members WHERE cast_id = ANY($1::uuid[]) ORDER BY position',
       [rows.map((r) => r.id)],
     );
+    const byCast = groupBy(members, (m) => m.cast_id);
     return rows.map(
       (r) =>
         new Cast({
@@ -108,7 +100,7 @@ export class PgCastRepository implements ICastRepository {
           imageUrl: r.image_url,
           createdAt: r.created_at,
           ownerId: r.owner_id,
-          characterIds: members.filter((m) => m.cast_id === r.id).map((m) => m.character_id),
+          characterIds: (byCast.get(r.id) ?? []).map((m) => m.character_id),
         }),
     );
   }

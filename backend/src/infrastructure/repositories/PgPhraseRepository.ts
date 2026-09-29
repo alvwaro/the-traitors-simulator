@@ -2,7 +2,7 @@ import { Phrase } from '../../domain/entities';
 import { PhrasePhase, PhraseTone } from '../../domain/enums';
 import { IPhraseRepository } from '../../domain/repositories';
 import { Queryable } from '../database/connection';
-import { query } from '../database/query';
+import { query, queryOne } from '../database/query';
 
 interface PhraseRow {
   id: string;
@@ -18,9 +18,8 @@ const toEntity = (r: PhraseRow): Phrase => new Phrase({ id: r.id, phase: r.phase
 export class PgPhraseRepository implements IPhraseRepository {
   constructor(private readonly db: Queryable) {}
 
-  async findById(id: string): Promise<Phrase | null> {
-    const [row] = await query<PhraseRow>(this.db, 'SELECT * FROM phrases WHERE id = $1', [id]);
-    return row ? toEntity(row) : null;
+  findById(id: string): Promise<Phrase | null> {
+    return queryOne(this.db, 'SELECT * FROM phrases WHERE id = $1', [id], toEntity);
   }
 
   async findAll(phase?: PhrasePhase): Promise<Phrase[]> {

@@ -2,15 +2,7 @@ import { IRelationshipRepository } from '../../domain/repositories';
 import { RelationshipProps } from '../../domain/simulation/RelationshipMatrix';
 import { Queryable } from '../database/connection';
 import { query } from '../database/query';
-
-interface RelationshipRow {
-  from_player_id: string;
-  to_player_id: string;
-  trust: number;
-  liking: number;
-  hatred: number;
-  allied: boolean;
-}
+import { RELATIONSHIP_FEELINGS, RelationshipRow, toRelationship } from './rows';
 
 /** Quantos pares vão em cada INSERT (4 colunas variáveis por par + season). */
 const BATCH = 500;
@@ -21,10 +13,10 @@ export class PgRelationshipRepository implements IRelationshipRepository {
   async findBySeason(seasonId: string): Promise<RelationshipProps[]> {
     const rows = await query<RelationshipRow>(
       this.db,
-      'SELECT from_player_id, to_player_id, trust, liking, hatred, allied FROM relationships WHERE season_id = $1',
+      `SELECT from_player_id AS from_id, to_player_id AS to_id, ${RELATIONSHIP_FEELINGS} FROM relationships WHERE season_id = $1`,
       [seasonId],
     );
-    return rows.map((r) => ({ fromId: r.from_player_id, toId: r.to_player_id, trust: r.trust, liking: r.liking, hatred: r.hatred, allied: r.allied }));
+    return rows.map(toRelationship);
   }
 
   async saveMany(seasonId: string, relationships: readonly RelationshipProps[]): Promise<void> {

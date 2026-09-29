@@ -1,7 +1,7 @@
 import { SeasonWinner } from '../../domain/entities';
 import { ISeasonWinnerRepository } from '../../domain/repositories';
 import { Queryable } from '../database/connection';
-import { query } from '../database/query';
+import { insertMany, query } from '../database/query';
 
 interface SeasonWinnerRow {
   season_id: string;
@@ -18,13 +18,12 @@ export class PgSeasonWinnerRepository implements ISeasonWinnerRepository {
   }
 
   async saveAll(winners: SeasonWinner[]): Promise<void> {
-    for (const w of winners.map((x) => x.toJSON())) {
-      await query(
-        this.db,
-        `INSERT INTO season_winners (season_id, player_id, prize_share) VALUES ($1, $2, $3)
-         ON CONFLICT (season_id, player_id) DO UPDATE SET prize_share = EXCLUDED.prize_share`,
-        [w.seasonId, w.playerId, w.prizeShare],
-      );
-    }
+    await insertMany(
+      this.db,
+      'season_winners',
+      ['season_id', 'player_id', 'prize_share'],
+      winners.map((w) => w.toJSON()).map((w) => [w.seasonId, w.playerId, w.prizeShare]),
+      ' ON CONFLICT (season_id, player_id) DO UPDATE SET prize_share = EXCLUDED.prize_share',
+    );
   }
 }
