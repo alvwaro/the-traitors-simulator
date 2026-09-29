@@ -2,19 +2,24 @@
   "name": "the-traitors",
   "version": "0.1.0",
   "private": true,
-  "description": "Gerenciador e simulador de temporadas do reality The Traitors (monorepo: backend + frontend)",
+  "description": "Gerenciador e simulador de temporadas do reality The Traitors (monorepo: shared + backend + frontend + gateway)",
   "engines": {
     "node": ">=24"
   },
   "scripts": {
-    "install:all": "npm ci --prefix backend && npm ci --prefix frontend",
+    "install:all": "npm ci --prefix shared && npm ci --prefix backend && npm ci --prefix frontend && npm ci --prefix gateway",
     "db:up": "docker compose up -d db",
     "db:down": "docker compose down",
     "db:migrate": "npm run db:migrate --prefix backend",
     "dev:api": "npm run dev --prefix backend",
+    "dev:worker": "npm run dev:worker --prefix backend",
+    "dev:gateway": "npm run dev --prefix gateway",
     "dev:web": "npm run dev --prefix frontend",
-    "typecheck": "npm run typecheck --prefix backend && npm run typecheck --prefix frontend",
-    "build": "npm run build --prefix backend && npm run build --prefix frontend",
+    "typecheck": "npm run typecheck --prefix shared && npm run typecheck --prefix backend && npm run typecheck --prefix frontend && npm run typecheck --prefix gateway",
+    "build": "npm run build --prefix shared && npm run build --prefix backend && npm run build --prefix frontend && npm run build --prefix gateway",
+    "test:unit": "npm test --prefix shared && npm test --prefix gateway && npm test --prefix frontend",
+    "stack:up": "docker compose --profile stack up --build -d",
+    "stack:down": "docker compose --profile stack rm --stop --force web gateway api-1 api-2 worker migrate",
     "user:owner": "npm run user:owner --prefix backend --"
   }
 }

@@ -1,0 +1,14 @@
+# Só o código-fonte entra nas imagens: nada de dependências locais, builds, segredos ou histórico.
+**/node_modules
+**/dist
+**/coverage
+**/.vite
+**/*.log
+**/.env
+**/.env.*
+!**/.env.example
+.git
+.github
+.idea
+.claude
+docs

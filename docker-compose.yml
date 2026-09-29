@@ -1,5 +1,34 @@
-# Banco de desenvolvimento. As credenciais vêm de variáveis de ambiente (arquivo .env na raiz);
+# Desenvolvimento: só o banco (npm run db:up). As credenciais vêm do .env da raiz;
 # os valores padrão abaixo servem só para uso local.
+#
+# Pilha completa (npm run stack:up), com o perfil "stack":
+#   navegador → web (Nginx: site + /api) → gateway (validações, limites, balanceamento)
+#             → api-1 / api-2 (backend) → db;  worker (fila de trabalhos) → db
+x-backend: &backend
+  build:
+    context: .
+    dockerfile: backend/Dockerfile
+  environment:
+    DATABASE_URL: postgres://${POSTGRES_USER:-traitors}:${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env da raiz}@db:5432/${POSTGRES_DB:-traitors}
+    # Atrás do gateway: o IP do visitante vem do X-Forwarded-For.
+    TRUST_PROXY: "true"
+    # Local, sem HTTPS. Em produção (HTTPS na borda), deixe true.
+    COOKIE_SECURE: ${COOKIE_SECURE:-false}
+    # Ao desligar, espera o gateway tirar a instância da roda antes de fechar a porta.
+    SHUTDOWN_DRAIN_MS: "3000"
+  restart: unless-stopped
+  profiles: [stack]
+
+x-api: &api
+  <<: *backend
+  depends_on:
+    migrate:
+      condition: service_completed_successfully
+  healthcheck:
+    test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/health/ready || exit 1"]
+    interval: 5s
+    retries: 10
+
 services:
   db:
     image: postgres:16
@@ -15,6 +44,55 @@ services:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-traitors}"]
       interval: 5s
       retries: 10
+
+  migrate:
+    <<: *backend
+    command: ["node", "dist/infrastructure/database/migrate.js"]
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api-1:
+    <<: *api
+
+  api-2:
+    <<: *api
+
+  worker:
+    <<: *backend
+    command: ["node", "dist/main/worker.js"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  gateway:
+    build:
+      context: .
+      dockerfile: gateway/Dockerfile
+    environment:
+      UPSTREAMS: http://api-1:3000,http://api-2:3000
+      LB_STRATEGY: least-connections
+      # Atrás do Nginx (a borda), que informa o IP do visitante.
+      TRUST_PROXY: "true"
+    depends_on:
+      api-1:
+        condition: service_healthy
+      api-2:
+        condition: service_healthy
+    restart: unless-stopped
+    profiles: [stack]
+
+  web:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "${WEB_PORT:-8080}:8080"
+    depends_on:
+      - gateway
+    restart: unless-stopped
+    profiles: [stack]
 
 volumes:
   pgdata:
