@@ -1,6 +1,6 @@
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { describe, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { Agent, createCharacters, createSeason, ok, signUp } from '../helpers';
 import { getState, playAsHuman, State } from '../player-bot';
 
@@ -167,7 +167,14 @@ describe.runIf(import.meta.env.MODE === 'fixtures')('gravação das fixtures do 
       relationships: automatic.relationships,
       fullHistory: automatic.fullHistory,
     };
+    // As telas do frontend dependem de ter passado por cada modo e por cada situação do jogador.
+    expect(manual.some((s) => s.label === 'final')).toBe(true);
+    expect(automatic.shots.length).toBeGreaterThan(2);
+    expect(player.length).toBeGreaterThan(3);
+    expect(data.publications.official).not.toHaveLength(0);
+
     mkdirSync(join(OUT, '..'), { recursive: true });
     writeFileSync(OUT, JSON.stringify(data));
+    expect(JSON.parse(readFileSync(OUT, 'utf8')).username).toBe(username);
   });
 });
