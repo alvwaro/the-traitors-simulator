@@ -1,4 +1,5 @@
-import { useState, type FormEvent } from 'react';
+import { useCallback, useState, type FormEvent } from 'react';
+import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, USERNAME_MAX_LENGTH } from '@traitors/shared';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../app/auth';
 import { Button } from '../../components/ui/Button';
@@ -6,14 +7,10 @@ import { Field, Input } from '../../components/ui/Form';
 import { Loading } from '../../components/ui/States';
 import { useAction } from '../../hooks/useAction';
 import { fireAndForget } from '../../lib/async';
+import { safeReturn } from '../../lib/safeReturn';
 import styles from './LoginPage.module.css';
 
 type Mode = 'login' | 'register';
-
-/** Só aceita voltar para caminhos do próprio site (evita redirecionamento para fora). */
-function safeReturn(path: string | null): string {
-  return path?.startsWith('/') && !path.startsWith('//') ? path : '/';
-}
 
 /**
  * Porta de entrada do site: só o login (ou cadastro), sem nada do castelo por trás.
@@ -27,6 +24,8 @@ export function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const back = safeReturn(params.get('voltar'));
+  // A tela só serve para entrar: o cursor já começa no usuário (assim que o campo aparece).
+  const focusOnMount = useCallback((input: HTMLInputElement | null) => input?.focus(), []);
 
   const submit = useAction((m: Mode) => (m === 'login' ? login({ username, password }) : register({ username, password })), {
     success: (u) => `Bem-vindo(a) ao castelo, ${u.username}`,
@@ -52,17 +51,17 @@ export function LoginPage() {
         <h1 className={styles.heading}>{registering ? 'Criar conta' : 'Entrar'}</h1>
         <form className={styles.form} onSubmit={fireAndForget(handleSubmit)}>
           <Field label="Usuário" hint={registering ? 'De 3 a 30 caracteres: letras, números, ponto, hífen ou sublinhado.' : undefined}>
-            {(id) => <Input id={id} value={username} autoComplete="username" maxLength={30} required autoFocus onChange={(e) => setUsername(e.target.value)} />}
+            {(id) => <Input ref={focusOnMount} id={id} value={username} autoComplete="username" maxLength={USERNAME_MAX_LENGTH} required onChange={(e) => setUsername(e.target.value)} />}
           </Field>
-          <Field label="Senha" hint={registering ? 'Pelo menos 8 caracteres.' : undefined}>
+          <Field label="Senha" hint={registering ? `Pelo menos ${PASSWORD_MIN_LENGTH} caracteres.` : undefined}>
             {(id) => (
               <Input
                 id={id}
                 type="password"
                 value={password}
                 autoComplete={registering ? 'new-password' : 'current-password'}
-                minLength={registering ? 8 : undefined}
-                maxLength={128}
+                minLength={registering ? PASSWORD_MIN_LENGTH : undefined}
+                maxLength={PASSWORD_MAX_LENGTH}
                 required
                 onChange={(e) => setPassword(e.target.value)}
               />
