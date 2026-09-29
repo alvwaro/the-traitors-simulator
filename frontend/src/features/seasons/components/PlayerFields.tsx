@@ -1,5 +1,5 @@
 import { Portrait } from '../../../components/player/Portrait';
-import { Field, Input } from '../../../components/ui/Form';
+import { IdentityFields } from '../../../components/player/IdentityFields';
 import styles from './ModePicker.module.css';
 
 export interface PlayerDraft {
@@ -15,8 +15,15 @@ export function PlayerFields({ value, onChange }: Readonly<{ value: PlayerDraft;
       <div className={styles.you}>
         <Portrait name={value.name || 'Você'} imageUrl={value.imageUrl.trim() || null} size="sm" hideName />
         <div className={styles.youFields}>
-          <Field label="Seu nome no jogo">{(id) => <Input id={id} value={value.name} onChange={(e) => onChange({ ...value, name: e.target.value })} maxLength={80} required placeholder="Como o castelo vai te chamar" />}</Field>
-          <Field label="Sua foto (opcional)">{(id) => <Input id={id} type="url" value={value.imageUrl} onChange={(e) => onChange({ ...value, imageUrl: e.target.value })} placeholder="https://" />}</Field>
+          <IdentityFields
+            name={value.name}
+            imageUrl={value.imageUrl}
+            onName={(name) => onChange({ ...value, name })}
+            onImageUrl={(imageUrl) => onChange({ ...value, imageUrl })}
+            nameLabel="Seu nome no jogo"
+            imageLabel="Sua foto (opcional)"
+            namePlaceholder="Como o castelo vai te chamar"
+          />
         </div>
       </div>
       <label className={styles.chaos}>

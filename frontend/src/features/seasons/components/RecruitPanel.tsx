@@ -4,7 +4,8 @@ import { useServices } from '../../../app/services';
 import { TagPicker } from '../../../components/behavior/BehaviorTags';
 import { PortraitGrid, toggleIn } from '../../../components/player/PortraitGrid';
 import { Button } from '../../../components/ui/Button';
-import { Check, Field, Input } from '../../../components/ui/Form';
+import { IdentityFields } from '../../../components/player/IdentityFields';
+import { Check } from '../../../components/ui/Form';
 import { Panel } from '../../../components/ui/Panel';
 import { EmptyState, Loading } from '../../../components/ui/States';
 import type { SeasonDetails } from '../../../domain/models';
@@ -109,8 +110,7 @@ function NewPlayer({ onChanged, add }: Readonly<TabProps>) {
 
   return (
     <form className={styles.formStack} onSubmit={fireAndForget(handleSubmit)}>
-      <Field label="Nome">{(id) => <Input id={id} value={name} onChange={(e) => setName(e.target.value)} required maxLength={80} />}</Field>
-      <Field label="Link da imagem">{(id) => <Input id={id} type="url" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://" />}</Field>
+      <IdentityFields name={name} imageUrl={imageUrl} onName={setName} onImageUrl={setImageUrl} />
       <TagPicker behaviors={library.data ?? []} value={behaviorIds} onChange={setBehaviorIds} />
       <Check label="Guardar também na biblioteca" checked={saveToLibrary} onChange={(e) => setSaveToLibrary(e.target.checked)} />
       <div className={styles.actionsRow}>

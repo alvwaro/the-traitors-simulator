@@ -2,7 +2,7 @@ import { useState, type SubmitEvent } from 'react';
 import { TagPicker } from '../../../components/behavior/BehaviorTags';
 import { Portrait } from '../../../components/player/Portrait';
 import { Button } from '../../../components/ui/Button';
-import { Field, Input } from '../../../components/ui/Form';
+import { IdentityFields } from '../../../components/player/IdentityFields';
 import type { Behavior, Character } from '../../../domain/models';
 import type { CharacterInput } from '../../../services/api/CharacterService';
 import styles from './Library.module.css';
@@ -37,10 +37,7 @@ export function CharacterForm({ initial, behaviors, pending, submitLabel, onSubm
     <form className={styles.characterForm} onSubmit={fireAndForget(handleSubmit)}>
       <Portrait name={name || 'Novo personagem'} imageUrl={imageUrl.trim() || null} size="md" />
       <div className={styles.formFields}>
-        <Field label="Nome">{(id) => <Input id={id} value={name} onChange={(e) => setName(e.target.value)} required maxLength={80} placeholder="Ex.: Lady Morag" />}</Field>
-        <Field label="Link da imagem">
-          {(id) => <Input id={id} type="url" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://" />}
-        </Field>
+        <IdentityFields name={name} imageUrl={imageUrl} onName={setName} onImageUrl={setImageUrl} namePlaceholder="Ex.: Lady Morag" />
         <div className={styles.tagField}>
           <span className={styles.fieldLabel}>Comportamentos</span>
           <TagPicker behaviors={behaviors} value={behaviorIds} onChange={setBehaviorIds} />

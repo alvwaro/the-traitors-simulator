@@ -3,8 +3,9 @@ import { useServices } from '../../../app/services';
 import { TagPicker } from '../../../components/behavior/BehaviorTags';
 import { Portrait } from '../../../components/player/Portrait';
 import { Button } from '../../../components/ui/Button';
-import { Field, Input, Select } from '../../../components/ui/Form';
-import { Modal } from '../../../components/ui/Modal';
+import { IdentityFields } from '../../../components/player/IdentityFields';
+import { Field, Select } from '../../../components/ui/Form';
+import { Modal, ModalActions } from '../../../components/ui/Modal';
 import type { PlayerRole } from '../../../domain/enums';
 import type { Player } from '../../../domain/models';
 import { useAction } from '../../../hooks/useAction';
@@ -59,24 +60,24 @@ export function PlayerEditorModal({ seasonId, player, onClose, onChanged }: Read
       title="Ficha do jogador"
       onClose={onClose}
       footer={
-        <>
-          <Button variant="danger" pending={remove.pending} onClick={fireAndForget(handleRemove)}>
-            Dispensar
-          </Button>
-          <Button variant="quiet" onClick={onClose}>
-            Cancelar
-          </Button>
-          <Button pending={save.pending} disabled={!name.trim()} onClick={fireAndForget(handleSave)}>
-            Salvar
-          </Button>
-        </>
+        <ModalActions
+          onCancel={onClose}
+          confirmLabel="Salvar"
+          pending={save.pending}
+          disabled={!name.trim()}
+          onConfirm={handleSave}
+          extra={
+            <Button variant="danger" pending={remove.pending} onClick={fireAndForget(handleRemove)}>
+              Dispensar
+            </Button>
+          }
+        />
       }
     >
       <div className={styles.editor}>
         <Portrait name={name || '?'} imageUrl={imageUrl.trim() || null} />
         <div className={styles.editorFields}>
-          <Field label="Nome">{(id) => <Input id={id} value={name} onChange={(e) => setName(e.target.value)} maxLength={80} />}</Field>
-          <Field label="Link da imagem">{(id) => <Input id={id} type="url" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://" />}</Field>
+          <IdentityFields name={name} imageUrl={imageUrl} onName={setName} onImageUrl={setImageUrl} required={false} />
           <Field label="Função">
             {(id) => (
               <Select id={id} value={role} onChange={(e) => setRole(e.target.value as PlayerRole)}>
