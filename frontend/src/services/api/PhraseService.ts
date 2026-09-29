@@ -1,6 +1,7 @@
 import type { PhrasePhase, PhraseTone } from '../../domain/enums';
 import type { Phrase } from '../../domain/models';
 import type { IHttpClient } from '../http/HttpClient';
+import { ResourceService } from '../http/ResourceService';
 
 export interface PhraseInput {
   phase: PhrasePhase;
@@ -16,22 +17,12 @@ export interface IPhraseService {
   remove(id: string): Promise<void>;
 }
 
-export class PhraseService implements IPhraseService {
-  constructor(private readonly http: IHttpClient) {}
+export class PhraseService extends ResourceService<Phrase, PhraseInput> implements IPhraseService {
+  constructor(http: IHttpClient) {
+    super(http, '/phrases');
+  }
 
   list(phase?: PhrasePhase) {
-    return this.http.get<Phrase[]>('/phrases', { phase });
-  }
-
-  create(input: PhraseInput) {
-    return this.http.post<Phrase>('/phrases', input);
-  }
-
-  update(id: string, input: Partial<PhraseInput>) {
-    return this.http.patch<Phrase>(`/phrases/${id}`, input);
-  }
-
-  remove(id: string) {
-    return this.http.delete(`/phrases/${id}`);
+    return this.listWhere({ phase });
   }
 }

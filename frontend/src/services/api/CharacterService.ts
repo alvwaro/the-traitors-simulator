@@ -1,5 +1,6 @@
 import type { Character } from '../../domain/models';
 import type { IHttpClient } from '../http/HttpClient';
+import { ResourceService } from '../http/ResourceService';
 
 export interface CharacterInput {
   name: string;
@@ -14,22 +15,12 @@ export interface ICharacterService {
   remove(id: string): Promise<void>;
 }
 
-export class CharacterService implements ICharacterService {
-  constructor(private readonly http: IHttpClient) {}
+export class CharacterService extends ResourceService<Character, CharacterInput> implements ICharacterService {
+  constructor(http: IHttpClient) {
+    super(http, '/characters');
+  }
 
   list(search?: string) {
-    return this.http.get<Character[]>('/characters', { search });
-  }
-
-  create(input: CharacterInput) {
-    return this.http.post<Character>('/characters', input);
-  }
-
-  update(id: string, input: Partial<CharacterInput>) {
-    return this.http.patch<Character>(`/characters/${id}`, input);
-  }
-
-  remove(id: string) {
-    return this.http.delete(`/characters/${id}`);
+    return this.listWhere({ search });
   }
 }

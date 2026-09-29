@@ -1,5 +1,6 @@
 import type { Cast, CastRankingRow, Relationship } from '../../domain/models';
 import type { IHttpClient } from '../http/HttpClient';
+import { ResourceService } from '../http/ResourceService';
 
 export interface CastInput {
   name: string;
@@ -32,42 +33,32 @@ export interface ICastService {
   remove(id: string): Promise<void>;
 }
 
-export class CastService implements ICastService {
-  constructor(private readonly http: IHttpClient) {}
+export class CastService extends ResourceService<Cast, CastInput> implements ICastService {
+  constructor(http: IHttpClient) {
+    super(http, '/casts');
+  }
 
   list() {
-    return this.http.get<Cast[]>('/casts');
+    return this.listWhere();
   }
 
   get(id: string) {
-    return this.http.get<Cast>(`/casts/${id}`);
-  }
-
-  create(input: CastInput) {
-    return this.http.post<Cast>('/casts', input);
-  }
-
-  update(id: string, input: Partial<CastInput>) {
-    return this.http.patch<Cast>(`/casts/${id}`, input);
-  }
-
-  remove(id: string) {
-    return this.http.delete(`/casts/${id}`);
+    return this.http.get<Cast>(this.itemPath(id));
   }
 
   relationships(id: string) {
-    return this.http.get<{ relationships: Relationship[] }>(`/casts/${id}/relationships`);
+    return this.http.get<{ relationships: Relationship[] }>(this.itemPath(id, '/relationships'));
   }
 
   updateRelationship(id: string, patch: CastRelationshipPatch) {
-    return this.http.patch<{ relationships: Relationship[] }>(`/casts/${id}/relationships`, patch);
+    return this.http.patch<{ relationships: Relationship[] }>(this.itemPath(id, '/relationships'), patch);
   }
 
   ranking(id: string) {
-    return this.http.get<{ rows: CastRankingRow[] }>(`/casts/${id}/ranking`);
+    return this.http.get<{ rows: CastRankingRow[] }>(this.itemPath(id, '/ranking'));
   }
 
   randomizeBehaviors(id: string) {
-    return this.http.post<Cast>(`/casts/${id}/randomize-behaviors`, {});
+    return this.http.post<Cast>(this.itemPath(id, '/randomize-behaviors'), {});
   }
 }
