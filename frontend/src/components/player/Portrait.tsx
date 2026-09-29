@@ -21,6 +21,11 @@ export interface PortraitProps {
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   /** Carrega a foto na hora, mesmo fora da tela (ex.: arte do Instagram). */
   eager?: boolean;
+  /**
+   * Retrato de ninguém (ex.: arte de "ninguém morreu"): a moldura de sempre com fundo liso e uma
+   * interrogação no lugar da foto, com os mesmos efeitos de foto antiga.
+   */
+  mystery?: boolean;
   onClick?: () => void;
 }
 
@@ -67,12 +72,25 @@ function frameImageStyle(): CSSProperties {
  * Foto de um jogador: quadrada, ou retrato emoldurado na simulação.
  * No modo emoldurado usa o PNG de config/portraitFrame.ts; sem o PNG, a moldura dourada em CSS.
  */
-export function Portrait({ name, imageUrl, status, caption, badge, selected, disabled, hideName, size = 'md', eager, onClick }: Readonly<PortraitProps>) {
+export function Portrait({ name, imageUrl, status, caption, badge, selected, disabled, hideName, size = 'md', eager, mystery, onClick }: Readonly<PortraitProps>) {
   const [broken, setBroken] = useState(false);
   const framed = usePortraitStyle() === 'framed';
   const hasFrameImage = useImageAvailable(portraitFrame.src);
   const pngFrame = framed && hasFrameImage;
   const Tag = onClick ? 'button' : 'div';
+
+  let content: ReactNode;
+  if (mystery) {
+    content = (
+      <span className={styles.mystery} aria-hidden="true">
+        ?
+      </span>
+    );
+  } else if (imageUrl && !broken) {
+    content = <img className={styles.photo} src={imageUrl} alt="" loading={eager ? 'eager' : 'lazy'} onError={() => setBroken(true)} />;
+  } else {
+    content = <span className={styles.initials}>{initials(name)}</span>;
+  }
 
   return (
     <Tag
@@ -95,11 +113,7 @@ export function Portrait({ name, imageUrl, status, caption, badge, selected, dis
     >
       <div className={styles.frame} style={pngFrame ? windowVars() : undefined}>
         <div className={styles.window}>
-          {imageUrl && !broken ? (
-            <img className={styles.photo} src={imageUrl} alt="" loading={eager ? 'eager' : 'lazy'} onError={() => setBroken(true)} />
-          ) : (
-            <span className={styles.initials}>{initials(name)}</span>
-          )}
+          {content}
           {(status === 'BANISHED' || status === 'MURDERED') && <EliminationMark kind={status} />}
         </div>
         {pngFrame && <span className={styles.frameImage} style={frameImageStyle()} aria-hidden="true" />}

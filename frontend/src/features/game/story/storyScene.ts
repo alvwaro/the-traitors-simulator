@@ -17,6 +17,8 @@ export type StoryScene =
   | { kind: 'shields'; players: Player[] }
   /** Conclave na torre: um encapuzado no lugar dos Traidores, sem revelar ninguém. */
   | { kind: 'tower' }
+  /** Conclave encerrado sem morte (ninguém escolhido ou alvo salvo pelo escudo): a moldura com uma interrogação. */
+  | { kind: 'noMurder'; detail?: string }
   /**
    * Jogadores em volta da mesa; `votes` = votos recebidos por id e `ballots` = quem votou em quem
    * (vira uma seta na arte), sempre da rodada mais recente.
@@ -117,12 +119,17 @@ export function storyScene(game: GameContextValue, draft: StoryDraft): StoryScen
     }
 
     case 'TRAITORS_MEETING': {
-      const murder = today?.traitorsMeeting?.murder;
-      const target = murder && playersById.get(murder.targetId);
-      if (!target) return { kind: 'tower' };
-      return murder.outcome === 'SUCCESS'
-        ? { kind: 'elimination', player: target, status: 'MURDERED', headline: `${target.name} foi assassinado(a)`, detail: `Pela ordem dos Traidores, ${target.name} foi assassinado(a).` }
-        : { ...wall, headline: `${target.name} escapou graças ao escudo`, tone: 'good' };
+      // Reunião ainda não registrada: o conclave está acontecendo.
+      const meeting = today?.traitorsMeeting;
+      if (!meeting) return { kind: 'tower' };
+      const { murder } = meeting;
+      if (murder?.outcome === 'SUCCESS') {
+        const victim = playersById.get(murder.targetId);
+        if (!victim) return wall;
+        return { kind: 'elimination', player: victim, status: 'MURDERED', headline: `${victim.name} foi assassinado(a)`, detail: `Pela ordem dos Traidores, ${victim.name} foi assassinado(a).` };
+      }
+      // Ninguém morreu. Com escudo, a arte avisa, mas não revela quem era o alvo.
+      return murder ? { kind: 'noMurder', detail: 'O alvo dos Traidores estava protegido por um escudo.' } : { kind: 'noMurder' };
     }
 
     case 'FINALE': {

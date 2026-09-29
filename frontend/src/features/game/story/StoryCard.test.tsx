@@ -1,4 +1,5 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import { PortraitStyleProvider } from '../../../components/player/PortraitStyle';
 import { describe, expect, it } from 'vitest';
 import type { Player } from '../../../domain/models';
 import type { Conversation } from '../../../domain/phrases';
@@ -41,6 +42,8 @@ const SCENES: [string, StoryScene][] = [
   ['alguns escudos', { kind: 'shields', players: withPhotos.slice(0, 5) }],
   ['muitos escudos', { kind: 'shields', players: many.slice(0, 14) }],
   ['torre', { kind: 'tower' }],
+  ['noite sem morte', { kind: 'noMurder' }],
+  ['noite sem morte com escudo', { kind: 'noMurder', detail: 'O alvo dos Traidores estava protegido por um escudo.' }],
   ['mesa redonda', { kind: 'roundTable', players: withPhotos, votes: { [withPhotos[0].id]: ballots.length }, ballots }],
   ['mesa redonda cheia', { kind: 'roundTable', players: many.slice(0, 20), votes: {}, ballots: [] }],
 ];
@@ -50,5 +53,19 @@ describe('arte do Instagram', () => {
     const { container } = render(<StoryCard scene={scene} seasonName="Temporada" currency="BRL" />);
     expect(container.firstChild).toBeTruthy();
     refitLines(container as HTMLElement);
+  });
+
+  it('noite sem morte: a moldura com uma interrogação no lugar da foto e o aviso', () => {
+    const { container } = render(
+      <PortraitStyleProvider value="framed">
+        <StoryCard scene={{ kind: 'noMurder', detail: 'O alvo dos Traidores estava protegido por um escudo.' }} seasonName="Temporada" currency="BRL" />
+      </PortraitStyleProvider>,
+    );
+    expect(screen.getByText('Ninguém morreu esta noite')).toBeInTheDocument();
+    expect(screen.getByText('O alvo dos Traidores estava protegido por um escudo.')).toBeInTheDocument();
+    expect(screen.getByText('?')).toBeInTheDocument();
+    // sem foto de ninguém (nem iniciais): só a interrogação dentro da moldura
+    expect(container.querySelector('img')).toBeNull();
+    expect(screen.getByTitle('Ninguém')).toHaveClass('framed');
   });
 });

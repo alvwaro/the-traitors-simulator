@@ -68,6 +68,7 @@ function themeOf(scene: StoryScene): string | undefined {
     case 'roundTable':
       return styles['theme-table'];
     case 'tower':
+    case 'noMurder':
       return styles['theme-tower'];
     default:
       return undefined;
@@ -294,7 +295,7 @@ const REVEAL_ONE_LINE_MAX = 30;
 /** Diminui a fonte da linha até o texto caber na largura (sem quebrar). */
 function fitLine(line: HTMLElement): void {
   line.style.fontSize = '';
-  let size = parseFloat(getComputedStyle(line).fontSize);
+  let size = Number.parseFloat(getComputedStyle(line).fontSize);
   while (size > MIN_LINE_FONT && line.scrollWidth > line.clientWidth) {
     size -= 1;
     line.style.fontSize = `${size}px`;
@@ -373,7 +374,7 @@ function Conversations({ conversations }: Readonly<{ conversations: Conversation
     const stage = box?.parentElement;
     if (!box || !stage || stage.offsetHeight === 0) return;
     const style = getComputedStyle(stage);
-    const contentHeight = stage.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
+    const contentHeight = stage.clientHeight - Number.parseFloat(style.paddingTop) - Number.parseFloat(style.paddingBottom);
     const available = contentHeight * (stage.getBoundingClientRect().height / stage.offsetHeight);
     let zoom = initialZoom;
     box.style.zoom = String(zoom);
@@ -401,13 +402,24 @@ function Conversations({ conversations }: Readonly<{ conversations: Conversation
   );
 }
 
+/** Conclave sem morte: a moldura de sempre com uma interrogação, num painel liso. */
+function NoMurder({ detail }: Readonly<{ detail?: string }>) {
+  return (
+    <div className={cx(styles.spotlight, styles.panel, styles.noMurder)}>
+      <Portrait name="Ninguém" imageUrl={null} size="lg" hideName mystery />
+      <p className={styles.nightText}>Ninguém morreu esta noite</p>
+      {detail && <p className={styles.detail}>{detail}</p>}
+    </div>
+  );
+}
+
 /** O conclave: um encapuzado no lugar dos Traidores, sem revelar ninguém. */
 function Tower() {
   const hasImage = useImageAvailable(towerImage.src);
   return (
     <div className={cx(styles.spotlight, styles.panel)}>
       <Portrait name="Traidores" imageUrl={hasImage ? towerImage.src : hoodedFigure} size="lg" hideName eager />
-      <p className={styles.towerText}>Os Traidores estão se reunindo na torre para assassinar alguém.</p>
+      <p className={styles.nightText}>Os Traidores estão se reunindo na torre para assassinar alguém.</p>
     </div>
   );
 }
@@ -526,6 +538,9 @@ function SceneBody({ scene, currency }: Readonly<{ scene: StoryScene; currency: 
     case 'tower':
       return <Tower />;
 
+    case 'noMurder':
+      return <NoMurder detail={scene.detail} />;
+
     case 'roundTable':
       return <RoundTable players={scene.players} votes={scene.votes} ballots={scene.ballots} />;
 
@@ -562,15 +577,15 @@ function SceneBody({ scene, currency }: Readonly<{ scene: StoryScene; currency: 
   }
 }
 
+/** Cenas na versão simples: fundo liso, sem filete nem título, com o conteúdo no centro. */
+const PLAIN_SCENES: ReadonlySet<StoryScene['kind']> = new Set(['conversations', 'banishment', 'shields', 'roundTable', 'tower', 'noMurder']);
+
 /**
  * Arte vertical para o story do Instagram: fundo régio, título, temporada e a cena do momento.
- * Conversas, banimento, escudos, mesa redonda, torre e assassinato usam uma versão simples (fundo liso, sem filete nem título), com o conteúdo no centro.
+ * Conversas, banimento, escudos, mesa redonda, torre, noite sem morte e assassinato usam a versão simples.
  */
 export function StoryCard({ scene, seasonName, currency, ref }: Readonly<StoryCardProps>) {
-  const plain =
-    scene.kind === 'conversations' ||
-    scene.kind === 'banishment' ||
-    scene.kind === 'shields' || scene.kind === 'roundTable' || scene.kind === 'tower' || (scene.kind === 'elimination' && scene.status === 'MURDERED');
+  const plain = PLAIN_SCENES.has(scene.kind) || (scene.kind === 'elimination' && scene.status === 'MURDERED');
   return (
     <div ref={ref} className={cx(styles.card, themeOf(scene), plain && styles.plain)} style={{ width: STORY_SIZE.width, height: STORY_SIZE.height }}>
       {!plain && (

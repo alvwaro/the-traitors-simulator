@@ -81,6 +81,37 @@
   font-size: 0.8rem;
 }
 
+/* retrato de ninguém: fundo liso (sem degradê) e uma interrogação no meio, no lugar da foto */
+.mystery {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  font-family: 'Cinzel', serif;
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--portrait-mystery-ink, var(--text-muted));
+  background: var(--portrait-mystery-bg, var(--surface-2));
+  text-shadow: 0 2px 8px rgb(0 0 0 / 0.6);
+}
+
+.sm .mystery {
+  font-size: 2.4rem;
+}
+
+.md .mystery {
+  font-size: 3.4rem;
+}
+
+.lg .mystery {
+  font-size: 4.6rem;
+}
+
+.xl .mystery {
+  font-size: 6rem;
+}
+
 .name {
   max-width: 100%;
   overflow: hidden;
@@ -282,7 +313,9 @@
 /* ---------- foto envelhecida (só na simulação) ----------
  * tom amarronzado mais claro + estática + sombra escura nas bordas com poeira.
  * As camadas ficam por baixo do X. */
-.framed .photo {
+/* o retrato de ninguém envelhece igual às fotos (e recebe a mesma estática, poeira e sombra de baixo) */
+.framed .photo,
+.framed .mystery {
   filter: sepia(0.45) saturate(0.8) contrast(0.9) brightness(1.08);
 }
 
