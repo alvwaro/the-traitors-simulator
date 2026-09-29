@@ -1,6 +1,6 @@
 # API e worker (a mesma imagem; o worker só muda o comando). Construa a partir da raiz do repositório:
 #   docker build -f backend/Dockerfile .
-FROM node:24-alpine AS build
+FROM node:26-alpine AS build
 WORKDIR /app
 COPY shared/package.json shared/tsconfig.json shared/tsconfig.build.json shared/
 COPY shared/src shared/src
@@ -11,7 +11,7 @@ COPY backend/src backend/src
 RUN npm run build --prefix backend \
  && npm prune --omit=dev --prefix backend
 
-FROM node:24-alpine
+FROM node:26-alpine
 ENV NODE_ENV=production
 WORKDIR /app
 COPY --from=build --chown=node:node /app/shared/package.json shared/
