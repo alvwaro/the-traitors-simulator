@@ -77,7 +77,7 @@ jobs:
           pattern: coverage-*
       - name: Coloca cada lcov na pasta do seu pacote
         run: for app in shared backend frontend gateway; do mkdir -p "$app/coverage" && mv "coverage-$app/lcov.info" "$app/coverage/lcov.info"; done
-      - uses: SonarSource/sonarqube-scan-action@v5
+      - uses: SonarSource/sonarqube-scan-action@v8
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: https://sonarcloud.io
