@@ -94,8 +94,16 @@ describe('cliente HTTP', () => {
 
     vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ error: 'Falhou' }), { status: 500 })));
     await expect(http.get('/y')).rejects.toThrow('Falhou');
+    // Erro sem corpo da API (o gateway ou o balanceador respondendo): mensagem pelo status.
     vi.stubGlobal('fetch', vi.fn(async () => new Response('', { status: 502 })));
-    await expect(http.get('/y')).rejects.toThrow('Erro 502');
+    await expect(http.get('/y')).rejects.toThrow('O servidor está indisponível');
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('<html>Bad Gateway</html>', { status: 502 })));
+    await expect(http.get('/y')).rejects.toThrow('O servidor está indisponível');
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('', { status: 418 })));
+    await expect(http.get('/y')).rejects.toThrow('Erro 418');
+    // Falha inesperada no servidor: o código para achar o problema no log.
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ error: 'InternalServerError', requestId: '3f2b8c1e-9d4a' }), { status: 500 })));
+    await expect(http.get('/y')).rejects.toThrow('código 3f2b8c1e');
     vi.stubGlobal('fetch', vi.fn(async () => { throw new TypeError('offline'); }));
     await expect(http.get('/y')).rejects.toThrow(/servidor/);
   });
