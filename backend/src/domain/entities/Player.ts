@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { PlayerRole, PlayerStatus } from '../enums';
 import { DomainError } from '../errors/DomainError';
+import { requiredText, uniqueIds } from './values';
 
 export interface PlayerProps {
   id: string;
@@ -23,7 +24,7 @@ export interface PlayerProps {
   roleUnknown?: boolean;
 }
 
-export type EliminationStatus = Exclude<PlayerStatus, PlayerStatus.ACTIVE>;
+export type EliminationStatus = Exclude<PlayerStatus, typeof PlayerStatus.ACTIVE>;
 
 export class Player {
   constructor(private readonly props: PlayerProps) {}
@@ -44,7 +45,7 @@ export class Player {
       isHuman: input.isHuman ?? false,
       name: '',
       imageUrl: input.imageUrl ?? null,
-      behaviorIds: [...new Set(input.behaviorIds ?? [])],
+      behaviorIds: uniqueIds(input.behaviorIds ?? []),
       role: PlayerRole.FAITHFUL,
       isOriginalTraitor: false,
       status: PlayerStatus.ACTIVE,
@@ -72,9 +73,7 @@ export class Player {
   isTraitor(): boolean { return this.props.role === PlayerRole.TRAITOR; }
 
   rename(name: string): void {
-    const trimmed = name.trim();
-    if (!trimmed) throw new DomainError('O nome do jogador é obrigatório');
-    this.props.name = trimmed;
+    this.props.name = requiredText(name, 'O nome do jogador é obrigatório');
   }
 
   changeImage(imageUrl: string | null): void {
@@ -82,7 +81,7 @@ export class Player {
   }
 
   setBehaviors(behaviorIds: readonly string[]): void {
-    this.props.behaviorIds = [...new Set(behaviorIds)];
+    this.props.behaviorIds = uniqueIds(behaviorIds);
   }
 
   linkCharacter(characterId: string): void {

@@ -1,3 +1,4 @@
+import { userSlots } from '@traitors/shared';
 import { GamePhase, PhraseTone, SimulationEventKind } from '../enums';
 import { surprises } from './chaos';
 import { publicSuspicion } from './decisions';
@@ -159,7 +160,7 @@ function approachContext(input: ApproachInput, npcs: SimPlayer[], events: Narrat
   // {user} = cast[0], {user1} = cast[1]...; os ids seguem a ordem em que os marcadores aparecem no texto.
   // O jogador sempre está na conversa (é com ele que vieram falar), mesmo que a frase não cite o nome.
   const say: Say = (text, tone, cast) => {
-    const order = [...new Set([...text.matchAll(/\{user(\d*)\}/g)].map((m) => m[0]))];
+    const order = userSlots(text);
     const playerIds = order.map((t) => cast[Number(t.replace(/\D/g, '') || 0)].id);
     if (!playerIds.includes(human.id)) playerIds.push(human.id);
     events.push({ kind: SimulationEventKind.APPROACH, tone, text, playerIds, isPrivate: true });

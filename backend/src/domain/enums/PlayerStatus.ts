@@ -1,6 +1,0 @@
-export enum PlayerStatus {
-  ACTIVE = 'ACTIVE',
-  BANISHED = 'BANISHED',
-  MURDERED = 'MURDERED',
-  WITHDRAWN = 'WITHDRAWN',
-}

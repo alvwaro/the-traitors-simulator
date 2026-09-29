@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { DomainError } from '../errors/DomainError';
+import { requiredText, uniqueIds } from './values';
 
 export interface CharacterProps {
   id: string;
@@ -30,9 +30,7 @@ export class Character {
   get behaviorIds(): readonly string[] { return this.props.behaviorIds; }
 
   rename(name: string): void {
-    const trimmed = name.trim();
-    if (!trimmed) throw new DomainError('O nome do personagem é obrigatório');
-    this.props.name = trimmed;
+    this.props.name = requiredText(name, 'O nome do personagem é obrigatório');
   }
 
   changeImage(imageUrl: string | null): void {
@@ -40,7 +38,7 @@ export class Character {
   }
 
   setBehaviors(behaviorIds: readonly string[]): void {
-    this.props.behaviorIds = [...new Set(behaviorIds)];
+    this.props.behaviorIds = uniqueIds(behaviorIds);
   }
 
   toJSON(): CharacterProps { return { ...this.props, behaviorIds: [...this.props.behaviorIds] }; }

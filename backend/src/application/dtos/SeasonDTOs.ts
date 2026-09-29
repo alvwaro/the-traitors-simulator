@@ -56,7 +56,7 @@ export interface SaveSeasonAsCastInput {
 
 export interface PrizeAdjustmentInput {
   seasonId: string;
-  type: PrizeTransactionType.PENALTY | PrizeTransactionType.ADJUSTMENT;
+  type: typeof PrizeTransactionType.PENALTY | typeof PrizeTransactionType.ADJUSTMENT;
   /** PENALTY: valor positivo que será descontado. ADJUSTMENT: positivo ou negativo. */
   amount: number;
   description?: string | null;

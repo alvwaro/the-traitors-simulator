@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vitest/config';
 
 /**
@@ -11,6 +12,8 @@ const testUrl = new URL(base);
 testUrl.pathname = `${base.pathname.replace(/_test$/, '')}_test`;
 
 export default defineConfig({
+  // O kernel compartilhado entra pelo código-fonte (não precisa compilar o pacote antes dos testes).
+  resolve: { alias: { '@traitors/shared': fileURLToPath(new URL('../shared/src/index.ts', import.meta.url)) } },
   test: {
     environment: 'node',
     include: ['test/**/*.test.ts'],
@@ -25,6 +28,7 @@ export default defineConfig({
       include: ['src/**/*.ts'],
       exclude: [
         'src/main/server.ts',
+        'src/main/worker.ts',
         'src/infrastructure/database/migrate.ts',
         'src/infrastructure/cli/**',
       ],

@@ -1,13 +1,9 @@
 import { randomUUID } from 'node:crypto';
+import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, USERNAME_PATTERN, UserRole } from '@traitors/shared';
 import { DomainError } from '../errors/DomainError';
 
 /** OWNER: dono do site (publica na Área Oficial e modera). FAN: qualquer pessoa cadastrada. */
-export const UserRole = { OWNER: 'OWNER', FAN: 'FAN' } as const;
-export type UserRole = (typeof UserRole)[keyof typeof UserRole];
-
-export const USERNAME_PATTERN = /^[a-zA-Z0-9_.-]{3,30}$/;
-export const PASSWORD_MIN_LENGTH = 8;
-export const PASSWORD_MAX_LENGTH = 128;
+export { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, USERNAME_PATTERN, UserRole } from '@traitors/shared';
 
 export interface UserProps {
   id: string;

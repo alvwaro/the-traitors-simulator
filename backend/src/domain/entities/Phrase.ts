@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { phraseProblem } from '@traitors/shared';
 import { PhrasePhase, PhraseTone } from '../enums';
 import { DomainError } from '../errors/DomainError';
 
@@ -12,8 +13,7 @@ export interface PhraseProps {
   createdAt: Date;
 }
 
-export const PHRASE_MAX_LENGTH = 400;
-const VALID_TOKEN = /^\{(user\d*|victim)\}$/;
+export { PHRASE_MAX_LENGTH } from '@traitors/shared';
 
 /**
  * Modelo de fala usada nas conversas simuladas.
@@ -59,15 +59,12 @@ export class Phrase {
     this.props.behaviorId = behaviorId;
   }
 
-  /** Confere tamanho e marcadores; devolve o texto limpo. */
+  /** Confere tamanho e marcadores (a mesma regra do formulário do site); devolve o texto limpo. */
   static validate(raw: string): string {
     const text = raw.trim();
     if (!text) throw new DomainError('A frase não pode ficar vazia');
-    if (text.length > PHRASE_MAX_LENGTH) throw new DomainError(`A frase pode ter no máximo ${PHRASE_MAX_LENGTH} caracteres`);
-
-    const invalid = (text.match(/\{[^}]*\}?/g) ?? []).find((token) => !VALID_TOKEN.test(token));
-    if (invalid) throw new DomainError(`Marcador inválido: ${invalid}. Use {user}, {user1}, {user2}... ou {victim}`);
-    if (!/\{user\d*\}/.test(text)) throw new DomainError('A frase precisa de pelo menos um {user}');
+    const problem = phraseProblem(text);
+    if (problem) throw new DomainError(problem);
     return text;
   }
 

@@ -1,3 +1,4 @@
+import { countVotes, leadersOf, tally } from '@traitors/shared';
 import { EndgameChoice } from '../enums';
 import { blendWithUniform, surpriseChance, surprises } from './chaos';
 import { RelationshipMatrix } from './RelationshipMatrix';
@@ -72,13 +73,6 @@ function castVote(
   return softmaxPick(rng, options, (c) => voteScore(matrix, voter, c, pressure) + (bias?.(voter.id, c.id) ?? 0), VOTE_TEMPERATURE);
 }
 
-export function leadersOf(votes: readonly SimVote[], round: number): string[] {
-  const counts = new Map<string, number>();
-  for (const v of votes) if (v.round === round) counts.set(v.targetId, (counts.get(v.targetId) ?? 0) + 1);
-  const max = Math.max(0, ...counts.values());
-  return [...counts].filter(([, n]) => n === max && max > 0).map(([id]) => id);
-}
-
 export interface VoteResult {
   votes: SimVote[];
   banishedId: string;
@@ -102,7 +96,7 @@ export function runBanishmentVote(
   bias?: VoteBias,
 ): VoteResult {
   const votes = firstVoteRound(rng, matrix, players, chaos, confessorId, forced, bias);
-  const leaders = leadersOf(votes, 1);
+  const leaders = tally(votes, 1).leaders;
   if (leaders.length > 1) return revoteRound(rng, matrix, players, votes, leaders, chaos, forced, bias);
   return { votes, banishedId: leaders[0], decidedByLot: false };
 }
@@ -158,7 +152,7 @@ export function revoteRound(
       : castVote(rng, matrix, voter, tied, pressure, chaos, bias);
     if (target) votes.push({ voterId: voter.id, targetId: target.id, round: 2 });
   }
-  const leaders = leadersOf(votes, 2);
+  const leaders = tally(votes, 2).leaders;
   const decidedByLot = leaders.length > 1;
   return { votes, banishedId: decidedByLot ? shuffle(rng, leaders)[0] : leaders[0], decidedByLot };
 }
@@ -180,8 +174,7 @@ export function banishChances(rng: Rng, matrix: RelationshipMatrix, players: rea
       const target = weightedPick(rng, options.map((o, j) => ({ o, p: probabilities[j] })), (x) => x.p)?.o;
       if (target) counts.set(target.id, (counts.get(target.id) ?? 0) + 1);
     }
-    const max = Math.max(...counts.values());
-    const leaders = [...counts].filter(([, n]) => n === max).map(([id]) => id);
+    const leaders = leadersOf(counts);
     for (const id of leaders) wins.set(id, (wins.get(id) ?? 0) + 1 / leaders.length);
   }
   for (const [id, n] of wins) wins.set(id, n / iterations);
@@ -293,10 +286,7 @@ export function decideMurder(
     return { traitorId: traitor.id, targetId: target.id };
   });
 
-  const counts = new Map<string, number>();
-  for (const p of proposals) counts.set(p.targetId, (counts.get(p.targetId) ?? 0) + 1);
-  const max = Math.max(...counts.values());
-  const tied = [...counts].filter(([, n]) => n === max).map(([id]) => id);
+  const tied = leadersOf(countVotes(proposals.map((p) => p.targetId)));
   const leader = [...traitors].sort((a, b) => b.traits.influence - a.traits.influence)[0];
   const leaderPick = proposals.find((p) => p.traitorId === leader.id)?.targetId;
   const targetId = tied.length > 1 && leaderPick && tied.includes(leaderPick) ? leaderPick : tied[0];

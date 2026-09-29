@@ -1,4 +1,5 @@
 import { NextFunction, Request, RequestHandler, Response } from 'express';
+import { SESSION_COOKIE } from '@traitors/shared';
 import { Actor } from '../../../application/dtos/AuthDTOs';
 import { GetSessionUserUseCase } from '../../../application/use-cases/auth/SessionUseCases';
 import { PublicUser } from '../../../domain/entities';
@@ -17,7 +18,7 @@ declare global {
   }
 }
 
-export const SESSION_COOKIE = 'traitors_session';
+export { SESSION_COOKIE } from '@traitors/shared';
 
 function readCookie(req: Request, name: string): string | undefined {
   const header = req.headers.cookie;

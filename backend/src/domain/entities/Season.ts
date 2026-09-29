@@ -1,10 +1,12 @@
 import { randomUUID } from 'node:crypto';
+import { MISSION_POOLS, MissionPool } from '@traitors/shared';
 import { GamePhase, SeasonMode, SeasonStatus } from '../enums';
 import { DomainError } from '../errors/DomainError';
+import { requiredText } from './values';
 
 /** De qual temporada do programa (país + número) vêm as missões e reviravoltas simuladas (MIX = todas, embaralhadas). */
-export const MISSION_POOLS = ['US_S1', 'UK_S1', 'US_S2', 'UK_S2', 'US_S3', 'UK_S3', 'MIX'] as const;
-export type MissionPool = (typeof MISSION_POOLS)[number];
+export { MISSION_POOLS } from '@traitors/shared';
+export type { MissionPool } from '@traitors/shared';
 
 /** Temporadas criadas antes da separação EUA/Reino Unido guardavam só o número (S1, S2, S3). */
 export function normalizeMissionPool(value: string): MissionPool {
@@ -112,9 +114,7 @@ export class Season {
   }
 
   rename(name: string): void {
-    const trimmed = name.trim();
-    if (!trimmed) throw new DomainError('O nome da temporada é obrigatório');
-    this.props.name = trimmed;
+    this.props.name = requiredText(name, 'O nome da temporada é obrigatório');
   }
 
   /** O modo (manual ou automático) só pode mudar antes do início. */

@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { DomainError } from '../errors/DomainError';
+import { requiredText, uniqueIds } from './values';
 
 export interface CastProps {
   id: string;
@@ -38,9 +38,7 @@ export class Cast {
   get characterIds(): readonly string[] { return this.props.characterIds; }
 
   rename(name: string): void {
-    const trimmed = name.trim();
-    if (!trimmed) throw new DomainError('O nome do cast é obrigatório');
-    this.props.name = trimmed;
+    this.props.name = requiredText(name, 'O nome do cast é obrigatório');
   }
 
   describe(description: string | null): void {
@@ -52,7 +50,7 @@ export class Cast {
   }
 
   setMembers(characterIds: string[]): void {
-    this.props.characterIds = [...new Set(characterIds)];
+    this.props.characterIds = uniqueIds(characterIds);
   }
 
   toJSON(): CastProps { return { ...this.props, characterIds: [...this.props.characterIds] }; }

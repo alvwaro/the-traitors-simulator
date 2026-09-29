@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { RewardType } from '../enums';
 import { DomainError } from '../errors/DomainError';
+import { requiredText } from './values';
 
 export interface MissionRewardProps {
   id: string;
@@ -24,8 +25,7 @@ export class Mission {
   constructor(private readonly props: MissionProps) {}
 
   static create(input: { dayId: string; name: string; description?: string | null; prizeAvailable?: number | null }): Mission {
-    const name = input.name.trim();
-    if (!name) throw new DomainError('O nome da missão é obrigatório');
+    const name = requiredText(input.name, 'O nome da missão é obrigatório');
     return new Mission({
       id: randomUUID(),
       dayId: input.dayId,

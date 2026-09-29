@@ -1,3 +1,4 @@
+import { ARRIVAL_ACTIONS, HUMAN_ACTIONS, HumanAction, TOWER_ACTIONS } from '@traitors/shared';
 import { GamePhase, PhraseTone, SimulationEventKind } from '../enums';
 import { surprises } from './chaos';
 import { MurderReason, publicSuspicion, traitorPreference } from './decisions';
@@ -39,33 +40,9 @@ import {
 import { tokenList } from './tokens';
 import { isTraitor, SimPlayer } from './traits';
 
-/** O que o jogador humano pode fazer ao clicar na foto de alguém. */
-export const HUMAN_ACTIONS = [
-  'ACCUSE',
-  'SUSPECT',
-  'DEFEND',
-  'TRUST',
-  'PRAISE',
-  'JOKE',
-  'INSULT',
-  'ALLIANCE',
-  'ASK',
-  'ASK_ABOUT',
-  'PERSUADE_GUILTY',
-  'PERSUADE_INNOCENT',
-  'TOWER_ASK',
-  'TOWER_KILL',
-  'TOWER_SPARE',
-  'TOWER_RECRUIT',
-] as const;
-export type HumanAction = (typeof HUMAN_ACTIONS)[number];
-
-/** Ações que falam de uma terceira pessoa (escolhida depois de clicar em quem ouve). */
-export const SUBJECT_ACTIONS: readonly HumanAction[] = ['ASK_ABOUT', 'PERSUADE_GUILTY', 'PERSUADE_INNOCENT', 'TOWER_KILL', 'TOWER_SPARE', 'TOWER_RECRUIT'];
-/** Conversas da torre (só com os outros traidores). */
-export const TOWER_ACTIONS: readonly HumanAction[] = ['TOWER_ASK', 'TOWER_KILL', 'TOWER_SPARE', 'TOWER_RECRUIT'];
-/** Na chegada ninguém sabe nada do jogo: só dá para se apresentar, criar laços (ou antipatias). */
-export const ARRIVAL_ACTIONS: readonly HumanAction[] = ['TRUST', 'PRAISE', 'JOKE', 'INSULT', 'ALLIANCE', 'ASK_ABOUT'];
+// As ações do jogador são as mesmas dos botões do site: vêm do kernel compartilhado.
+export { ARRIVAL_ACTIONS, HUMAN_ACTIONS, SUBJECT_ACTIONS, TOWER_ACTIONS } from '@traitors/shared';
+export type { HumanAction } from '@traitors/shared';
 
 /** O que o jogador pode dizer neste momento. */
 export function actionsFor(phase: GamePhase | null, towerTalk: boolean): HumanAction[] {
@@ -196,17 +173,6 @@ function specialSay(input: HumanActionInput, pressure: number): string | null {
   if (action === 'JOKE' && victim && momentOf(input.phase) === 'BREAKFAST') return '{user} brincou com {user1}: "Pelo menos sobra mais bacon." Humor ácido, logo depois de {user2}.';
   return null;
 }
-
-/** Respostas por humor de quem responde: {user} = quem responde, {user1} = jogador. */
-const REPLIES: Partial<Record<HumanAction, Record<Mood, readonly string[]>>> = {
-  ACCUSE: REPLY_ACCUSE,
-  SUSPECT: REPLY_SUSPECT,
-  DEFEND: REPLY_DEFEND,
-  TRUST: REPLY_TRUST,
-  PRAISE: REPLY_PRAISE,
-  JOKE: REPLY_JOKE,
-  INSULT: REPLY_INSULT,
-};
 
 /** "O que você acha de...": o nível da resposta segue a confiança real (ou a mentira do traidor). */
 function opinionLevel(trust: number): keyof typeof REPLY_OPINION {

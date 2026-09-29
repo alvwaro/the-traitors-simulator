@@ -1,14 +1,17 @@
-export * from './SeasonStatus';
-export * from './GamePhase';
-export * from './PlayerRole';
-export * from './PlayerStatus';
-export * from './RewardType';
-export * from './PrizeTransactionType';
-export * from './RoundTableKind';
-export * from './MurderOutcome';
-export * from './RecruitmentOutcome';
-export * from './EndgameChoice';
-export * from './PhrasePhase';
-export * from './PhraseTone';
-export * from './SeasonMode';
-export * from './SimulationEventKind';
+// O vocabulário do jogo vem do kernel compartilhado: é o mesmo no banco, na API e nas telas.
+export {
+  EndgameChoice,
+  GamePhase,
+  MurderOutcome,
+  PhrasePhase,
+  PhraseTone,
+  PlayerRole,
+  PlayerStatus,
+  PrizeTransactionType,
+  RecruitmentOutcome,
+  RewardType,
+  RoundTableKind,
+  SeasonMode,
+  SeasonStatus,
+  SimulationEventKind,
+} from '@traitors/shared';

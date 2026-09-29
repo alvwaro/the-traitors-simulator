@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { GamePhase } from '../enums';
+import { optionalText } from './values';
 
 export interface DayPhaseProps {
   id: string;
@@ -24,7 +25,7 @@ export class DayPhase {
   get notes(): string | null { return this.props.notes; }
 
   writeNotes(notes: string | null): void {
-    this.props.notes = notes?.trim() || null;
+    this.props.notes = optionalText(notes);
   }
 
   end(): void {

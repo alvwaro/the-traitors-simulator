@@ -1,15 +1,12 @@
 import { randomUUID } from 'node:crypto';
 import { DomainError } from '../errors/DomainError';
+import { requiredText } from './values';
 import { MIN_PLAYERS_TO_START } from '../rules';
 import { PublishedSnapshot } from './PublishedSnapshot';
-import { UserRole } from './User';
+import { PublicationArea, PublicationKind, UserRole } from '@traitors/shared';
 
-export const PublicationKind = { SEASON: 'SEASON', CAST: 'CAST', CHARACTER: 'CHARACTER' } as const;
-export type PublicationKind = (typeof PublicationKind)[keyof typeof PublicationKind];
-
-/** OFFICIAL: Castelo · Área Oficial (só donos). FAN: Área de Fãs. */
-export const PublicationArea = { OFFICIAL: 'OFFICIAL', FAN: 'FAN' } as const;
-export type PublicationArea = (typeof PublicationArea)[keyof typeof PublicationArea];
+/** SEASON, CAST ou CHARACTER. OFFICIAL: Castelo · Área Oficial (só donos). FAN: Área de Fãs. */
+export { PublicationArea, PublicationKind } from '@traitors/shared';
 
 export interface PublicationProps {
   id: string;
@@ -80,8 +77,7 @@ export class Publication {
 
   /** Troca o conteúdo pela versão atual da origem (mantém o mesmo id). */
   republish(input: PublicationContent): void {
-    const name = input.name.trim();
-    if (!name) throw new DomainError('O nome é obrigatório');
+    const name = requiredText(input.name, 'O nome é obrigatório');
     this.assertSnapshot(input.snapshot);
     this.props.name = name;
     this.props.description = input.description ?? null;

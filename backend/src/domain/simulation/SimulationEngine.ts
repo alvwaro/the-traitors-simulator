@@ -1,3 +1,4 @@
+import { countVotes, leadersOf, tally } from '@traitors/shared';
 import { EndgameChoice, GamePhase, PhrasePhase, PhraseTone, PlayerRole, SimulationEventKind } from '../enums';
 import { AllianceBook, AllianceGroup } from './alliances';
 import { ApproachMoment, approachHuman, LastTable } from './approaches';
@@ -6,7 +7,6 @@ import {
   acceptsRecruitment,
   decideMurder,
   endgameChoice,
-  leadersOf,
   murderScores,
   recruitmentTarget,
   firstVoteRound,
@@ -1121,10 +1121,7 @@ export class SimulationEngine {
     const wanted = choice.murderTargetId ? this.byId.get(choice.murderTargetId) : undefined;
     const npcProposals = this.partnerProposals(partners, dungeon);
     const proposals = [...npcProposals, ...(wanted ? [{ traitorId: human.id, targetId: wanted.id }] : [])];
-    const counts = new Map<string, number>();
-    for (const p of proposals) counts.set(p.targetId, (counts.get(p.targetId) ?? 0) + 1);
-    const max = Math.max(0, ...counts.values());
-    const tied = [...counts].filter(([, n]) => n === max).map(([id]) => id);
+    const tied = leadersOf(countVotes(proposals.map((p) => p.targetId)));
     const targetId = wanted && tied.includes(wanted.id) ? wanted.id : tied[0] ?? null;
     const target = targetId ? this.byId.get(targetId) : undefined;
     if (!target) {
@@ -1275,7 +1272,7 @@ export class SimulationEngine {
     this.say(SimulationEventKind.NARRATION, 'Hora de votar. Um a um, os nomes são escritos e revelados.');
     this.narrateVotes(votes, 1, confessorId);
 
-    const leaders = leadersOf(votes, 1);
+    const leaders = tally(votes, 1).leaders;
     if (leaders.length <= 1) return this.finishVote({ votes, banishedId: leaders[0], decidedByLot: false });
 
     const tied = leaders.map((id) => this.byId.get(id)!);
