@@ -14,7 +14,10 @@ import type {
   SeasonStatus,
   SimulationEventKind,
 } from './enums';
-import type { BehaviorEffectKey } from './behaviors';
+import type { BehaviorEffects, CharacterStats, MissionPool, PublicationArea, PublicationKind, UserRole } from '@traitors/shared';
+
+// Tipos que o backend define igual (kernel compartilhado).
+export type { BehaviorEffects, CharacterStats, MissionPool, PublicationArea, PublicationKind, UserRole } from '@traitors/shared';
 
 // Formatos devolvidos pela API (datas chegam como string ISO).
 
@@ -25,9 +28,6 @@ export interface Character {
   behaviorIds: string[];
   createdAt: string;
 }
-
-/** Efeitos de um comportamento: modificadores de -50 a +50 (ver domain/behaviors.ts). */
-export type BehaviorEffects = Partial<Record<BehaviorEffectKey, number>>;
 
 export interface Behavior {
   id: string;
@@ -46,9 +46,6 @@ export interface Cast {
   characters: Character[];
   createdAt: string;
 }
-
-/** Conta do site. OWNER: dono (publica na Área Oficial e modera); FAN: qualquer pessoa cadastrada. */
-export type UserRole = 'OWNER' | 'FAN';
 
 export interface User {
   id: string;
@@ -70,10 +67,6 @@ export interface PublishedCharacter {
   imageUrl: string | null;
   behaviors: PublishedBehavior[];
 }
-
-export type PublicationKind = 'SEASON' | 'CAST' | 'CHARACTER';
-/** OFFICIAL: Castelo · Área Oficial (donos). FAN: Área de Fãs. */
-export type PublicationArea = 'OFFICIAL' | 'FAN';
 
 /** Algo publicado numa área pública. Casts e personagens são cópias; temporadas são lidas ao vivo. */
 export interface Publication {
@@ -377,9 +370,6 @@ export interface Standing {
   allies: string[];
 }
 
-/** Temporada do programa (país + número) de onde vêm as missões e reviravoltas; MIX = todas. */
-export type MissionPool = 'US_S1' | 'UK_S1' | 'US_S2' | 'UK_S2' | 'US_S3' | 'UK_S3' | 'MIX';
-
 /** Um acontecimento ou reviravolta, como aparece no guia das temporadas. */
 export interface GameEvent {
   name: string;
@@ -411,27 +401,6 @@ export interface Edition {
 export interface EditionsGuide {
   commonEvents: GameEvent[];
   editions: Edition[];
-}
-
-export interface CharacterStats {
-  characterId: string;
-  seasons: number;
-  finished: number;
-  wins: number;
-  winsAsTraitor: number;
-  winsAsFaithful: number;
-  prizeWon: number;
-  timesTraitor: number;
-  timesRecruited: number;
-  banished: number;
-  murdered: number;
-  withdrawn: number;
-  finals: number;
-  votesReceived: number;
-  votesCast: number;
-  votesOnTraitors: number;
-  shields: number;
-  avgDays: number;
 }
 
 export interface CastRankingRow {

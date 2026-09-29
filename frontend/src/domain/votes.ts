@@ -1,20 +1,8 @@
+import { tally, type VoteLike } from '@traitors/shared';
 import { gameRng } from '../lib/random';
-export interface VoteLike {
-  voterId: string;
-  targetId: string;
-  round: number;
-}
 
-export interface Tally {
-  round: number;
-  /** [targetId, votos] do mais votado para o menos votado. */
-  counts: [string, number][];
-  leaders: string[];
-}
-
-export function lastRound(votes: readonly VoteLike[]): number {
-  return Math.max(1, ...votes.map((v) => v.round));
-}
+// A apuração é a mesma do backend: o banido precisa estar entre os mais votados da última rodada.
+export { lastRound, tally, type Tally, type VoteLike } from '@traitors/shared';
 
 /**
  * Sorteia um voto para cada votante. Numa revotação (round > 1) só os empatados
@@ -34,13 +22,4 @@ export function drawVotes(
     if (!pool.length) return [];
     return [{ voterId, targetId: pool[Math.floor(random() * pool.length)], round }];
   });
-}
-
-/** Mesma regra do backend: o banido precisa estar entre os mais votados da última rodada. */
-export function tally(votes: readonly VoteLike[], round = lastRound(votes)): Tally {
-  const map = new Map<string, number>();
-  votes.filter((v) => v.round === round).forEach((v) => map.set(v.targetId, (map.get(v.targetId) ?? 0) + 1));
-  const counts = [...map].sort((a, b) => b[1] - a[1]);
-  const max = counts[0]?.[1] ?? 0;
-  return { round, counts, leaders: counts.filter(([, n]) => n === max && max > 0).map(([id]) => id) };
 }

@@ -12,6 +12,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@traitors/shared": "file:../shared",
     "modern-screenshot": "^4.7.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",

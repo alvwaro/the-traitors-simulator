@@ -1,5 +1,9 @@
+import { phraseProblem, userSlots, userTokens } from '@traitors/shared';
 import type { Player } from './models';
 import { seededRng, shuffle, type Rng } from '../lib/random';
+
+// Tamanho e marcadores seguem a mesma regra do backend (kernel compartilhado).
+export { PHRASE_MAX_LENGTH } from '@traitors/shared';
 
 export type ConversationPart = { kind: 'text'; text: string } | { kind: 'player'; player: Player };
 
@@ -10,28 +14,20 @@ export interface Conversation {
   parts: ConversationPart[];
 }
 
-const TOKEN = /\{user(\d*)\}/g;
-
 /**
  * Vagas de personagem de uma frase, na ordem de aparição.
  * Cada marcador diferente ({user}, {user1}, {user2}...) é uma pessoa diferente;
  * o mesmo marcador repetido é sempre a mesma pessoa.
  */
-export function slotsOf(template: string): string[] {
-  const slots: string[] = [];
-  for (const match of template.matchAll(TOKEN)) {
-    if (!slots.includes(match[0])) slots.push(match[0]);
-  }
-  return slots;
-}
+export const slotsOf = userSlots;
 
 /** Troca os marcadores pelos personagens (um por vaga, na ordem de slotsOf). */
 export function fillTemplate(template: string, players: Player[]): ConversationPart[] {
   const bySlot = new Map(slotsOf(template).map((slot, i) => [slot, players[i]]));
   const parts: ConversationPart[] = [];
   let last = 0;
-  for (const match of template.matchAll(TOKEN)) {
-    const index = match.index ?? 0;
+  for (const match of userTokens(template)) {
+    const index = match.index;
     if (index > last) parts.push({ kind: 'text', text: template.slice(last, index) });
     const player = bySlot.get(match[0]);
     if (player) parts.push({ kind: 'player', player });
@@ -80,16 +76,8 @@ export function generateConversations({ templates, players, count, seed }: Gener
     });
 }
 
-const VALID_TOKEN = /^\{(user\d*|victim)\}$/;
-export const PHRASE_MAX_LENGTH = 400;
-
-/** Mesma validação do backend; devolve a mensagem de erro ou null. */
+/** Mesma validação do backend; devolve a mensagem de erro ou null (a frase vazia ainda não é erro no formulário). */
 export function validatePhrase(raw: string): string | null {
   const text = raw.trim();
-  if (!text) return null;
-  if (text.length > PHRASE_MAX_LENGTH) return `A frase pode ter no máximo ${PHRASE_MAX_LENGTH} caracteres`;
-  const invalid = (text.match(/\{[^}]*\}?/g) ?? []).find((token) => !VALID_TOKEN.test(token));
-  if (invalid) return `Marcador inválido: ${invalid}. Use {user}, {user1}, {user2}... ou {victim}`;
-  if (!/\{user\d*\}/.test(text)) return 'A frase precisa de pelo menos um {user}';
-  return null;
+  return text ? phraseProblem(text) : null;
 }

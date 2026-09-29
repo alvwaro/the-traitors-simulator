@@ -1,8 +1,10 @@
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
+import { sharedKernel } from './vite.config.ts';
 
 export default defineConfig({
   plugins: [react()],
+  resolve: { alias: { '@traitors/shared': sharedKernel } },
   test: {
     environment: 'jsdom',
     include: ['src/**/*.test.{ts,tsx}'],
