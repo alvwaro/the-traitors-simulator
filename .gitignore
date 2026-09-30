@@ -9,10 +9,17 @@ coverage/
 .vite/
 .scannerwork/
 
-# Variáveis de ambiente (use os arquivos .env.example)
+# Variáveis de ambiente e segredos (use os arquivos .env.example)
 .env
 .env.*
 !.env.example
+*.pem
+*.key
+
+# Cópias do banco (backups e exportações com dados das contas)
+*.dump
+*.sql.gz
+backups/
 
 # Logs
 *.log
@@ -29,3 +36,5 @@ Thumbs.db
 # Claude Code (configuração local)
 .claude/settings.local.json
 
+# Anotações pessoais (ficam só no PC)
+deploy/TUTORIAL.md
