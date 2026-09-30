@@ -17,6 +17,7 @@ interface CastRow {
 interface MemberRow {
   cast_id: string;
   character_id: string;
+  image_url: string | null;
 }
 
 export class PgCastRepository implements ICastRepository {
@@ -40,14 +41,14 @@ export class PgCastRepository implements ICastRepository {
       'INSERT INTO casts (id, name, description, image_url, created_at, owner_id) VALUES ($1, $2, $3, $4, $5, $6)',
       [c.id, c.name, c.description, c.imageUrl, c.createdAt, c.ownerId],
     );
-    await this.insertMembers(c.id, c.characterIds);
+    await this.insertMembers(c.id, c.characterIds, c.memberImages);
   }
 
   async update(cast: Cast): Promise<void> {
     const c = cast.toJSON();
     await query(this.db, 'UPDATE casts SET name = $2, description = $3, image_url = $4 WHERE id = $1', [c.id, c.name, c.description, c.imageUrl]);
     await query(this.db, 'DELETE FROM cast_members WHERE cast_id = $1', [c.id]);
-    await this.insertMembers(c.id, c.characterIds);
+    await this.insertMembers(c.id, c.characterIds, c.memberImages);
   }
 
   async delete(id: string): Promise<void> {
@@ -78,16 +79,21 @@ export class PgCastRepository implements ICastRepository {
     await query(this.db, 'DELETE FROM cast_relationships WHERE cast_id = $1 AND from_character_id = $2 AND to_character_id = $3', [castId, fromId, toId]);
   }
 
-  /** O elenco na ordem dada (position 1, 2, 3...). */
-  private insertMembers(castId: string, characterIds: readonly string[]): Promise<void> {
-    return insertMany(this.db, 'cast_members', ['cast_id', 'character_id', 'position'], characterIds.map((characterId, i) => [castId, characterId, i + 1]));
+  /** O elenco na ordem dada (position 1, 2, 3...), com a foto de cada um neste cast. */
+  private insertMembers(castId: string, characterIds: readonly string[], images: Readonly<Record<string, string>>): Promise<void> {
+    return insertMany(
+      this.db,
+      'cast_members',
+      ['cast_id', 'character_id', 'position', 'image_url'],
+      characterIds.map((characterId, i) => [castId, characterId, i + 1, images[characterId] ?? null]),
+    );
   }
 
   private async hydrate(rows: CastRow[]): Promise<Cast[]> {
     if (rows.length === 0) return [];
     const members = await query<MemberRow>(
       this.db,
-      'SELECT cast_id, character_id FROM cast_members WHERE cast_id = ANY($1::uuid[]) ORDER BY position',
+      'SELECT cast_id, character_id, image_url FROM cast_members WHERE cast_id = ANY($1::uuid[]) ORDER BY position',
       [rows.map((r) => r.id)],
     );
     const byCast = groupBy(members, (m) => m.cast_id);
@@ -101,6 +107,7 @@ export class PgCastRepository implements ICastRepository {
           createdAt: r.created_at,
           ownerId: r.owner_id,
           characterIds: (byCast.get(r.id) ?? []).map((m) => m.character_id),
+          memberImages: Object.fromEntries((byCast.get(r.id) ?? []).flatMap((m) => (m.image_url ? [[m.character_id, m.image_url]] : []))),
         }),
     );
   }

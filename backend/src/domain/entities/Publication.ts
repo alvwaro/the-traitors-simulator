@@ -34,9 +34,16 @@ export interface PublicationContent {
 /** De onde veio a publicação: a própria temporada, ou o cast/personagem da biblioteca. */
 export type PublicationSource = { kind: 'SEASON'; seasonId: string } | { kind: 'CAST'; castId: string } | { kind: 'CHARACTER'; characterId: string };
 
-/** A área sai do papel de quem publica: donos publicam no Castelo, fãs na Área de Fãs. */
-export function areaFor(role: UserRole): PublicationArea {
-  return role === UserRole.OWNER ? PublicationArea.OFFICIAL : PublicationArea.FAN;
+/**
+ * A área depende do papel de quem publica: donos escolhem (oficial, por padrão, ou fãs);
+ * fãs publicam sempre na Área de Fãs.
+ */
+export function areaFor(role: UserRole, requested?: PublicationArea): PublicationArea {
+  if (role !== UserRole.OWNER) {
+    if (requested === PublicationArea.OFFICIAL) throw new DomainError('Só os donos do site publicam temporadas oficiais');
+    return PublicationArea.FAN;
+  }
+  return requested ?? PublicationArea.OFFICIAL;
 }
 
 /**
@@ -84,6 +91,11 @@ export class Publication {
     this.props.imageUrl = input.imageUrl ?? null;
     this.props.snapshot = input.snapshot;
     this.props.publishedAt = new Date();
+  }
+
+  /** Muda de área (donos movem entre a oficial e a de fãs). */
+  moveTo(area: PublicationArea): void {
+    this.props.area = area;
   }
 
   /** Quem publicou pode tirar; donos do site também (moderação). */

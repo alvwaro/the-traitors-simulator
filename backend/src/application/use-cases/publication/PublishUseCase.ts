@@ -39,7 +39,7 @@ async function contentOf(repos: Repositories, input: PublishInput): Promise<{ so
 
 /**
  * Publica uma temporada, um cast ou um personagem da Minha Área.
- * Donos publicam na Área Oficial; fãs, na Área de Fãs. Publicar de novo atualiza a mesma publicação.
+ * Donos escolhem a área (oficial ou fãs); fãs publicam na Área de Fãs. Publicar de novo atualiza a mesma publicação.
  */
 export class PublishUseCase implements IUseCase<PublishInput, PublicationOutput> {
   constructor(private readonly uow: IUnitOfWork) {}
@@ -50,8 +50,12 @@ export class PublishUseCase implements IUseCase<PublishInput, PublicationOutput>
       const existing = await repos.publications.findBySource(source);
       if (existing && existing.publisherId !== input.actor.id) throw new ForbiddenError('Isso já foi publicado por outra pessoa');
 
-      const publication = existing ?? Publication.publish({ ...content, source, publisherId: input.actor.id, area: areaFor(input.actor.role) });
-      if (existing) existing.republish(content);
+      const area = areaFor(input.actor.role, input.area ?? existing?.area);
+      const publication = existing ?? Publication.publish({ ...content, source, publisherId: input.actor.id, area });
+      if (existing) {
+        existing.republish(content);
+        existing.moveTo(area);
+      }
       await repos.publications.save(publication);
       const [output] = await toPublicationOutputs(repos, [publication]);
       return output;

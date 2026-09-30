@@ -39,12 +39,39 @@ const relationshipPatch = {
 };
 
 // ---------- biblioteca ----------
+const httpUrl = z.url({ protocol: /^https?$/ });
+const shortText = (max: number) => z.string().trim().max(max).nullable().optional();
+const photos = z.array(z.object({ url: httpUrl, label: shortText(80) })).max(20);
+const participantSeason = z.object({
+  label: z.string().trim().min(1).max(120),
+  seasonId: id.nullable().optional(),
+  role: z.enum(['FAITHFUL', 'TRAITOR', 'RECRUITED']).nullable().optional(),
+  roleDetail: shortText(200),
+  fate: shortText(200),
+  placement: shortText(40),
+  shieldWins: z.number().int().min(0).max(99).nullable().optional(),
+  episodes: z.number().int().min(0).max(99).nullable().optional(),
+});
+const participantProfile = z
+  .object({
+    wikiUrl: httpUrl.nullable().optional(),
+    seasons: z.array(participantSeason).max(20).optional(),
+    otherShows: z.array(z.string().trim().min(1).max(120)).max(30).optional(),
+  })
+  .nullable();
+
 export const createCharacterBody = z.object({
   name: personName,
   imageUrl,
   behaviorIds: behaviorIds.optional(),
+  photos: photos.optional(),
 });
-export const updateCharacterBody = createCharacterBody.partial();
+export const newCharacterBody = createCharacterBody.extend({ castId: id.nullable().optional() });
+export const updateCharacterBody = createCharacterBody.extend({ profile: participantProfile.optional() }).partial();
+/** Página do participante na wiki Fandom de The Traitors. */
+export const wikiImportBody = z.object({ url: httpUrl });
+export const castMemberParams = z.object({ castId: id, characterId: id });
+export const castMemberPhotoBody = z.object({ imageUrl: httpUrl.nullable() });
 export const listCharactersQuery = z.object({ search: z.string().optional() });
 
 export const createCastBody = z.object({
@@ -88,6 +115,7 @@ const seasonSettings = {
   missionPool: z.enum(MISSION_POOLS).optional(),
   interactionLimit: z.number().int().min(0).max(20).optional(),
   withdrawals: z.boolean().optional(),
+  hiddenShieldChance: z.number().int().min(0).max(100).optional(),
   currency: z.string().length(3).optional(),
   initialPrizePot: money.optional(),
   maxPrizePot: money.nullable().optional(),
@@ -193,10 +221,13 @@ export const credentialsBody = z.object({
 
 // ---------- publicações ----------
 const publicationKind = z.enum([PublicationKind.SEASON, PublicationKind.CAST, PublicationKind.CHARACTER]);
+const publicationArea = z.enum([PublicationArea.OFFICIAL, PublicationArea.FAN]);
 export const publishBody = z.object({
   kind: publicationKind,
   sourceId: id,
   description: notes,
+  /** Só donos escolhem; fãs publicam sempre na Área de Fãs. */
+  area: publicationArea.optional(),
 });
 export const publicationsQuery = z.object({
   area: z.enum([PublicationArea.OFFICIAL, PublicationArea.FAN]).optional(),

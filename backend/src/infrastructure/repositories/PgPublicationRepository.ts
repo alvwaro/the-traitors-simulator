@@ -85,7 +85,7 @@ export class PgPublicationRepository implements IPublicationRepository {
       `INSERT INTO publications (id, kind, area, publisher_id, season_id, cast_id, character_id, name, description, image_url, snapshot, published_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
        ON CONFLICT (id) DO UPDATE
-          SET name = EXCLUDED.name, description = EXCLUDED.description, image_url = EXCLUDED.image_url,
+          SET area = EXCLUDED.area, name = EXCLUDED.name, description = EXCLUDED.description, image_url = EXCLUDED.image_url,
               snapshot = EXCLUDED.snapshot, published_at = EXCLUDED.published_at`,
       [
         p.id,

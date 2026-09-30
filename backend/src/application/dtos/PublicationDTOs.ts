@@ -9,6 +9,8 @@ export interface PublishInput {
   /** Id da temporada, do cast ou do personagem, conforme o tipo. */
   sourceId: string;
   description?: string | null;
+  /** Donos escolhem entre a área oficial e a de fãs (padrão: oficial). */
+  area?: PublicationArea;
 }
 
 export interface ListPublicationsInput {

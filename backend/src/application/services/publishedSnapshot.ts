@@ -18,7 +18,7 @@ export async function castSnapshot(repos: Repositories, cast: Cast): Promise<Pub
   const members = new Set(characters.map((c) => c.id));
   const relationships = await repos.casts.findRelationships(cast.id);
   return {
-    characters: characters.map((c) => ({ key: c.id, name: c.name, imageUrl: c.imageUrl, behaviors: pick(behaviors, c.behaviorIds) })),
+    characters: characters.map((c) => ({ key: c.id, name: c.name, imageUrl: cast.imageOf(c), behaviors: pick(behaviors, c.behaviorIds) })),
     relationships: relationships
       .filter((r) => members.has(r.fromId) && members.has(r.toId))
       .map((r) => ({ fromKey: r.fromId, toKey: r.toId, trust: r.trust, liking: r.liking, hatred: r.hatred, allied: r.allied })),

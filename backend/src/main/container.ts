@@ -27,6 +27,10 @@ import { DeleteCharacterUseCase } from '../application/use-cases/character/Delet
 import { GetCharacterUseCase } from '../application/use-cases/character/GetCharacterUseCase';
 import { ListCharactersUseCase } from '../application/use-cases/character/ListCharactersUseCase';
 import { UpdateCharacterUseCase } from '../application/use-cases/character/UpdateCharacterUseCase';
+import { GetParticipantUseCase, ImportWikiUseCase } from '../application/use-cases/character/ParticipantUseCases';
+import { SetCastMemberPhotoUseCase } from '../application/use-cases/cast/SetCastMemberPhotoUseCase';
+import { IWikiClient } from '../application/ports/IWikiClient';
+import { FandomWikiClient } from '../infrastructure/http/FandomWikiClient';
 import { ListEditionsUseCase } from '../application/use-cases/edition/ListEditionsUseCase';
 import { AdvancePhaseUseCase } from '../application/use-cases/game/AdvancePhaseUseCase';
 import { GetGameStateUseCase } from '../application/use-cases/game/GetGameStateUseCase';
@@ -84,6 +88,8 @@ import { AccessGuards } from '../presentation/http/middlewares/access';
 /** Peças que os testes podem trocar (ex.: um buscador de imagens que aceita o servidor local de teste). */
 export interface ContainerOverrides {
   imageFetcher?: RemoteImageFetcher;
+  /** Wiki dos participantes (os testes usam uma falsa, sem internet). */
+  wiki?: IWikiClient;
 }
 
 /** Tudo que a aplicação HTTP precisa: um handler por rota, a política de acesso e a leitura da sessão. */
@@ -129,6 +135,8 @@ export function buildContainer(overrides: ContainerOverrides = {}): Container {
       get: new GetCharacterUseCase(repos),
       update: new UpdateCharacterUseCase(uow),
       remove: new DeleteCharacterUseCase(uow),
+      importWiki: new ImportWikiUseCase(uow, overrides.wiki ?? new FandomWikiClient()),
+      participant: new GetParticipantUseCase(repos),
     }),
     ...castController({
       create: new CreateCastUseCase(uow),
@@ -140,6 +148,7 @@ export function buildContainer(overrides: ContainerOverrides = {}): Container {
       updateRelationship: new UpdateCastRelationshipUseCase(uow),
       ranking: new GetCastRankingUseCase(repos),
       randomizeBehaviors: new RandomizeCastBehaviorsUseCase(uow),
+      memberPhoto: new SetCastMemberPhotoUseCase(uow),
     }),
     ...phraseController({
       create: new CreatePhraseUseCase(uow),

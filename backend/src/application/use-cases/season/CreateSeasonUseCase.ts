@@ -13,10 +13,8 @@ export class CreateSeasonUseCase implements IUseCase<CreateSeasonInput, SeasonDe
   execute(input: CreateSeasonInput): Promise<SeasonDetailsOutput> {
     return this.uow.run(async (repos) => {
       const characterIds: string[] = [];
-      if (input.castId) {
-        const cast = await requireOwnedCast(repos, input.ownerId, input.castId);
-        characterIds.push(...cast.characterIds);
-      }
+      const cast = input.castId ? await requireOwnedCast(repos, input.ownerId, input.castId) : null;
+      if (cast) characterIds.push(...cast.characterIds);
       characterIds.push(...(input.characterIds ?? []));
 
       const uniqueIds = [...new Set(characterIds)];
@@ -26,7 +24,7 @@ export class CreateSeasonUseCase implements IUseCase<CreateSeasonInput, SeasonDe
       await repos.seasons.create(season);
 
       const players = characters.map((c) =>
-        Player.create({ seasonId: season.id, name: c.name, imageUrl: c.imageUrl, characterId: c.id, behaviorIds: c.behaviorIds }),
+        Player.create({ seasonId: season.id, name: c.name, imageUrl: cast ? cast.imageOf(c) : c.imageUrl, characterId: c.id, behaviorIds: c.behaviorIds }),
       );
       if (season.isPlayerMode()) {
         // O usuário entra no castelo como mais um participante: sem comportamentos, com relacionamentos.

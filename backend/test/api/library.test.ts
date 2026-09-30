@@ -26,6 +26,18 @@ describe('biblioteca: personagens, casts, comportamentos e frases', () => {
     expect((await agent.get(`/api/characters/${created.id}`)).status).toBe(404);
   });
 
+  it('cria o personagem direto no fim de um cast (só num cast seu)', async () => {
+    const { agent } = await signUp('nocast');
+    const ids = await createCharacters(agent, ['Primeira', 'Segunda']);
+    const cast = ok(await agent.post('/api/casts').send({ name: 'Elenco', characterIds: ids }), 201);
+    const created = ok(await agent.post('/api/characters').send({ name: 'Recém-chegada', castId: cast.id }), 201);
+    expect(ok(await agent.get(`/api/casts/${cast.id}`)).characterIds).toEqual([...ids, created.id]);
+
+    const { agent: other } = await signUp('nocast2');
+    expect((await other.post('/api/characters').send({ name: 'Intrusa', castId: cast.id })).status).toBe(404);
+    expect(ok<{ name: string }[]>(await other.get('/api/characters')).some((c) => c.name === 'Intrusa')).toBe(false);
+  });
+
   it('não deixa ver nem mexer no personagem de outra pessoa', async () => {
     const { agent } = await signUp('dono');
     const [id] = await createCharacters(agent, ['Secreto']);
@@ -73,7 +85,7 @@ describe('biblioteca: personagens, casts, comportamentos e frases', () => {
   it('mostra o guia das temporadas', async () => {
     const { agent } = await signUp('guia');
     const guide = ok(await agent.get('/api/editions'));
-    expect(guide.editions.map((e: { pool: string }) => e.pool)).toEqual(['US_S1', 'UK_S1', 'US_S2', 'UK_S2', 'US_S3', 'UK_S3', 'MIX']);
+    expect(guide.editions.map((e: { pool: string }) => e.pool)).toEqual(['US_S1', 'UK_S1', 'US_S2', 'UK_S2', 'US_S3', 'UK_S3', 'US_S4', 'MIX']);
     expect(guide.commonEvents.length).toBeGreaterThan(5);
   });
 

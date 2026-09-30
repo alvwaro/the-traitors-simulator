@@ -1,4 +1,4 @@
-import { BehaviorEffects, CastProps, CharacterProps } from '../../domain/entities';
+import { BehaviorEffects, CastProps, CharacterPhoto, CharacterPhotoInput, CharacterProps, ParticipantProfileInput } from '../../domain/entities';
 import { PhrasePhase, PhraseTone } from '../../domain/enums';
 import { CharacterStats } from '../../domain/repositories';
 import { RelationshipProps } from '../../domain/simulation/RelationshipMatrix';
@@ -9,6 +9,9 @@ export interface CreateCharacterInput {
   ownerId: string;
   imageUrl?: string | null;
   behaviorIds?: string[];
+  photos?: CharacterPhotoInput[];
+  /** Cast em que o personagem já nasce (sem cast, fica em "Personagens sem cast"). */
+  castId?: string | null;
 }
 
 export interface UpdateCharacterInput {
@@ -16,6 +19,36 @@ export interface UpdateCharacterInput {
   name?: string;
   imageUrl?: string | null;
   behaviorIds?: string[];
+  photos?: CharacterPhotoInput[];
+  profile?: ParticipantProfileInput | null;
+}
+
+export interface WikiImportInput {
+  characterId: string;
+  url: string;
+}
+
+export interface CastMemberPhotoInput {
+  castId: string;
+  characterId: string;
+  imageUrl: string | null;
+}
+
+export interface ParticipantInput {
+  characterId: string;
+  /** Quem está vendo: a página abre para quem criou o personagem e, se ele for de um dono do site, para todos. */
+  ownerId: string;
+}
+
+/** Página de informações do participante. */
+export interface ParticipantOutput {
+  id: string;
+  name: string;
+  imageUrl: string | null;
+  photos: CharacterPhoto[];
+  profile: ParticipantProfileInput | null;
+  /** Quem vê pode editar (é quem criou o personagem). */
+  canEdit: boolean;
 }
 
 export interface CharacterIdInput {

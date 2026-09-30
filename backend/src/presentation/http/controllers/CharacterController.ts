@@ -3,8 +3,9 @@ import { DeleteCharacterUseCase } from '../../../application/use-cases/character
 import { GetCharacterUseCase } from '../../../application/use-cases/character/GetCharacterUseCase';
 import { ListCharactersUseCase } from '../../../application/use-cases/character/ListCharactersUseCase';
 import { UpdateCharacterUseCase } from '../../../application/use-cases/character/UpdateCharacterUseCase';
+import { GetParticipantUseCase, ImportWikiUseCase } from '../../../application/use-cases/character/ParticipantUseCases';
 import { endpoint, Handlers, RoutesOf } from '../endpoint';
-import { characterIdParams, createCharacterBody, listCharactersQuery, updateCharacterBody } from '../validators/schemas';
+import { characterIdParams, listCharactersQuery, newCharacterBody, updateCharacterBody, wikiImportBody } from '../validators/schemas';
 
 export interface CharacterUseCases {
   create: CreateCharacterUseCase;
@@ -12,15 +13,19 @@ export interface CharacterUseCases {
   get: GetCharacterUseCase;
   update: UpdateCharacterUseCase;
   remove: DeleteCharacterUseCase;
+  importWiki: ImportWikiUseCase;
+  participant: GetParticipantUseCase;
 }
 
 /** Biblioteca de personagens salvos (Minha Área). */
 export function characterController(c: CharacterUseCases): Handlers<RoutesOf<'characters'>> {
   return {
-    'characters.create': endpoint(c.create, { body: createCharacterBody, identity: 'ownerId', status: 201 }),
+    'characters.create': endpoint(c.create, { body: newCharacterBody, identity: 'ownerId', status: 201 }),
     'characters.list': endpoint(c.list, { query: listCharactersQuery, identity: 'ownerId' }),
     'characters.get': endpoint(c.get, { params: characterIdParams }),
     'characters.update': endpoint(c.update, { params: characterIdParams, body: updateCharacterBody }),
     'characters.remove': endpoint(c.remove, { params: characterIdParams, status: 204 }),
+    'characters.importWiki': endpoint(c.importWiki, { params: characterIdParams, body: wikiImportBody }),
+    'characters.participant': endpoint(c.participant, { params: characterIdParams, identity: 'ownerId' }),
   };
 }

@@ -13,6 +13,8 @@ export class UpdateCharacterUseCase implements IUseCase<UpdateCharacterInput, Ch
       const character = await requireCharacter(repos, input.characterId);
       if (input.name !== undefined) character.rename(input.name);
       if (input.imageUrl !== undefined) character.changeImage(input.imageUrl);
+      if (input.photos !== undefined) character.setPhotos(input.photos);
+      if (input.profile !== undefined) character.setProfile(input.profile);
       if (input.behaviorIds !== undefined) {
         character.setBehaviors(input.behaviorIds);
         await ensureBehaviorsExist(repos, character.behaviorIds);

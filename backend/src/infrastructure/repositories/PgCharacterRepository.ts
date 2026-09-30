@@ -1,4 +1,4 @@
-import { Character } from '../../domain/entities';
+import { Character, CharacterPhoto, ParticipantProfile } from '../../domain/entities';
 import { ICharacterRepository } from '../../domain/repositories';
 import { Queryable } from '../database/connection';
 import { inOrder, query, queryOne } from '../database/query';
@@ -8,6 +8,8 @@ interface CharacterRow {
   id: string;
   name: string;
   image_url: string | null;
+  photos: CharacterPhoto[] | null;
+  profile: ParticipantProfile | null;
   behavior_ids: string[];
   created_at: Date;
   owner_id: string | null;
@@ -16,7 +18,16 @@ interface CharacterRow {
 const SELECT = `SELECT c.*, ${CHARACTER_BEHAVIORS.column('c')} FROM characters c`;
 
 const toEntity = (r: CharacterRow): Character =>
-  new Character({ id: r.id, name: r.name, imageUrl: r.image_url, behaviorIds: r.behavior_ids ?? [], createdAt: r.created_at, ownerId: r.owner_id });
+  new Character({
+    id: r.id,
+    name: r.name,
+    imageUrl: r.image_url,
+    photos: r.photos ?? [],
+    behaviorIds: r.behavior_ids ?? [],
+    profile: r.profile ?? null,
+    createdAt: r.created_at,
+    ownerId: r.owner_id,
+  });
 
 export class PgCharacterRepository implements ICharacterRepository {
   constructor(private readonly db: Queryable) {}
@@ -50,15 +61,21 @@ export class PgCharacterRepository implements ICharacterRepository {
     const c = character.toJSON();
     await query(
       this.db,
-      'INSERT INTO characters (id, name, image_url, created_at, owner_id) VALUES ($1, $2, $3, $4, $5)',
-      [c.id, c.name, c.imageUrl, c.createdAt, c.ownerId],
+      'INSERT INTO characters (id, name, image_url, photos, profile, created_at, owner_id) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+      [c.id, c.name, c.imageUrl, JSON.stringify(c.photos), c.profile === null ? null : JSON.stringify(c.profile), c.createdAt, c.ownerId],
     );
     await CHARACTER_BEHAVIORS.replace(this.db, c.id, c.behaviorIds);
   }
 
   async update(character: Character): Promise<void> {
     const c = character.toJSON();
-    await query(this.db, 'UPDATE characters SET name = $2, image_url = $3 WHERE id = $1', [c.id, c.name, c.imageUrl]);
+    await query(this.db, 'UPDATE characters SET name = $2, image_url = $3, photos = $4, profile = $5 WHERE id = $1', [
+      c.id,
+      c.name,
+      c.imageUrl,
+      JSON.stringify(c.photos),
+      c.profile === null ? null : JSON.stringify(c.profile),
+    ]);
     await CHARACTER_BEHAVIORS.replace(this.db, c.id, c.behaviorIds);
   }
 

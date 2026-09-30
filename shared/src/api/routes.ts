@@ -59,6 +59,9 @@ export const API_ROUTES = {
   'characters.get': route({ method: 'GET', path: CHARACTER, access: 'user', guard: 'character' }),
   'characters.update': route({ method: 'PATCH', path: CHARACTER, access: 'user', guard: 'character' }),
   'characters.remove': route({ method: 'DELETE', path: CHARACTER, access: 'user', guard: 'character' }),
+  'characters.importWiki': route({ method: 'POST', path: `${CHARACTER}/wiki`, access: 'user', guard: 'character' }),
+  // Página do participante: de quem criou o personagem e, nos personagens dos donos do site, de todos
+  'characters.participant': route({ method: 'GET', path: '/participants/:characterId', access: 'user' }),
 
   'casts.create': route({ method: 'POST', path: '/casts', access: 'user' }),
   'casts.list': route({ method: 'GET', path: '/casts', access: 'user' }),
@@ -69,6 +72,7 @@ export const API_ROUTES = {
   'casts.updateRelationship': route({ method: 'PATCH', path: `${CAST}/relationships`, access: 'user', guard: 'cast' }),
   'casts.ranking': route({ method: 'GET', path: `${CAST}/ranking`, access: 'user', guard: 'cast' }),
   'casts.randomizeBehaviors': route({ method: 'POST', path: `${CAST}/randomize-behaviors`, access: 'user', guard: 'cast' }),
+  'casts.memberPhoto': route({ method: 'PATCH', path: `${CAST}/members/:characterId/photo`, access: 'user', guard: 'cast' }),
 
   // Frases e comportamentos: todos leem, só os donos do site alteram
   'phrases.list': route({ method: 'GET', path: '/phrases', access: 'user' }),

@@ -1,0 +1,27 @@
+{{Contestant
+| image1=US4 Eric Nam.webp
+| born={{Birth date and age|1988|11|17|mf=yes}}
+| hometown=Atlanta, Georgia, United States
+| occupation=Singer & songwriter
+| known_for=''[[K-pop Star]]''
+| franchise={{V|US}}
+| season={{V2|US4}}
+| faction=[[Traitors]] <small>(from Episode 9)</small><br>[[Faithfuls]] <small>(from Episode 1-8)</small>
+| status=Banished
+| placed=3/23
+| votes_against=5
+| shield_wins=2
+| dagger_wins=0
+| episodes_lasted=11
+}}
+
+'''{{PAGENAME}}''' is a contestant from {{V|US4}}.
+
+==Game History==
+
+=== Season 4 ===
+{| class="wikitable"
+! Episode
+! 1
+! {{c|banished|'''''Banished: Episode 11'''''|1|6}}
+|}
