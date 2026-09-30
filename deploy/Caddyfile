@@ -1,0 +1,13 @@
+# Borda da EC2. SITE_ADDRESS vem do .env:
+#   traitors.meudominio.com  → HTTPS automático (Let's Encrypt) e redireciona o HTTP
+#   :80                      → só HTTP, acessando pelo IP (para testar; use COOKIE_SECURE=false)
+{$SITE_ADDRESS} {
+	# Comprime o site; a /api fica de fora para as respostas em partes (streaming) seguirem na hora.
+	@site not path /api/*
+	encode @site zstd gzip
+
+	# O Caddy troca o X-Forwarded-For pelo IP de quem conectou (descarta o que o cliente mandou).
+	reverse_proxy web:8080 {
+		flush_interval -1
+	}
+}

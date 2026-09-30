@@ -1,0 +1,132 @@
+# Produção na EC2. As imagens chegam prontas do GHCR (o GitHub Actions constrói a cada push na main):
+# nada é compilado no servidor. Veja deploy/README.md.
+#
+#   internet → caddy (HTTPS, portas 80/443) → web (Nginx: site + /api) → gateway → api-1 / api-2 → db
+#                                                                        worker (fila de trabalhos) → db
+#
+# Nesta pasta, com o .env preenchido: ./deploy.sh
+name: traitors
+
+x-logging: &logging
+  # Os logs dos containers giram: não enchem o disco da instância.
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-backend: &backend
+  image: ${IMAGE_REGISTRY:?defina IMAGE_REGISTRY no .env}/traitors-api:${IMAGE_TAG:-latest}
+  environment:
+    DATABASE_URL: postgres://${POSTGRES_USER:-traitors}:${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}@db:5432/${POSTGRES_DB:-traitors}
+    # Atrás do gateway: o IP do visitante vem do X-Forwarded-For.
+    TRUST_PROXY: "true"
+    # Com HTTPS no Caddy, o cookie da sessão só anda por HTTPS. Só HTTP (SITE_ADDRESS=:80): false.
+    COOKIE_SECURE: ${COOKIE_SECURE:-true}
+    # Ao desligar, espera o gateway tirar a instância da roda antes de fechar a porta.
+    SHUTDOWN_DRAIN_MS: "3000"
+  restart: unless-stopped
+  logging: *logging
+
+x-api: &api
+  <<: *backend
+  depends_on:
+    migrate:
+      condition: service_completed_successfully
+  healthcheck:
+    test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/health/ready || exit 1"]
+    interval: 5s
+    retries: 10
+
+services:
+  caddy:
+    # A borda: certificado HTTPS automático (Let's Encrypt) e repasse de tudo para o web.
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:?defina SITE_ADDRESS no .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+    restart: unless-stopped
+    logging: *logging
+
+  web:
+    image: ${IMAGE_REGISTRY}/traitors-web:${IMAGE_TAG:-latest}
+    # Sem porta publicada: só o Caddy chega aqui.
+    volumes:
+      - ./nginx-edge.conf:/etc/nginx/edge.d/real-ip.conf:ro
+    depends_on:
+      - gateway
+    restart: unless-stopped
+    logging: *logging
+
+  gateway:
+    image: ${IMAGE_REGISTRY}/traitors-gateway:${IMAGE_TAG:-latest}
+    environment:
+      UPSTREAMS: http://api-1:3000,http://api-2:3000
+      LB_STRATEGY: least-connections
+      # Atrás do Nginx, que informa o IP do visitante.
+      TRUST_PROXY: "true"
+    depends_on:
+      api-1:
+        condition: service_healthy
+      api-2:
+        condition: service_healthy
+    restart: unless-stopped
+    logging: *logging
+
+  api-1:
+    <<: *api
+
+  api-2:
+    <<: *api
+
+  worker:
+    <<: *backend
+    command: ["node", "dist/main/worker.js"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  migrate:
+    # Roda as migrações e termina; a API e o worker só sobem depois que ela der certo.
+    <<: *backend
+    command: ["node", "dist/infrastructure/database/migrate.js"]
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16
+    # Sem porta publicada: o banco só é acessível pela rede interna do Docker.
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-traitors}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
+      POSTGRES_DB: ${POSTGRES_DB:-traitors}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
+      interval: 5s
+      retries: 10
+    restart: unless-stopped
+    logging: *logging
+
+networks:
+  default:
+    # Faixa fixa: o nginx-edge.conf confia no X-Forwarded-For só de quem está nela (o Caddy).
+    ipam:
+      config:
+        - subnet: 172.28.0.0/24
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

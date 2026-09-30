@@ -29,5 +29,3 @@ Thumbs.db
 # Claude Code (configuração local)
 .claude/settings.local.json
 
-#Docs de anotação
-docs/architecture.md
