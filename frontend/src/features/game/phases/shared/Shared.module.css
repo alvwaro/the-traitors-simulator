@@ -217,3 +217,9 @@
     text-align: center;
   }
 }
+
+/* escudo misterioso: um retrato com "?" no lugar de quem ganhou */
+.mysteryShield {
+  display: flex;
+  justify-content: center;
+}

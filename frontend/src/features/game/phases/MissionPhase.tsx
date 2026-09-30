@@ -1,6 +1,7 @@
 import { useState, type SubmitEvent } from 'react';
 import { useServices } from '../../../app/services';
 import { PortraitGrid, toggleIn } from '../../../components/player/PortraitGrid';
+import { Portrait } from '../../../components/player/Portrait';
 import { Button } from '../../../components/ui/Button';
 import { Field, FormRow, Input } from '../../../components/ui/Form';
 import { ShieldIcon } from '../../../components/ui/Icons';
@@ -41,18 +42,25 @@ export function MissionPhase() {
 
 export function MissionSummary({ mission }: Readonly<{ mission: MissionRecord }>) {
   const { playersById, state } = useGame();
-  const shielded = mission.rewards.flatMap((r) => playersById.get(r.playerId) ?? []);
+  // Escudo misterioso: ninguém (nem quem assiste) sabe quem ficou protegido.
+  const hidden = !!mission.shieldsHidden;
+  const shielded = hidden ? [] : mission.rewards.flatMap((r) => playersById.get(r.playerId) ?? []);
   return (
     <div className={styles.section}>
       <div className={styles.result}>
         <div className={styles.resultText} style={{ textAlign: 'center' }}>
           <p className={styles.resultTitle}>{mission.name}</p>
           <p className={styles.resultMeta}>
-            +{formatMoney(mission.prizeEarned, state.season.currency)} · {shielded.length} escudo(s)
+            +{formatMoney(mission.prizeEarned, state.season.currency)} · {hidden ? 'escudo misterioso' : `${shielded.length} escudo(s)`}
           </p>
         </div>
       </div>
       {shielded.length > 0 && <PortraitGrid items={shielded} size="sm" badge={() => <ShieldIcon size={13} />} />}
+      {hidden && (
+        <div className={styles.mysteryShield}>
+          <Portrait name="?" imageUrl={null} mystery size="sm" badge={<ShieldIcon size={13} />} caption="Escudo misterioso" />
+        </div>
+      )}
     </div>
   );
 }

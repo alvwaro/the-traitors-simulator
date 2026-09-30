@@ -25,7 +25,7 @@ export function SeasonSettingsPanel({ season, onChanged }: Readonly<{ season: Se
     maxPrizePot: season.maxPrizePot === null ? '' : String(season.maxPrizePot),
   });
   const [mode, setMode] = useState<SeasonMode>(season.mode);
-  const [simulation, setSimulation] = useState<SimulationDraft>({ chaos: season.chaos, missionPool: season.missionPool, withdrawals: season.withdrawals });
+  const [simulation, setSimulation] = useState<SimulationDraft>({ chaos: season.chaos, missionPool: season.missionPool, withdrawals: season.withdrawals, hiddenShieldChance: season.hiddenShieldChance ?? 0 });
   const [interactionLimit, setInteractionLimit] = useState(season.interactionLimit);
   const [savingCast, setSavingCast] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);

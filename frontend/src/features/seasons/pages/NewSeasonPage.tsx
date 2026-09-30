@@ -31,7 +31,7 @@ export function NewSeasonPage() {
   const [castId, setCastId] = useState(params.get('cast') ?? '');
   const [extraIds, setExtraIds] = useState<string[]>([]);
   const [mode, setMode] = useState<SeasonMode>('MANUAL');
-  const [simulation, setSimulation] = useState<SimulationDraft>({ chaos: 0, missionPool: 'US_S3', withdrawals: true });
+  const [simulation, setSimulation] = useState<SimulationDraft>({ chaos: 0, missionPool: 'US_S3', withdrawals: true, hiddenShieldChance: 0 });
   const [me, setMe] = useState<PlayerDraft>({ name: '', imageUrl: '', interactionLimit: 3 });
 
   const create = useAction((input: CreateSeasonInput) => services.seasons.create(input), { success: (s) => `${s.name} criada com ${s.players.length} jogadores` });

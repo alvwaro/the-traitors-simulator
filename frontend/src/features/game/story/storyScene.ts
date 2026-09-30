@@ -34,7 +34,8 @@ export interface StoryDraft {
 
 /** Escudos do dia: os já registrados nas missões de hoje mais os escolhidos no formulário. */
 export function shieldedToday(game: GameContextValue, draftIds: string[]): Player[] {
-  const registered = (game.today?.missions ?? []).flatMap((m) => m.rewards.map((r) => r.playerId));
+  // Escudos misteriosos não aparecem nas artes.
+  const registered = (game.today?.missions ?? []).filter((m) => !m.shieldsHidden).flatMap((m) => m.rewards.map((r) => r.playerId));
   const ids = [...new Set([...registered, ...draftIds])];
   return ids.flatMap((id) => game.playersById.get(id) ?? []);
 }
@@ -98,7 +99,7 @@ export function storyScene(game: GameContextValue, draft: StoryDraft): StoryScen
         kind: 'mission',
         name: mission.name ?? 'Missão',
         prize: today!.missions.reduce((total, m) => total + m.prizeEarned, 0),
-        shielded: today!.missions.flatMap((m) => m.rewards.flatMap((r) => playersById.get(r.playerId) ?? [])),
+        shielded: today!.missions.filter((m) => !m.shieldsHidden).flatMap((m) => m.rewards.flatMap((r) => playersById.get(r.playerId) ?? [])),
       };
     }
 
