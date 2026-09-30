@@ -31,7 +31,7 @@ export function MyAreaPage() {
       <HomeSection title="Minhas temporadas" subtitle="Temporadas criadas por você. Publique para aparecerem na sua área pública." action={<ButtonLink to="/temporadas/nova" variant="ghost" size="sm">Nova temporada</ButtonLink>}>
         {seasons.data.length === 0 ? (
           <EmptyState title="Nenhuma temporada ainda">
-            Crie uma do zero ou copie um cast da Área Oficial ou da Área de Fãs para jogar.
+            Crie uma do zero ou copie um elenco oficial ou da Área de Fãs para jogar.
           </EmptyState>
         ) : (
           <div className={styles.grid}>
@@ -55,7 +55,7 @@ export function MyAreaPage() {
         </div>
       </HomeSection>
 
-      <HomeSection title="Minhas publicações" subtitle="O que você colocou numa vitrine (Área Oficial ou Área de Fãs).">
+      <HomeSection title="Minhas publicações" subtitle="O que você colocou numa vitrine (Temporadas Oficiais ou Área de Fãs).">
         <PublicationShelf publications={mine.list} empty="Você ainda não publicou nada" onChanged={refresh} showArea />
       </HomeSection>
     </div>

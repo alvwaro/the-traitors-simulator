@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { phaseLabel, seasonStatusLabel } from '../../domain/labels';
 import type { Publication } from '../../domain/models';
@@ -32,7 +33,32 @@ export function PublicationCard({ publication: p, canRemove, onView, onCopy, onR
   const navigate = useNavigate();
   const imageUrl = p.imageUrl ?? (p.kind === 'CHARACTER' ? (p.snapshot?.characters[0]?.imageUrl ?? null) : null);
   const watchUrl = `/temporadas/${p.seasonId}`;
-  const open = p.kind === 'SEASON' ? () => navigate(watchUrl) : onView;
+  const official = p.area === 'OFFICIAL';
+  // Participante real: abre a página de informações dele.
+  const participantUrl = official && p.kind === 'CHARACTER' && p.characterId ? `/participantes/${p.characterId}` : null;
+  let open = onView;
+  if (p.kind === 'SEASON') open = () => navigate(watchUrl);
+  else if (participantUrl) open = () => navigate(participantUrl);
+  let primary: ReactNode = null;
+  if (p.kind === 'SEASON') {
+    primary = (
+      <Link to={watchUrl} className={styles.inlineLink}>
+        Assistir
+      </Link>
+    );
+  } else if (participantUrl) {
+    primary = (
+      <Link to={participantUrl} className={styles.inlineLink}>
+        Ver participante
+      </Link>
+    );
+  } else if (p.kind === 'CAST') {
+    primary = (
+      <button type="button" className={styles.inlineLink} onClick={onView}>
+        Ver elenco
+      </button>
+    );
+  }
   const copyLabel = { SEASON: 'Copiar elenco para jogar', CAST: 'Copiar para jogar', CHARACTER: 'Salvar na biblioteca' }[p.kind];
 
   return (
@@ -45,24 +71,17 @@ export function PublicationCard({ publication: p, canRemove, onView, onCopy, onR
           </button>
         </h3>
         <p className={styles.castMeta}>{metaOf(p)}</p>
-        <p className={styles.castMeta}>
-          {showArea ? `${areaLabel[p.area]} · ` : ''}
-          {p.publisherName && !showArea ? `por ${p.publisherName} · ` : ''}
-          {formatDate(p.publishedAt)}
-        </p>
+        {/* Nas oficiais, quem publicou e quando não importam: são as temporadas do programa. */}
+        {(showArea || !official) && (
+          <p className={styles.castMeta}>
+            {showArea ? `${areaLabel[p.area]} · ` : ''}
+            {p.publisherName && !showArea ? `por ${p.publisherName} · ` : ''}
+            {formatDate(p.publishedAt)}
+          </p>
+        )}
         {p.description && <p className={styles.castDescription}>{p.description}</p>}
         <div className={styles.castActions}>
-          {p.kind === 'SEASON' ? (
-            <Link to={watchUrl} className={styles.inlineLink}>
-              Assistir
-            </Link>
-          ) : (
-            p.kind === 'CAST' && (
-              <button type="button" className={styles.inlineLink} onClick={onView}>
-                Ver elenco
-              </button>
-            )
-          )}
+          {primary}
           <button type="button" className={styles.inlineLink} onClick={onCopy}>
             {copyLabel}
           </button>

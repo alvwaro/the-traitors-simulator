@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../app/auth';
 import { useServices } from '../../app/services';
 import { PortraitGrid } from '../../components/player/PortraitGrid';
@@ -16,10 +17,14 @@ interface ShelfProps {
   onChanged: () => void;
   /** Mostra em qual área cada item está (lista da Minha Área). */
   showArea?: boolean;
+  /** Mostra só os primeiros `limit` itens. */
+  limit?: number;
+  /** Quadrado "…" no fim da grade que leva à página com a lista completa. */
+  moreTo?: string;
 }
 
 /** Grade de publicações com as ações de ver elenco, copiar e tirar da vitrine. */
-export function PublicationShelf({ publications, empty, onChanged, showArea }: Readonly<ShelfProps>) {
+export function PublicationShelf({ publications, empty, onChanged, showArea, limit, moreTo }: Readonly<ShelfProps>) {
   const { user } = useAuth();
   const { publications: service } = useServices();
   const [viewing, setViewing] = useState<Publication | null>(null);
@@ -44,10 +49,11 @@ export function PublicationShelf({ publications, empty, onChanged, showArea }: R
   if (publications.length === 0) return <EmptyState title={empty} />;
 
   const items = (viewing?.snapshot?.characters ?? []).map((c) => ({ ...c, id: c.key }));
+  const shown = limit === undefined ? publications : publications.slice(0, limit);
   return (
     <>
       <div className={cardStyles.castGrid}>
-        {publications.map((p) => (
+        {shown.map((p) => (
           <PublicationCard
             key={p.id}
             publication={p}
@@ -58,6 +64,14 @@ export function PublicationShelf({ publications, empty, onChanged, showArea }: R
             onRemove={() => setRemoving(p)}
           />
         ))}
+        {moreTo && (
+          <Link to={moreTo} className={cardStyles.moreTile} aria-label={`Ver todos (${publications.length})`}>
+            <span className={cardStyles.moreDots} aria-hidden="true">
+              …
+            </span>
+            <span className={cardStyles.moreLabel}>Ver todos ({publications.length})</span>
+          </Link>
+        )}
       </div>
 
       <Modal open={!!viewing} wide title={viewing?.name} onClose={() => setViewing(null)}>

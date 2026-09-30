@@ -12,7 +12,8 @@ export interface PublicationQuery {
 export interface IPublicationService {
   list(query?: PublicationQuery): Promise<Publication[]>;
   /** Publica (ou atualiza a publicação de) uma temporada, cast ou personagem seu. */
-  publish(kind: PublicationKind, sourceId: string, description?: string | null): Promise<Publication>;
+  /** Donos escolhem a área (oficial ou fãs); fãs publicam sempre na Área de Fãs. */
+  publish(kind: PublicationKind, sourceId: string, description?: string | null, area?: PublicationArea): Promise<Publication>;
   unpublish(id: string): Promise<void>;
   /** Copia para a Minha Área: casts e temporadas viram um cast; personagens entram na biblioteca. */
   copy(id: string, name?: string): Promise<CopyResult>;
@@ -25,8 +26,8 @@ export class PublicationService implements IPublicationService {
     return this.http.get<Publication[]>('/publications', { area: query.area, kind: query.kind, mine: query.mine ? 'true' : undefined });
   }
 
-  publish(kind: PublicationKind, sourceId: string, description?: string | null) {
-    return this.http.post<Publication>('/publications', { kind, sourceId, description });
+  publish(kind: PublicationKind, sourceId: string, description?: string | null, area?: PublicationArea) {
+    return this.http.post<Publication>('/publications', { kind, sourceId, description, ...(area && { area }) });
   }
 
   unpublish(id: string) {

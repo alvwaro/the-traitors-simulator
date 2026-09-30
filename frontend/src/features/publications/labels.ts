@@ -1,7 +1,7 @@
 import type { PublicationArea, PublicationKind } from '../../domain/models';
 
 export const areaLabel: Record<PublicationArea, string> = {
-  OFFICIAL: 'Castelo · Área Oficial',
+  OFFICIAL: 'Castelo · Temporadas Oficiais',
   FAN: 'Área de Fãs',
 };
 

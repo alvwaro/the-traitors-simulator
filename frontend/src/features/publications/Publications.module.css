@@ -1,0 +1,13 @@
+/* escolha da área na hora de publicar (só donos do site) */
+.areaChoice {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0 0 1rem;
+  padding: 0;
+  border: 0;
+}
+
+.areaChoice legend {
+  margin-bottom: 0.4rem;
+  font-weight: 600;
+}
