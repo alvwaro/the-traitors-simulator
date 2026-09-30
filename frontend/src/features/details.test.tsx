@@ -23,10 +23,54 @@ describe('detalhes que só aparecem depois de um clique', () => {
     await settled();
     const card = await screen.findByText('Quarteto');
     await view.user.click(card);
+    // O cast abre na aba de personagens; o ranking fica na aba ao lado.
+    await view.user.click(await screen.findByRole('tab', { name: 'Ranking' }));
     const dialog = await screen.findByRole('dialog').catch(() => document.body);
     await fillEverything(view.user, '80');
     await exercise(view.user, { maxClicks: 60, root: dialog as HTMLElement });
     expect(view.api.calls.some((c) => c.path.includes('/relationships') || c.path.includes('/ranking'))).toBe(true);
+  });
+
+  it('cria um personagem direto na página do cast', async () => {
+    const view = renderApp('/biblioteca');
+    await settled();
+    await view.user.click(await screen.findByText('Quarteto'));
+    await view.user.type(await screen.findByLabelText(/Nome/i), 'Lady Morag');
+    await view.user.click(screen.getByRole('button', { name: 'Salvar no cast' }));
+    await waitFor(() => {
+      const created = view.api.calls.find((c) => c.method === 'POST' && c.path.endsWith('/characters'));
+      expect((created?.body as { castId?: string } | undefined)?.castId).toBeTruthy();
+    });
+  });
+
+  it('página do participante: spoiler, cartão da temporada e importação da wiki', async () => {
+    const api = new FakeApi();
+    api.user = fixtures.owner.user;
+    const view = renderApp(`/participantes/${fixtures.characters[0].id}`, api);
+    await settled();
+    expect(screen.queryByText('Banido(a) no episódio 11')).toBeNull();
+    await view.user.click(await screen.findByRole('button', { name: 'Exibir spoiler' }));
+    expect(screen.getByText('Banido(a) no episódio 11')).toBeTruthy();
+    expect(screen.getByText('Recrutado(a)')).toBeTruthy();
+    expect(screen.getByText('The Real Housewives of New York City')).toBeTruthy();
+
+    await view.user.click(screen.getByRole('button', { name: 'Editar informações' }));
+    await view.user.click(await screen.findByRole('button', { name: 'Importar da wiki' }));
+    await waitFor(() => expect(api.calls.some((c) => c.method === 'POST' && c.path.endsWith('/wiki'))).toBe(true));
+    await view.user.click(screen.getByRole('button', { name: 'Salvar página' }));
+    await waitFor(() => {
+      const saved = api.calls.find((c) => c.method === 'PATCH' && /^\/characters\/[^/]+$/.test(c.path));
+      expect((saved?.body as { profile?: unknown } | undefined)?.profile).toBeTruthy();
+    });
+  });
+
+  it('personagens: os casts ficam recolhidos e só mostram os retratos ao expandir', async () => {
+    const view = renderApp('/biblioteca/personagens');
+    await settled();
+    const group = await screen.findByRole('article', { name: 'Quarteto' });
+    expect(within(group).queryAllByRole('img').length).toBeLessThanOrEqual(1);
+    await view.user.click(within(group).getByRole('button', { name: 'Expandir' }));
+    expect(within(group).getByRole('button', { name: 'Recolher' })).toBeTruthy();
   });
 
   it('mostra o termômetro do castelo e o detalhe de cada jogador', async () => {

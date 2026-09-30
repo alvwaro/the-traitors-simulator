@@ -4,8 +4,10 @@ import { LoginPage } from '../features/auth/LoginPage';
 import { HomeLayout } from '../features/home/HomeLayout';
 import { MyAreaPage } from '../features/home/MyAreaPage';
 import { PublicAreaPage } from '../features/home/PublicAreaPage';
+import { PublicListPage } from '../features/home/PublicListPage';
 import { LibraryLayout } from '../features/library/pages/LibraryLayout';
 import { CastsPage } from '../features/library/pages/CastsPage';
+import { CastPage } from '../features/library/pages/CastPage';
 import { BehaviorsPage } from '../features/library/pages/BehaviorsPage';
 import { CharactersPage } from '../features/library/pages/CharactersPage';
 import { PhrasesPage } from '../features/library/pages/PhrasesPage';
@@ -13,6 +15,7 @@ import { NewSeasonPage } from '../features/seasons/pages/NewSeasonPage';
 import { SeasonPage } from '../features/seasons/pages/SeasonPage';
 import { HistoryPage } from '../features/history/pages/HistoryPage';
 import { GuidePage } from '../features/guide/GuidePage';
+import { ParticipantPage } from '../features/participants/ParticipantPage';
 import { NotFoundPage } from './NotFoundPage';
 import { RequireAuth } from './RequireAuth';
 
@@ -29,11 +32,13 @@ export const routes: RouteObject[] = [
     ),
     children: [
       {
-        // página inicial: Castelo (oficial), Fãs e Minha Área
+        // página inicial: Castelo (temporadas oficiais), Fãs e Minha Área, e a lista completa de cada seção
         element: <HomeLayout />,
         children: [
           { path: '/', element: <PublicAreaPage area="OFFICIAL" /> },
           { path: '/fas', element: <PublicAreaPage area="FAN" /> },
+          { path: '/oficial/:kind', element: <PublicListPage area="OFFICIAL" /> },
+          { path: '/fas/:kind', element: <PublicListPage area="FAN" /> },
           { path: '/minha-area', element: <MyAreaPage /> },
         ],
       },
@@ -42,11 +47,13 @@ export const routes: RouteObject[] = [
         element: <LibraryLayout />,
         children: [
           { index: true, element: <CastsPage /> },
+          { path: 'casts/:castId', element: <CastPage /> },
           { path: 'personagens', element: <CharactersPage /> },
           { path: 'comportamentos', element: <BehaviorsPage /> },
           { path: 'frases', element: <PhrasesPage /> },
         ],
       },
+      { path: '/participantes/:characterId', element: <ParticipantPage /> },
       { path: '/guia', element: <GuidePage /> },
       { path: '/guia/:pool', element: <GuidePage /> },
       { path: '/temporadas/nova', element: <NewSeasonPage /> },

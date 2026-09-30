@@ -31,7 +31,7 @@ export function CastCard({ cast, onOpen, onEdit, onDelete, onPublish, published 
         {cast.description && <p className={styles.castDescription}>{cast.description}</p>}
         <div className={styles.castActions}>
           <button type="button" className={styles.inlineLink} onClick={onOpen}>
-            Ranking e relacionamentos
+            Personagens e ranking
           </button>
           <Link to={`/temporadas/nova?cast=${cast.id}`} className={styles.inlineLink}>
             Nova temporada

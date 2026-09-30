@@ -90,6 +90,7 @@ export class FakeApi implements IHttpClient {
     if (path === '/phrases') return fixtures.phrases;
     if (path === '/editions') return fixtures.editions;
     if (path === '/characters') return fixtures.characters;
+    if (/^\/participants\/[^/]+$/.test(path)) return participantFixture(this.user === fixtures.owner.user);
     if (/^\/characters\/[^/]+$/.test(path)) return fixtures.characters[0];
     if (path === '/casts') return fixtures.casts;
     if (/^\/casts\/[^/]+\/relationships$/.test(path)) return fixtures.castRelationships;
@@ -127,6 +128,27 @@ export class FakeApi implements IHttpClient {
     if (path.startsWith('/phrases')) return fixtures.phrases[0];
     return {};
   }
+}
+
+/** Página de participante de exemplo: duas temporadas (uma com recrutamento), fotos e outro reality. */
+function participantFixture(canEdit: boolean): unknown {
+  const character = fixtures.characters[0] as { id: string; name?: string; imageUrl?: string | null };
+  const seasonId = (fixtures.publications.official.find((p) => (p as { kind: string }).kind === 'SEASON') as { seasonId?: string } | undefined)?.seasonId ?? null;
+  return {
+    id: character.id,
+    name: character.name ?? 'Participante',
+    imageUrl: character.imageUrl ?? null,
+    photos: [{ url: 'https://example.com/t4.png', label: 'EUA · 4ª temporada' }],
+    profile: {
+      wikiUrl: 'https://thetraitors.fandom.com/wiki/Dorinda_Medley',
+      seasons: [
+        { label: 'EUA · 3ª temporada', seasonId: null, role: 'FAITHFUL', roleDetail: null, fate: 'Assassinado(a) no episódio 2', placement: '23º de 23', shieldWins: 0, episodes: 2 },
+        { label: 'EUA · 4ª temporada', seasonId, role: 'RECRUITED', roleDetail: 'Recrutado(a) no episódio 9', fate: 'Banido(a) no episódio 11', placement: '3º de 23', shieldWins: 2, episodes: 11 },
+      ],
+      otherShows: ['The Real Housewives of New York City'],
+    },
+    canEdit,
+  };
 }
 
 /** A primeira foto gravada que satisfaz a condição. */

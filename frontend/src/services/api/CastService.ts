@@ -26,6 +26,8 @@ export interface ICastService {
   ranking(id: string): Promise<{ rows: CastRankingRow[] }>;
   /** Sorteia novos comportamentos para todos os personagens do cast. */
   randomizeBehaviors(id: string): Promise<Cast>;
+  /** A foto do personagem só neste cast (null volta à principal). */
+  memberPhoto(id: string, characterId: string, imageUrl: string | null): Promise<Cast>;
   list(): Promise<Cast[]>;
   get(id: string): Promise<Cast>;
   create(input: CastInput): Promise<Cast>;
@@ -60,5 +62,9 @@ export class CastService extends ResourceService<Cast, CastInput> implements ICa
 
   randomizeBehaviors(id: string) {
     return this.http.post<Cast>(this.itemPath(id, '/randomize-behaviors'), {});
+  }
+
+  memberPhoto(id: string, characterId: string, imageUrl: string | null) {
+    return this.http.patch<Cast>(this.itemPath(id, `/members/${characterId}/photo`), { imageUrl });
   }
 }

@@ -18,8 +18,13 @@ async function visit(path: string, setup: (api: FakeApi) => void = () => {}) {
 const ROUTES = [
   '/',
   '/fas',
+  '/oficial/temporadas',
+  '/oficial/casts',
+  '/fas/personagens',
   '/minha-area',
   '/biblioteca',
+  '/biblioteca/casts/sem-cast',
+  `/participantes/${fixtures.characters[0].id}`,
   '/biblioteca/personagens',
   '/biblioteca/comportamentos',
   '/biblioteca/frases',

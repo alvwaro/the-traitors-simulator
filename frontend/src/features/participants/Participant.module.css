@@ -1,0 +1,193 @@
+/* página do participante: retrato com moldura, temporadas (com spoiler) e outros realities */
+.page {
+  display: grid;
+  gap: calc(var(--gap) * 1.5);
+}
+
+.hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.hero > :first-child {
+  width: min(100%, 14rem);
+}
+
+.heroText {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.name {
+  font-size: clamp(1.6rem, 4vw, 2.2rem);
+}
+
+.muted {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.wiki {
+  color: var(--gold);
+}
+
+.block {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.blockHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.blockTitle {
+  font-size: 1.25rem;
+}
+
+.seasons {
+  display: grid;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.season {
+  display: grid;
+  gap: 0.5rem;
+  padding: 1rem 1.1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.seasonHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.seasonTitle {
+  font-size: 1.1rem;
+}
+
+.role {
+  padding: 0.1rem 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+}
+
+.FAITHFUL {
+  color: var(--gold);
+}
+
+.TRAITOR,
+.RECRUITED {
+  color: var(--danger);
+}
+
+.spoiler {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.fate {
+  font-weight: 600;
+}
+
+/* o cartão da temporada publicada no site */
+.seasonCard {
+  display: grid;
+  grid-template-columns: 7rem 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 0.9rem;
+  align-items: center;
+  max-width: 28rem;
+  color: var(--text);
+  text-decoration: none;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.seasonCard:hover {
+  border-color: var(--border-strong);
+}
+
+.seasonCard > :first-child {
+  grid-row: 1 / span 2;
+  height: 100%;
+  pointer-events: none;
+}
+
+.seasonCardName {
+  align-self: end;
+  font-weight: 600;
+}
+
+.seasonCardMeta {
+  align-self: start;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.shows {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.shows li {
+  padding: 0.3rem 0.8rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+
+/* edição */
+.editor {
+  display: grid;
+  gap: 1rem;
+}
+
+.inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.inline > input {
+  flex: 1 1 16rem;
+  min-width: 0;
+}
+
+.seasonEditor {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.seasonEditor legend {
+  padding: 0 0.4rem;
+  font-weight: 600;
+}

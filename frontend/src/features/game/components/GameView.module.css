@@ -17,3 +17,13 @@
   display: grid;
   gap: var(--gap);
 }
+
+/* temporadas oficiais: links para a página de cada participante real */
+.participants {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.9rem;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}

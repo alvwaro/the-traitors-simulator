@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useServices } from '../../../app/services';
 import { Button } from '../../../components/ui/Button';
 import { ConfirmModal } from '../../../components/ui/Modal';
@@ -9,7 +10,8 @@ import { useAction } from '../../../hooks/useAction';
 import { useResource } from '../../../hooks/useResource';
 import type { CastInput } from '../../../services/api/CastService';
 import { CastCard } from '../components/CastCard';
-import { CastDetail } from '../components/CastDetail';
+import { CardCover } from '../components/CardCover';
+import { castPath, NO_CAST_NAME, uncast } from '../components/castGroups';
 import { CastEditor } from '../components/CastEditor';
 import cardStyles from '../components/Library.module.css';
 import styles from './LibraryPage.module.css';
@@ -17,7 +19,7 @@ import { PublishModal } from '../../publications/PublishModal';
 import { useMyPublications } from '../../publications/useMyPublications';
 import { MIN_PLAYERS_TO_START } from '../../../domain/rules';
 
-/** Casts salvos como cartões com capa; o elenco só aparece ao editar. */
+/** Casts salvos como cartões com capa; cada um abre a própria página. No fim, os personagens sem cast. */
 export function CastsPage() {
   const services = useServices();
   const characters = useResource(() => services.characters.list(), []);
@@ -26,7 +28,7 @@ export function CastsPage() {
   const [publishing, setPublishing] = useState<Cast | null>(null);
   const [editing, setEditing] = useState<Cast | 'new' | null>(null);
   const [deleting, setDeleting] = useState<Cast | null>(null);
-  const [viewingId, setViewingId] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   const create = useAction((input: CastInput) => services.casts.create(input), { success: (c) => `Cast "${c.name}" salvo` });
   const update = useAction((id: string, input: CastInput) => services.casts.update(id, input), { success: 'Cast atualizado' });
@@ -67,17 +69,8 @@ export function CastsPage() {
     );
   }
 
-  const viewing = casts.data.find((c) => c.id === viewingId);
-  if (viewing) {
-    return (
-      <CastDetail
-        cast={viewing}
-        onBack={() => setViewingId(null)}
-        onEdit={() => { setViewingId(null); setEditing(viewing); }}
-        onChanged={() => { casts.reload(); characters.reload(); }}
-      />
-    );
-  }
+  const loose = uncast(characters.data, casts.data);
+  const openLoose = () => navigate(castPath(null));
 
   return (
     <>
@@ -88,7 +81,7 @@ export function CastsPage() {
         </Button>
       </div>
 
-      {casts.data.length === 0 ? (
+      {casts.data.length === 0 && loose.length === 0 ? (
         <EmptyState title="Nenhum cast salvo">{characters.data.length ? 'Monte um grupo de personagens para começar temporadas mais rápido.' : 'Cadastre personagens primeiro.'}</EmptyState>
       ) : (
         <div className={cardStyles.castGrid}>
@@ -97,12 +90,26 @@ export function CastsPage() {
               key={cast.id}
               cast={cast}
               published={!!mine.find('CAST', cast.id)}
-              onOpen={() => setViewingId(cast.id)}
+              onOpen={() => navigate(castPath(cast.id))}
               onEdit={() => setEditing(cast)}
               onDelete={() => setDeleting(cast)}
               onPublish={() => setPublishing(cast)}
             />
           ))}
+          {loose.length > 0 && (
+            <article className={cardStyles.castCard}>
+              <CardCover name={NO_CAST_NAME} imageUrl={null} label={`Abrir ${NO_CAST_NAME}`} onOpen={openLoose} />
+              <div className={cardStyles.castBody}>
+                <h3 className={cardStyles.castName}>
+                  <button type="button" className={cardStyles.castOpen} onClick={openLoose}>
+                    {NO_CAST_NAME}
+                  </button>
+                </h3>
+                <p className={cardStyles.castMeta}>{loose.length === 1 ? '1 personagem' : `${loose.length} personagens`}</p>
+                <p className={cardStyles.castDescription}>Personagens criados fora de um cast. Coloque-os num cast pela edição do cast.</p>
+              </div>
+            </article>
+          )}
         </div>
       )}
 

@@ -21,12 +21,54 @@ export type { BehaviorEffects, CharacterStats, MissionPool, PublicationArea, Pub
 
 // Formatos devolvidos pela API (datas chegam como string ISO).
 
+export interface CharacterPhoto {
+  url: string;
+  /** Legenda curta, como "EUA · 4ª temporada". */
+  label: string | null;
+}
+
+/** Papel do participante numa temporada do programa (spoiler). */
+export type ParticipantRole = 'FAITHFUL' | 'TRAITOR' | 'RECRUITED';
+
+/** Uma temporada de The Traitors em que o participante real esteve. */
+export interface ParticipantSeason {
+  label: string;
+  /** Temporada publicada no site que corresponde a esta (a página mostra o cartão dela). */
+  seasonId: string | null;
+  role: ParticipantRole | null;
+  roleDetail: string | null;
+  fate: string | null;
+  placement: string | null;
+  shieldWins: number | null;
+  episodes: number | null;
+}
+
+/** Página de informações do participante (temporadas oficiais). */
+export interface ParticipantProfile {
+  wikiUrl: string | null;
+  seasons: ParticipantSeason[];
+  otherShows: string[];
+}
+
 export interface Character {
   id: string;
   name: string;
   imageUrl: string | null;
+  /** Fotos extras; cada cast pode usar uma delas. */
+  photos?: CharacterPhoto[];
   behaviorIds: string[];
+  profile?: ParticipantProfile | null;
   createdAt: string;
+}
+
+/** A página do participante, como a API devolve. */
+export interface Participant {
+  id: string;
+  name: string;
+  imageUrl: string | null;
+  photos: CharacterPhoto[];
+  profile: ParticipantProfile | null;
+  canEdit: boolean;
 }
 
 export interface Behavior {
@@ -109,6 +151,8 @@ export interface Season {
   interactionLimit: number;
   /** A simulação pode tirar alguém do castelo por motivos pessoais. */
   withdrawals: boolean;
+  /** Chance (0 a 100) de os escudos de uma missão ficarem misteriosos na simulação. */
+  hiddenShieldChance?: number;
   status: SeasonStatus;
   currentDay: number | null;
   currentPhase: GamePhase | null;
@@ -253,6 +297,8 @@ export interface MissionRecord {
   prizeAvailable: number | null;
   prizeEarned: number;
   rewards: { id: string; missionId: string; playerId: string; rewardType: 'SHIELD' }[];
+  /** Escudo misterioso: quem ganhou escudo fica em segredo (a tela mostra "?"). */
+  shieldsHidden?: boolean;
   createdAt: string;
 }
 

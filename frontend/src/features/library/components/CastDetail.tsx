@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../../../components/ui/Button';
 import { Panel } from '../../../components/ui/Panel';
@@ -9,11 +9,20 @@ import { CastRanking } from './CastRanking';
 import { CastRelationships } from './CastRelationships';
 import styles from './CastDetail.module.css';
 
-type Tab = 'ranking' | 'relationships' | 'behaviors';
+type Tab = 'characters' | 'ranking' | 'relationships' | 'behaviors';
 
-/** Um cast aberto: ranking de desempenho, relacionamentos e comportamentos dos personagens. */
-export function CastDetail({ cast, onBack, onEdit, onChanged }: Readonly<{ cast: Cast; onBack: () => void; onEdit: () => void; onChanged: () => void }>) {
-  const [tab, setTab] = useState<Tab>('ranking');
+interface CastDetailProps {
+  cast: Cast;
+  onBack: () => void;
+  onEdit: () => void;
+  onChanged: () => void;
+  /** Aba de personagens: o elenco e o cadastro de personagens direto no cast. */
+  characters: ReactNode;
+}
+
+/** Um cast aberto: personagens, ranking de desempenho, relacionamentos e comportamentos. */
+export function CastDetail({ cast, onBack, onEdit, onChanged, characters }: Readonly<CastDetailProps>) {
+  const [tab, setTab] = useState<Tab>('characters');
 
   return (
     <Panel
@@ -34,6 +43,9 @@ export function CastDetail({ cast, onBack, onEdit, onChanged }: Readonly<{ cast:
       }
     >
       <div className={styles.tabs} role="tablist">
+        <button type="button" role="tab" aria-selected={tab === 'characters'} className={cx(styles.tab, tab === 'characters' && styles.tabOn)} onClick={() => setTab('characters')}>
+          Personagens
+        </button>
         <button type="button" role="tab" aria-selected={tab === 'ranking'} className={cx(styles.tab, tab === 'ranking' && styles.tabOn)} onClick={() => setTab('ranking')}>
           Ranking
         </button>
@@ -50,6 +62,7 @@ export function CastDetail({ cast, onBack, onEdit, onChanged }: Readonly<{ cast:
           Comportamentos
         </button>
       </div>
+      {tab === 'characters' && characters}
       {tab === 'ranking' && <CastRanking castId={cast.id} />}
       {tab === 'relationships' && <CastRelationships cast={cast} />}
       {tab === 'behaviors' && <CastBehaviors cast={cast} onChanged={onChanged} />}
