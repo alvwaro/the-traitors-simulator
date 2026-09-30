@@ -10,6 +10,7 @@ interface MissionRow {
   name: string;
   description: string | null;
   prize_available: string | null;
+  shields_hidden: boolean | null;
   created_at: Date;
 }
 
@@ -47,9 +48,9 @@ export class PgMissionRepository implements IMissionRepository {
     const m = mission.toJSON();
     await query(
       this.db,
-      `INSERT INTO missions (id, day_id, name, description, prize_available, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6)`,
-      [m.id, m.dayId, m.name, m.description, m.prizeAvailable, m.createdAt],
+      `INSERT INTO missions (id, day_id, name, description, prize_available, shields_hidden, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [m.id, m.dayId, m.name, m.description, m.prizeAvailable, m.shieldsHidden, m.createdAt],
     );
     await insertMany(this.db, 'mission_rewards', ['id', 'mission_id', 'player_id', 'reward_type'], m.rewards.map((r) => [r.id, r.missionId, r.playerId, r.rewardType]));
   }
@@ -82,6 +83,7 @@ export class PgMissionRepository implements IMissionRepository {
           name: r.name,
           description: r.description,
           prizeAvailable: r.prize_available === null ? null : Number(r.prize_available),
+          shieldsHidden: r.shields_hidden ?? false,
           createdAt: r.created_at,
           rewards: (byMission.get(r.id) ?? []).map((w) => ({ id: w.id, missionId: w.mission_id, playerId: w.player_id, rewardType: w.reward_type })),
         }),

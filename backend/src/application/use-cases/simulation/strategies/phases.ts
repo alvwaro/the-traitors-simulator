@@ -99,6 +99,7 @@ export class MissionSimulation implements PhaseSimulation {
       prizeAvailable: def.prizeAvailable,
       prizeEarned: Math.min(outcome.prizeEarned, room),
       shieldedPlayerIds: outcome.shieldIds,
+      shieldsHidden: outcome.shieldsHidden,
     });
   }
 }

@@ -111,6 +111,8 @@ export interface RegisterMissionInput {
   prizeEarned: number;
   prizeAvailable?: number | null;
   shieldedPlayerIds: string[];
+  /** Simulação: os escudos desta missão ficaram misteriosos. */
+  shieldsHidden?: boolean;
 }
 
 export interface MissionOutput extends MissionProps {

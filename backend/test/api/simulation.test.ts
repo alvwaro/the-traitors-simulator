@@ -5,7 +5,7 @@ import { playAsHuman } from '../player-bot';
 describe('simulação automática e modo Jogador', () => {
   it('simula temporadas automáticas inteiras em cada temporada do programa', async () => {
     const { agent } = await signUp('auto');
-    for (const [i, missionPool] of ['US_S1', 'UK_S1', 'US_S2', 'UK_S2', 'US_S3', 'UK_S3', 'MIX'].entries()) {
+    for (const [i, missionPool] of ['US_S1', 'UK_S1', 'US_S2', 'UK_S2', 'US_S3', 'UK_S3', 'US_S4', 'MIX'].entries()) {
       const season = await createSeason(agent, 12 + (i % 3) * 2, { mode: 'AUTOMATIC', chaos: (i * 15) % 100, missionPool, withdrawals: i % 2 === 0, maxPrizePot: 60000 });
       ok(await agent.patch(`/api/seasons/${season.id}`).send({ chaos: 40, missionPool }));
       ok(await agent.post(`/api/seasons/${season.id}/relationships/regenerate`));

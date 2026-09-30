@@ -220,6 +220,8 @@ export interface EngineOptions {
   coffins?: boolean;
   /** Alguém pode deixar o castelo por motivos pessoais (padrão: sim). */
   withdrawals?: boolean;
+  /** Chance (0 a 1) de os escudos de uma missão ficarem misteriosos (padrão: nunca). */
+  hiddenShields?: number;
 }
 
 /**
@@ -689,6 +691,9 @@ export class SimulationEngine {
     this.say(SimulationEventKind.MISSION_STEP, `${def.name}. ${def.description}`);
     const human = this.active.find((p) => this.isHuman(p));
     const ctx = new MissionContext(this.rng, this.matrix, shuffle(this.rng, this.active), this.narrator, this.social, this.options.money, this.chaos, human, answers);
+    // Escudo misterioso: sorteado só quando a chance está entre 0 e 100% (sem mexer no sorteio das outras temporadas).
+    const hiddenChance = clamp(this.options.hiddenShields ?? 0, 0, 1);
+    ctx.hideShields = hiddenChance >= 1 || (hiddenChance > 0 && chance(this.rng, hiddenChance));
     let outcome: MissionOutcome;
     try {
       outcome = def.play(ctx);
@@ -709,7 +714,8 @@ export class SimulationEngine {
       const tempted = weightedPick(this.rng, this.npcs.filter((p) => !shieldIds.includes(p.id)), (p) => p.traits.skill + 10);
       if (tempted) {
         this.flags.temptationUsed = true;
-        this.say(SimulationEventKind.MISSION_STEP, 'No fim da missão, uma oferta a {user}: um escudo só seu, em troca de um quarto do dinheiro do grupo.', [tempted]);
+        if (ctx.hideShields) this.say(SimulationEventKind.MISSION_STEP, 'No fim da missão, uma oferta em segredo a alguém: um escudo só seu, em troca de um quarto do dinheiro do grupo.');
+        else this.say(SimulationEventKind.MISSION_STEP, 'No fim da missão, uma oferta a {user}: um escudo só seu, em troca de um quarto do dinheiro do grupo.', [tempted]);
         const refuses = surprises(this.rng, this.chaos, tempted) ? chance(this.rng, 0.5) : chance(this.rng, clamp(tempted.traits.loyalty / 100 + 0.1));
         if (refuses) {
           for (const other of this.active) if (other.id !== tempted.id) this.matrix.adjust(other.id, tempted.id, { liking: 6, trust: 5 });
@@ -718,14 +724,15 @@ export class SimulationEngine {
           prizeEarned = Math.round(prizeEarned * 0.75);
           shieldIds.push(tempted.id);
           for (const other of this.active) if (other.id !== tempted.id) this.matrix.adjust(other.id, tempted.id, { trust: -6, hatred: 4 });
-          this.say(SimulationEventKind.SHIELD, '{user} aceitou o escudo. O pote encolheu e os olhares também.', [tempted]);
+          if (ctx.hideShields) this.say(SimulationEventKind.SHIELD, 'A oferta foi aceita em segredo: o pote encolheu, e ninguém sabe quem ficou com o escudo. ?');
+          else this.say(SimulationEventKind.SHIELD, '{user} aceitou o escudo. O pote encolheu e os olhares também.', [tempted]);
         }
       }
     }
 
     this.say(SimulationEventKind.NARRATION, `Fim da missão: ${this.options.money(prizeEarned)} de ${this.options.money(def.prizeAvailable)} vão para o prêmio.`);
     this.approachHuman('MISSION', GamePhase.MISSION);
-    return { prizeEarned, shieldIds };
+    return { prizeEarned, shieldIds, shieldsHidden: ctx.hideShields && shieldIds.length > 0 };
   }
 
   /**

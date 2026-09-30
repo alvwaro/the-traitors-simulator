@@ -17,6 +17,8 @@ export interface MissionProps {
   description: string | null;
   prizeAvailable: number | null;
   rewards: MissionRewardProps[];
+  /** Escudo misterioso: quem ganhou escudo fica em segredo para quem assiste. */
+  shieldsHidden: boolean;
   createdAt: Date;
 }
 
@@ -24,7 +26,7 @@ export interface MissionProps {
 export class Mission {
   constructor(private readonly props: MissionProps) {}
 
-  static create(input: { dayId: string; name: string; description?: string | null; prizeAvailable?: number | null }): Mission {
+  static create(input: { dayId: string; name: string; description?: string | null; prizeAvailable?: number | null; shieldsHidden?: boolean }): Mission {
     const name = requiredText(input.name, 'O nome da missão é obrigatório');
     return new Mission({
       id: randomUUID(),
@@ -33,6 +35,7 @@ export class Mission {
       description: input.description ?? null,
       prizeAvailable: input.prizeAvailable ?? null,
       rewards: [],
+      shieldsHidden: input.shieldsHidden ?? false,
       createdAt: new Date(),
     });
   }

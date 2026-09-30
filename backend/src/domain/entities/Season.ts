@@ -22,6 +22,8 @@ export interface SimulationSettings {
   interactionLimit?: number;
   /** Jogadores podem deixar o castelo por motivos pessoais durante a simulação. */
   withdrawals?: boolean;
+  /** Chance (0 a 100) de os escudos de uma missão ficarem em segredo: a simulação mostra só "?". */
+  hiddenShieldChance?: number;
 }
 
 export interface SeasonProps {
@@ -33,6 +35,8 @@ export interface SeasonProps {
   missionPool: MissionPool;
   interactionLimit: number;
   withdrawals: boolean;
+  /** Chance (0 a 100) de os escudos de cada missão ficarem misteriosos. */
+  hiddenShieldChance: number;
   /** Memória da simulação automática entre fases (reviravoltas já usadas etc.). */
   simState: Record<string, unknown>;
   status: SeasonStatus;
@@ -68,6 +72,7 @@ export class Season {
       missionPool: 'US_S3',
       interactionLimit: 3,
       withdrawals: true,
+      hiddenShieldChance: 0,
       simState: {},
       status: SeasonStatus.SETUP,
       currentDay: null,
@@ -95,6 +100,7 @@ export class Season {
   get missionPool(): MissionPool { return this.props.missionPool; }
   get interactionLimit(): number { return this.props.interactionLimit; }
   get withdrawals(): boolean { return this.props.withdrawals; }
+  get hiddenShieldChance(): number { return this.props.hiddenShieldChance; }
   get simState(): Record<string, unknown> { return this.props.simState; }
   get status(): SeasonStatus { return this.props.status; }
   get currentDay(): number | null { return this.props.currentDay; }
@@ -130,10 +136,17 @@ export class Season {
       (settings.chaos !== undefined && settings.chaos !== this.props.chaos) ||
       (settings.missionPool !== undefined && settings.missionPool !== this.props.missionPool) ||
       (settings.interactionLimit !== undefined && settings.interactionLimit !== this.props.interactionLimit) ||
-      (settings.withdrawals !== undefined && settings.withdrawals !== this.props.withdrawals);
+      (settings.withdrawals !== undefined && settings.withdrawals !== this.props.withdrawals) ||
+      (settings.hiddenShieldChance !== undefined && settings.hiddenShieldChance !== this.props.hiddenShieldChance);
     if (!changing) return;
-    if (!this.isInSetup()) throw new DomainError('Loucura, missões e desistências só podem mudar antes do início');
+    if (!this.isInSetup()) throw new DomainError('Loucura, missões, desistências e escudos misteriosos só podem mudar antes do início');
     if (settings.withdrawals !== undefined) this.props.withdrawals = settings.withdrawals;
+    if (settings.hiddenShieldChance !== undefined) {
+      if (!Number.isInteger(settings.hiddenShieldChance) || settings.hiddenShieldChance < 0 || settings.hiddenShieldChance > 100) {
+        throw new DomainError('A chance de escudo misterioso vai de 0% a 100%');
+      }
+      this.props.hiddenShieldChance = settings.hiddenShieldChance;
+    }
     if (settings.chaos !== undefined) {
       if (!Number.isInteger(settings.chaos) || settings.chaos < 0 || settings.chaos > 100) {
         throw new DomainError('A loucura vai de 0% a 100%');

@@ -9,6 +9,8 @@ import { isTraitor, SimPlayer } from '../traits';
 export interface MissionOutcome {
   prizeEarned: number;
   shieldIds: string[];
+  /** Escudo misterioso: a missão não revela quem ficou com os escudos. */
+  shieldsHidden?: boolean;
 }
 
 /** Reviravoltas que uma missão deixa armadas para a noite. */
@@ -120,6 +122,9 @@ export class MissionContext {
   /** Preenchido pelo roteiro; lido depois da missão. */
   readonly twists: MissionTwists = {};
 
+  /** Escudo misterioso: quem ganha escudo nesta missão não aparece (a narração mostra "?"). */
+  hideShields = false;
+
   /** Traidores presentes (o público sabe quem são). */
   get traitors(): SimPlayer[] {
     return this.players.filter(isTraitor);
@@ -136,7 +141,16 @@ export class MissionContext {
   }
 
   shield(text: string, players: readonly SimPlayer[]): void {
+    if (this.hideShields) {
+      this.narrator.line(SimulationEventKind.SHIELD, 'Escudo misterioso: alguém ficou protegido(a), mas ninguém sabe quem. ?');
+      return;
+    }
     this.narrator.line(SimulationEventKind.SHIELD, text, players);
+  }
+
+  /** Um segredo sobre escudos: com o escudo misterioso, nem o público fica sabendo. */
+  shieldSecret(text: string, players: readonly SimPlayer[] = []): void {
+    if (!this.hideShields) this.secret(text, players);
   }
 
   /** Conversas durante a missão, com as frases da biblioteca. */

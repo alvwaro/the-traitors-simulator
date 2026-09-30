@@ -25,7 +25,7 @@ export class UpdateSeasonUseCase implements IUseCase<UpdateSeasonInput, SeasonPr
         throw new DomainError('O modo Jogador só pode ser escolhido ao criar a temporada');
       }
       if (input.mode !== undefined) season.changeMode(input.mode);
-      season.configureSimulation({ chaos: input.chaos, missionPool: input.missionPool, interactionLimit: input.interactionLimit, withdrawals: input.withdrawals });
+      season.configureSimulation({ chaos: input.chaos, missionPool: input.missionPool, interactionLimit: input.interactionLimit, withdrawals: input.withdrawals, hiddenShieldChance: input.hiddenShieldChance });
 
       await repos.seasons.update(season);
       if (season.isAutomatic()) await ensureRelationships(repos, season.id);

@@ -36,6 +36,7 @@ export class RegisterMissionUseCase extends UndoableRecord<RegisterMissionInput,
       name,
       description: input.description,
       prizeAvailable: input.prizeAvailable,
+      shieldsHidden: input.shieldsHidden,
     });
     for (const playerId of new Set(input.shieldedPlayerIds)) {
       roster.requireActive(playerId);

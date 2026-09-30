@@ -81,6 +81,40 @@ describe('missões de todas as temporadas', () => {
   });
 });
 
+describe('escudo misterioso', () => {
+  const effigies = editionFor('US_S4').missions.find((m) => m.key === 'effigies')!;
+
+  function run(hiddenShields: number) {
+    const players = cast(14, 3);
+    const engine = new SimulationEngine({
+      rng: seededRng('escudos'),
+      matrix: matrixFor(players, 'escudos'),
+      everyone: players,
+      activeIds: players.map((p) => p.id),
+      phrases: [],
+      money: (n) => `$${n}`,
+      day: 3,
+      hiddenShields,
+    });
+    return { out: engine.mission(effigies), events: engine.events };
+  }
+
+  it('com 100%, a missão dá os escudos mas não mostra de quem são', () => {
+    const { out, events } = run(1);
+    expect(out.shieldIds.length).toBeGreaterThan(0);
+    expect(out.shieldsHidden).toBe(true);
+    const shields = events.filter((e) => e.kind === 'SHIELD');
+    expect(shields.length).toBeGreaterThan(0);
+    expect(shields.every((e) => e.playerIds.length === 0 && e.text.includes('?'))).toBe(true);
+  });
+
+  it('com 0%, os escudos aparecem como sempre', () => {
+    const { out, events } = run(0);
+    expect(out.shieldsHidden).toBe(false);
+    expect(events.some((e) => e.kind === 'SHIELD' && e.playerIds.length > 0)).toBe(true);
+  });
+});
+
 describe('ações do jogador', () => {
   const PHASES = [GamePhase.ARRIVAL, GamePhase.BREAKFAST, GamePhase.MISSION, GamePhase.ROUND_TABLE, GamePhase.ENDGAME_ROUND_TABLE, GamePhase.TRAITORS_MEETING];
 

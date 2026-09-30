@@ -87,6 +87,7 @@ export const missionPoolLabel: Record<MissionPool, string> = {
   UK_S2: 'Reino Unido · 2ª temporada',
   US_S3: 'EUA · 3ª temporada',
   UK_S3: 'Reino Unido · 3ª temporada',
+  US_S4: 'EUA · 4ª temporada',
   MIX: 'Todas, embaralhadas',
 };
 

@@ -762,7 +762,7 @@ function gunpowder(origin: string, prizeAvailable: number): MissionDefinition {
               for (const o of ctx.players) if (o !== player) ctx.matrix.adjust(o.id, player.id, { trust: 4 });
               ctx.say('{user} ergueu o escudo e mostrou para todo mundo: "Não tenho nada a esconder."', [player]);
             } else {
-              ctx.secret('{user} abriu o caixote e encontrou um escudo. Decidiu não contar a ninguém.', [player]);
+              ctx.shieldSecret('{user} abriu o caixote e encontrou um escudo. Decidiu não contar a ninguém.', [player]);
             }
           }
         } else {

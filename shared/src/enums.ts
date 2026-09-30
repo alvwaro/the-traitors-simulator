@@ -113,5 +113,5 @@ export const PublicationArea = enumOf('OFFICIAL', 'FAN');
 export type PublicationArea = EnumValue<typeof PublicationArea>;
 
 /** Conjuntos de missões e reviravoltas: uma temporada de cada versão do programa (EUA/Reino Unido) ou a mistura. */
-export const MISSION_POOLS = ['US_S1', 'UK_S1', 'US_S2', 'UK_S2', 'US_S3', 'UK_S3', 'MIX'] as const;
+export const MISSION_POOLS = ['US_S1', 'UK_S1', 'US_S2', 'UK_S2', 'US_S3', 'UK_S3', 'US_S4', 'MIX'] as const;
 export type MissionPool = (typeof MISSION_POOLS)[number];

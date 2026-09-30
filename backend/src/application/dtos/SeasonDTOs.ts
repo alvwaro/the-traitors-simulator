@@ -13,6 +13,8 @@ export interface CreateSeasonInput {
   interactionLimit?: number;
   /** A simulação pode tirar alguém do castelo por motivos pessoais. */
   withdrawals?: boolean;
+  /** Chance (0 a 100) de os escudos de uma missão ficarem em segredo. */
+  hiddenShieldChance?: number;
   /** Modo Jogador: o participante que o usuário controla. */
   human?: { name: string; imageUrl?: string | null } | null;
   currency?: string;
@@ -32,6 +34,7 @@ export interface UpdateSeasonInput {
   missionPool?: MissionPool;
   interactionLimit?: number;
   withdrawals?: boolean;
+  hiddenShieldChance?: number;
   currency?: string;
   initialPrizePot?: number;
   maxPrizePot?: number | null;

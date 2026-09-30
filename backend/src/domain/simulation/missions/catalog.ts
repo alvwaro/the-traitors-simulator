@@ -4,6 +4,7 @@ import { MissionDefinition } from './MissionContext';
 import { UK_SEASON_1_FINALE, UK_SEASON_1_MISSIONS, US_SEASON_1_FINALE, US_SEASON_1_MISSIONS } from './season1';
 import { UK_SEASON_2_FINALE, UK_SEASON_2_MISSIONS, US_SEASON_2_FINALE, US_SEASON_2_MISSIONS } from './season2';
 import { UK_SEASON_3_FINALE, UK_SEASON_3_MISSIONS, UK_SEASON_3_SEER, US_SEASON_3_FINALE, US_SEASON_3_MISSIONS, US_SEASON_3_SEER } from './season3';
+import { US_SEASON_4_FINALE, US_SEASON_4_MISSIONS } from './season4';
 
 /** Uma reviravolta ou acontecimento do jogo, como aparece no guia das temporadas. */
 export interface GameEvent {
@@ -58,6 +59,14 @@ const MONUMENT: GameEvent = {
 const STATUE: GameEvent = {
   name: 'A Estátua dos Traidores',
   description: 'Na missão da pólvora britânica, 500 kg de pólvora explodem a estátua dos Traidores e impedem o assassinato daquela noite.',
+};
+const GRAVES: GameEvent = {
+  name: 'A Lista da Morte',
+  description: 'Na 4ª temporada americana, várias missões decidem quem pode morrer: os caixões enterrados nas covas, os que ficam presos nas jaulas do pântano e os quatro nomes que os Traidores dão na última pergunta das caixas. Naquela noite, só eles podem ser assassinados.',
+};
+const FOUNTAIN_PACT: GameEvent = {
+  name: 'O Pacto da Fonte',
+  description: 'Escudos escondidos debaixo das estátuas da fonte: se ninguém pegar nenhum, não há assassinato naquela noite. Basta um escudo pego em segredo para a torre abrir.',
 };
 const ARMOURY: GameEvent = {
   name: 'O Arsenal',
@@ -138,7 +147,20 @@ const UK_S3: Edition = {
   twists: [STATUE, LONGBOAT, SEER],
 };
 
-const REAL: readonly Edition[] = [US_S1, UK_S1, US_S2, UK_S2, US_S3, UK_S3];
+const US_S4: Edition = {
+  pool: 'US_S4',
+  country: 'US',
+  season: 4,
+  label: 'EUA · 4ª temporada (2026)',
+  summary:
+    'Valores em dólar. Caixões nas covas, jaulas no pântano e a pergunta final das caixas limitam quem pode ser assassinado; na fonte, se ninguém pegar escudo, a torre fica fechada. Termina com o salto do helicóptero.',
+  missions: US_SEASON_4_MISSIONS,
+  finale: [US_SEASON_4_FINALE],
+  coffins: false,
+  twists: [GRAVES, FOUNTAIN_PACT],
+};
+
+const REAL: readonly Edition[] = [US_S1, UK_S1, US_S2, UK_S2, US_S3, UK_S3, US_S4];
 
 /** Sem repetir a mesma prova: fica a primeira versão que aparece (a americana, quando as duas existem). */
 function distinct(missions: readonly MissionDefinition[]): MissionDefinition[] {
@@ -159,7 +181,7 @@ const MIX: Edition = {
   finale: distinct(REAL.flatMap((e) => e.finale)),
   seer: US_SEASON_3_SEER,
   coffins: true,
-  twists: [LONGBOAT, COFFINS, SEER, DUNGEON, POISON, MONUMENT, STATUE, ARMOURY],
+  twists: [LONGBOAT, COFFINS, SEER, DUNGEON, POISON, MONUMENT, STATUE, ARMOURY, GRAVES, FOUNTAIN_PACT],
 };
 
 export const EDITIONS: readonly Edition[] = [...REAL, MIX];
