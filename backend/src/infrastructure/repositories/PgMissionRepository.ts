@@ -19,6 +19,7 @@ interface RewardRow {
   mission_id: string;
   player_id: string;
   reward_type: RewardType;
+  hidden: boolean | null;
 }
 
 export class PgMissionRepository implements IMissionRepository {
@@ -52,7 +53,7 @@ export class PgMissionRepository implements IMissionRepository {
        VALUES ($1, $2, $3, $4, $5, $6, $7)`,
       [m.id, m.dayId, m.name, m.description, m.prizeAvailable, m.shieldsHidden, m.createdAt],
     );
-    await insertMany(this.db, 'mission_rewards', ['id', 'mission_id', 'player_id', 'reward_type'], m.rewards.map((r) => [r.id, r.missionId, r.playerId, r.rewardType]));
+    await insertMany(this.db, 'mission_rewards', ['id', 'mission_id', 'player_id', 'reward_type', 'hidden'], m.rewards.map((r) => [r.id, r.missionId, r.playerId, r.rewardType, r.hidden]));
   }
 
   async findShieldedPlayerIds(dayId: string): Promise<string[]> {
@@ -85,7 +86,7 @@ export class PgMissionRepository implements IMissionRepository {
           prizeAvailable: r.prize_available === null ? null : Number(r.prize_available),
           shieldsHidden: r.shields_hidden ?? false,
           createdAt: r.created_at,
-          rewards: (byMission.get(r.id) ?? []).map((w) => ({ id: w.id, missionId: w.mission_id, playerId: w.player_id, rewardType: w.reward_type })),
+          rewards: (byMission.get(r.id) ?? []).map((w) => ({ id: w.id, missionId: w.mission_id, playerId: w.player_id, rewardType: w.reward_type, hidden: w.hidden ?? false })),
         }),
     );
   }

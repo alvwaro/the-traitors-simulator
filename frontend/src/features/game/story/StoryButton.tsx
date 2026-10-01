@@ -64,7 +64,8 @@ export function StoryButton() {
   const day = `Dia ${toRoman(state.day ?? 1)}`;
   const phaseName = state.phase ? ` · ${phaseLabel[state.phase]}` : '';
   const moment = `${day}${phaseName}`;
-  const hasShields = shieldedToday(game, draft.shieldIds).length > 0;
+  const shieldsToday = shieldedToday(game, draft.shieldIds, draft.hiddenShieldIds);
+  const hasShields = shieldsToday.players.length + shieldsToday.hidden > 0;
   const atTable = state.phase === 'ROUND_TABLE' || state.phase === 'ENDGAME_ROUND_TABLE';
   const votesScene = atTable ? recordedVotesScene(game) : null;
 
@@ -124,7 +125,7 @@ export function StoryButton() {
             </Button>
           )}
           {hasShields && (
-            <Button variant="ghost" pending={request?.label === `Escudos · ${day}`} disabled={!!request} onClick={() => generate({ scene: shieldScene(game, draft.shieldIds), label: `Escudos · ${day}` })}>
+            <Button variant="ghost" pending={request?.label === `Escudos · ${day}`} disabled={!!request} onClick={() => generate({ scene: shieldScene(game, draft.shieldIds, draft.hiddenShieldIds), label: `Escudos · ${day}` })}>
               Estilizar escudos
             </Button>
           )}

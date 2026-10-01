@@ -1,4 +1,4 @@
-import { useState, type SubmitEvent } from 'react';
+import { useMemo, useState, type SubmitEvent } from 'react';
 import { useServices } from '../../../app/services';
 import { PortraitGrid, toggleIn } from '../../../components/player/PortraitGrid';
 import { Portrait } from '../../../components/player/Portrait';
@@ -44,18 +44,27 @@ export function MissionSummary({ mission }: Readonly<{ mission: MissionRecord }>
   const { playersById, state } = useGame();
   // Escudo misterioso: ninguém (nem quem assiste) sabe quem ficou protegido.
   const hidden = !!mission.shieldsHidden;
-  const shielded = hidden ? [] : mission.rewards.flatMap((r) => playersById.get(r.playerId) ?? []);
+  // Escudos escondidos um a um (simulação manual): cada um vira um "?".
+  const rewards = hidden ? [] : mission.rewards;
+  const shielded = rewards.filter((r) => !r.hidden).flatMap((r) => playersById.get(r.playerId) ?? []);
+  const hiddenCount = rewards.filter((r) => r.hidden).length;
   return (
     <div className={styles.section}>
       <div className={styles.result}>
         <div className={styles.resultText} style={{ textAlign: 'center' }}>
           <p className={styles.resultTitle}>{mission.name}</p>
           <p className={styles.resultMeta}>
-            +{formatMoney(mission.prizeEarned, state.season.currency)} · {hidden ? 'escudo misterioso' : `${shielded.length} escudo(s)`}
+            +{formatMoney(mission.prizeEarned, state.season.currency)} · {hidden ? 'escudo misterioso' : `${rewards.length} escudo(s)`}
           </p>
         </div>
       </div>
-      {shielded.length > 0 && <PortraitGrid items={shielded} size="sm" badge={() => <ShieldIcon size={13} />} />}
+      {(shielded.length > 0 || hiddenCount > 0) && (
+        <PortraitGrid
+          items={[...shielded, ...Array.from({ length: hiddenCount }, (_, i) => ({ id: `hidden-${i}`, name: '?', imageUrl: null, mystery: true }))]}
+          size="sm"
+          badge={() => <ShieldIcon size={13} />}
+        />
+      )}
       {hidden && (
         <div className={styles.mysteryShield}>
           <Portrait name="?" imageUrl={null} mystery size="sm" badge={<ShieldIcon size={13} />} caption="Escudo misterioso" />
@@ -72,10 +81,15 @@ function MissionForm({ onDone }: Readonly<{ onDone: () => void }>) {
   const [name, setName] = useState('');
   const [prizeEarned, setPrizeEarned] = useState('');
   const [shields, setShields] = useState<string[]>([]);
+  const [hiddenIds, setHiddenIds] = useState<string[]>([]);
   const [drawCount, setDrawCount] = useState('1');
-  useShareShields(shields);
+  // só vale esconder quem está com escudo (sortear de novo ou limpar descarta o resto)
+  const hidden = useMemo(() => hiddenIds.filter((id) => shields.includes(id)), [hiddenIds, shields]);
+  useShareShields(shields, hidden);
 
   const players = state.activePlayers;
+  const shieldedPlayers = players.filter((p) => shields.includes(p.id));
+  const allHidden = shields.length > 0 && hidden.length === shields.length;
   const toDraw = Math.min(Math.max(Math.floor(Number(drawCount) || 0), 0), players.length);
 
   function drawShields() {
@@ -86,7 +100,7 @@ function MissionForm({ onDone }: Readonly<{ onDone: () => void }>) {
 
   async function handleSubmit(e: SubmitEvent) {
     e.preventDefault();
-    if (await save.run({ name: name.trim() || null, prizeEarned: Number(prizeEarned || 0), shieldedPlayerIds: shields })) {
+    if (await save.run({ name: name.trim() || null, prizeEarned: Number(prizeEarned || 0), shieldedPlayerIds: shields, hiddenShieldPlayerIds: hidden })) {
       onDone();
       refresh();
     }
@@ -122,6 +136,26 @@ function MissionForm({ onDone }: Readonly<{ onDone: () => void }>) {
           badge={(p) => (shields.includes(p.id) ? <ShieldIcon size={13} /> : null)}
         />
       </div>
+
+      {shieldedPlayers.length > 0 && (
+        <div className={styles.section}>
+          <h3 className={styles.sectionTitle}>Esconder escudos</h3>
+          <div className={styles.hideRow}>
+            <p className={styles.muted}>Toque em quem deve ficar em segredo. Escudo escondido aparece como “?” na tela e na arte.</p>
+            <Button variant="ghost" onClick={() => setHiddenIds(allHidden ? [] : shields)}>
+              {allHidden ? 'Mostrar todos' : 'Esconder todos'}
+            </Button>
+          </div>
+          <PortraitGrid
+            items={shieldedPlayers}
+            size="xs"
+            selectedIds={hidden}
+            onToggle={(id) => setHiddenIds(toggleIn(hidden, id))}
+            badge={(p) => (hidden.includes(p.id) ? '?' : <ShieldIcon size={11} />)}
+            caption={(p) => (hidden.includes(p.id) ? 'Escondido' : 'Visível')}
+          />
+        </div>
+      )}
 
       <div className={styles.submitRow}>
         <Button type="submit" pending={save.pending}>

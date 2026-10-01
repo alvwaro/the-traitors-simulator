@@ -296,7 +296,7 @@ export interface MissionRecord {
   description: string | null;
   prizeAvailable: number | null;
   prizeEarned: number;
-  rewards: { id: string; missionId: string; playerId: string; rewardType: 'SHIELD' }[];
+  rewards: { id: string; missionId: string; playerId: string; rewardType: 'SHIELD'; hidden?: boolean }[];
   /** Escudo misterioso: quem ganhou escudo fica em segredo (a tela mostra "?"). */
   shieldsHidden?: boolean;
   createdAt: string;

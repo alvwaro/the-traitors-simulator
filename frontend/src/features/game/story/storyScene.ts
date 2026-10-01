@@ -1,5 +1,5 @@
 import type { PlayerRole } from '../../../domain/enums';
-import type { Player } from '../../../domain/models';
+import type { MissionRecord, Player } from '../../../domain/models';
 import type { Conversation } from '../../../domain/phrases';
 import { lastRound } from '../../../domain/votes';
 import type { VoteDraft } from '../../../services/api/PhaseService';
@@ -12,9 +12,10 @@ export type StoryScene =
   | { kind: 'elimination'; player: Player; status: 'BANISHED' | 'MURDERED'; headline: string; role?: PlayerRole; detail?: string }
   /** Banido na mesa redonda: foto, o anúncio num cartão e os votos recebidos numa caixa. */
   | { kind: 'banishment'; player: Player; role?: PlayerRole; votes: number }
-  | { kind: 'mission'; name: string; prize: number; shielded: Player[] }
+  /** `hidden`: quantos escudos escondidos entram como "?" (sem foto e sem nome). */
+  | { kind: 'mission'; name: string; prize: number; shielded: Player[]; hidden?: number }
   | { kind: 'winners'; players: Player[]; headline: string }
-  | { kind: 'shields'; players: Player[] }
+  | { kind: 'shields'; players: Player[]; hidden?: number }
   /** Conclave na torre: um encapuzado no lugar dos Traidores, sem revelar ninguém. */
   | { kind: 'tower' }
   /** Conclave encerrado sem morte (ninguém escolhido ou alvo salvo pelo escudo): a moldura com uma interrogação. */
@@ -29,19 +30,46 @@ export type StoryScene =
 export interface StoryDraft {
   conversations: Conversation[];
   shieldIds: string[];
+  hiddenShieldIds: string[];
   votes: VoteDraft[];
 }
 
-/** Escudos do dia: os já registrados nas missões de hoje mais os escolhidos no formulário. */
-export function shieldedToday(game: GameContextValue, draftIds: string[]): Player[] {
-  // Escudos misteriosos não aparecem nas artes.
-  const registered = (game.today?.missions ?? []).filter((m) => !m.shieldsHidden).flatMap((m) => m.rewards.map((r) => r.playerId));
-  const ids = [...new Set([...registered, ...draftIds])];
-  return ids.flatMap((id) => game.playersById.get(id) ?? []);
+/** Escudos que a arte mostra: quem aparece com foto e quantos ficam como "?". */
+export interface ShieldedFaces {
+  players: Player[];
+  hidden: number;
 }
 
-export function shieldScene(game: GameContextValue, draftIds: string[]): StoryScene {
-  return { kind: 'shields', players: shieldedToday(game, draftIds) };
+/**
+ * Escudos de um conjunto de missões (mais os escolhidos no formulário, ainda não registrados).
+ * Escudo escondido vira "?"; missão com escudo misterioso (simulação) vira um único "?",
+ * porque nem a quantidade de escudos é revelada.
+ */
+function shieldFaces(game: GameContextValue, missions: readonly MissionRecord[], draftIds: readonly string[] = [], draftHidden: readonly string[] = []): ShieldedFaces {
+  const shown = new Set<string>();
+  const hiddenIds = new Set<string>();
+  let mysteryMissions = 0;
+  for (const m of missions) {
+    if (m.shieldsHidden) {
+      if (m.rewards.length > 0) mysteryMissions++;
+      continue;
+    }
+    for (const r of m.rewards) (r.hidden ? hiddenIds : shown).add(r.playerId);
+  }
+  const draftHiddenSet = new Set(draftHidden);
+  for (const id of draftIds) (draftHiddenSet.has(id) ? hiddenIds : shown).add(id);
+  // quem já aparece com foto em outra missão não precisa de "?"
+  const hidden = [...hiddenIds].filter((id) => !shown.has(id)).length + mysteryMissions;
+  return { players: [...shown].flatMap((id) => game.playersById.get(id) ?? []), hidden };
+}
+
+/** Escudos do dia: os já registrados nas missões de hoje mais os escolhidos no formulário. */
+export function shieldedToday(game: GameContextValue, draftIds: string[], draftHidden: string[] = []): ShieldedFaces {
+  return shieldFaces(game, game.today?.missions ?? [], draftIds, draftHidden);
+}
+
+export function shieldScene(game: GameContextValue, draftIds: string[], draftHidden: string[] = []): StoryScene {
+  return { kind: 'shields', ...shieldedToday(game, draftIds, draftHidden) };
 }
 
 function roundTableScene(players: Player[], votes: VoteDraft[]): StoryScene {
@@ -95,11 +123,13 @@ export function storyScene(game: GameContextValue, draft: StoryDraft): StoryScen
     case 'MISSION': {
       const mission = today?.missions.at(-1);
       if (!mission) return wall;
+      const { players, hidden } = shieldFaces(game, today!.missions);
       return {
         kind: 'mission',
         name: mission.name ?? 'Missão',
         prize: today!.missions.reduce((total, m) => total + m.prizeEarned, 0),
-        shielded: today!.missions.filter((m) => !m.shieldsHidden).flatMap((m) => m.rewards.flatMap((r) => playersById.get(r.playerId) ?? [])),
+        shielded: players,
+        hidden,
       };
     }
 

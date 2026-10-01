@@ -81,6 +81,14 @@ function Face({ player, size = 'sm', hideName }: Readonly<{ player: Player; size
   return <Portrait name={player.name} imageUrl={sameOrigin(player.imageUrl)} status={player.status} size={size} hideName={hideName} eager />;
 }
 
+/** Escudo escondido: a moldura com "?" no lugar da foto e "?" no lugar do nome. */
+function HiddenFace() {
+  return <Portrait name="?" imageUrl={null} mystery size="sm" eager />;
+}
+
+/** Uma entrada por escudo escondido, para desenhar os "?" depois dos retratos. */
+const hiddenSlots = (count = 0) => Array.from({ length: count }, (_, i) => `hidden-${i}`);
+
 /** `count` pontos igualmente espaçados pelo contorno da oval, começando no topo. */
 function ovalPoints(count: number, cx: number, cy: number, rx: number, ry: number) {
   const STEPS = 720;
@@ -442,13 +450,15 @@ function TruthCircle() {
 }
 
 /** "Ana", "Ana e Bruno", "Ana, Bruno e Carla" com os nomes em destaque. */
-function NameList({ players }: Readonly<{ players: Player[] }>) {
+/** "Ana, Bia e ?": cada escudo escondido entra como "?" no fim da lista. */
+function NameList({ players, hidden = 0 }: Readonly<{ players: Player[]; hidden?: number }>) {
+  const names = [...players.map((p) => ({ key: p.id, name: p.name })), ...hiddenSlots(hidden).map((key) => ({ key, name: '?' }))];
   return (
     <>
-      {players.map((p, i) => (
-        <span key={p.id}>
-          {i > 0 && (i === players.length - 1 ? ' e ' : ', ')}
-          <strong>{p.name}</strong>
+      {names.map((n, i) => (
+        <span key={n.key}>
+          {i > 0 && (i === names.length - 1 ? ' e ' : ', ')}
+          <strong>{n.name}</strong>
         </span>
       ))}
     </>
@@ -508,7 +518,7 @@ function SceneBody({ scene, currency }: Readonly<{ scene: StoryScene; currency: 
       );
 
     case 'shields': {
-      const total = scene.players.length;
+      const total = scene.players.length + (scene.hidden ?? 0);
       const scale = shieldScale(total);
       return (
         <div className={styles.shieldScene}>
@@ -526,9 +536,16 @@ function SceneBody({ scene, currency }: Readonly<{ scene: StoryScene; currency: 
                   </div>
                 </div>
               ))}
+              {hiddenSlots(scene.hidden).map((key) => (
+                <div key={key} style={{ width: SEAT.width * scale, height: SEAT.height * scale }}>
+                  <div style={{ zoom: scale }}>
+                    <HiddenFace />
+                  </div>
+                </div>
+              ))}
             </div>
             <p className={styles.panelText}>
-              <NameList players={scene.players} /> {total === 1 ? 'está protegido(a)' : 'estão protegidos'} do assassinato dos Traidores esta noite.
+              <NameList players={scene.players} hidden={scene.hidden} /> {total === 1 ? 'está protegido(a)' : 'estão protegidos'} do assassinato dos Traidores esta noite.
             </p>
           </div>
         </div>
@@ -550,12 +567,15 @@ function SceneBody({ scene, currency }: Readonly<{ scene: StoryScene; currency: 
           <p className={styles.verdict}>{scene.name}</p>
           <p className={styles.prize}>+ {formatMoney(scene.prize, currency)}</p>
           <p className={styles.detail}>para o prêmio final</p>
-          {scene.shielded.length > 0 && (
+          {scene.shielded.length + (scene.hidden ?? 0) > 0 && (
             <>
               <p className={styles.label}>Escudos</p>
               <div className={styles.faces}>
                 {scene.shielded.map((p) => (
                   <Face key={p.id} player={p} />
+                ))}
+                {hiddenSlots(scene.hidden).map((key) => (
+                  <HiddenFace key={key} />
                 ))}
               </div>
             </>

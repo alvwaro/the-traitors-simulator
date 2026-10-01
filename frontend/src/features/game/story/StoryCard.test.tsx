@@ -41,6 +41,8 @@ const SCENES: [string, StoryScene][] = [
   ['um escudo', { kind: 'shields', players: withPhotos.slice(0, 1) }],
   ['alguns escudos', { kind: 'shields', players: withPhotos.slice(0, 5) }],
   ['muitos escudos', { kind: 'shields', players: many.slice(0, 14) }],
+  ['escudos escondidos', { kind: 'shields', players: withPhotos.slice(0, 2), hidden: 2 }],
+  ['missão com escudo escondido', { kind: 'mission', name: 'Missão', prize: 0, shielded: withPhotos.slice(0, 1), hidden: 1 }],
   ['torre', { kind: 'tower' }],
   ['noite sem morte', { kind: 'noMurder' }],
   ['noite sem morte com escudo', { kind: 'noMurder', detail: 'O alvo dos Traidores estava protegido por um escudo.' }],

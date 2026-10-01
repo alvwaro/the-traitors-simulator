@@ -61,6 +61,8 @@ describe('regras das entidades', () => {
     const mission = Mission.create({ dayId: 'd', name: 'Barco', prizeAvailable: 100 });
     mission.grantShield('a');
     expect(() => mission.grantShield('a')).toThrow();
+    mission.grantShield('b', true);
+    expect(mission.rewards.map((r) => r.hidden)).toEqual([false, true]);
 
     const meeting = TraitorMeeting.create({ dayId: 'd' });
     expect(meeting.murderPlayer('x', true).outcome).toBe('BLOCKED_BY_SHIELD');

@@ -1,5 +1,5 @@
 import { phaseLabel, roleLabel } from '../../../domain/labels';
-import type { DayHistory, Player, RoundTableRecord } from '../../../domain/models';
+import type { DayHistory, MissionRecord, Player, RoundTableRecord } from '../../../domain/models';
 import { cx } from '../../../lib/cx';
 import { formatMoney, toRoman } from '../../../lib/format';
 import { EventFeed } from '../../game/auto/EventFeed';
@@ -36,7 +36,7 @@ export function DayChronicle({ day, playersById, currency }: Readonly<DayChronic
           <p>
             {formatMoney(m.prizeEarned, currency)} para o prêmio
             {m.prizeAvailable !== null ? ` (de ${formatMoney(m.prizeAvailable, currency)})` : ''}.{' '}
-            {m.rewards.length ? `Escudos: ${m.rewards.map((r) => name(r.playerId)).join(', ')}.` : 'Ninguém ganhou escudo.'}
+            {shieldsLine(m, name)}
           </p>
           {m.description && <p className={styles.prose}>{m.description}</p>}
         </section>
@@ -138,4 +138,11 @@ function murderText(murder: { targetId: string; outcome: string } | null, name: 
   if (!murder) return 'Ninguém foi assassinado.';
   if (murder.outcome === 'SUCCESS') return `${name(murder.targetId)} foi assassinado(a).`;
   return `${name(murder.targetId)} foi o alvo, mas estava protegido(a) por escudo.`;
+}
+
+/** Quem ganhou escudo na missão; escudo escondido aparece como "?". */
+function shieldsLine(mission: MissionRecord, name: (id: string) => string): string {
+  if (mission.rewards.length === 0) return 'Ninguém ganhou escudo.';
+  if (mission.shieldsHidden) return 'Escudo misterioso.';
+  return `Escudos: ${mission.rewards.map((r) => (r.hidden ? '?' : name(r.playerId))).join(', ')}.`;
 }

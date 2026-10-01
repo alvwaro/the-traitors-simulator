@@ -7,6 +7,8 @@ interface StoryShared {
   conversations: Conversation[];
   /** Escudos escolhidos no formulário da missão. */
   shieldIds: string[];
+  /** Escudos do formulário marcados como escondidos (aparecem como "?"). */
+  hiddenShieldIds: string[];
   /** Votos marcados na mesa redonda. */
   votes: VoteDraft[];
 }
@@ -15,7 +17,7 @@ interface StoryContextValue extends StoryShared {
   set: <K extends keyof StoryShared>(key: K, value: StoryShared[K]) => void;
 }
 
-const EMPTY: StoryShared = { conversations: [], shieldIds: [], votes: [] };
+const EMPTY: StoryShared = { conversations: [], shieldIds: [], hiddenShieldIds: [], votes: [] };
 const StoryContext = createContext<StoryContextValue>({ ...EMPTY, set: () => {} });
 
 export function StoryProvider({ children }: Readonly<{ children: ReactNode }>) {
@@ -45,8 +47,9 @@ export function useShareConversations(conversations: Conversation[]) {
   useShare('conversations', conversations);
 }
 
-export function useShareShields(playerIds: string[]) {
+export function useShareShields(playerIds: string[], hiddenIds: string[]) {
   useShare('shieldIds', playerIds);
+  useShare('hiddenShieldIds', hiddenIds);
 }
 
 export function useShareVotes(votes: VoteDraft[]) {

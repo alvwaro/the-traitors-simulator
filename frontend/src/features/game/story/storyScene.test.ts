@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { DayHistory, GameState, Player, SeasonHistory, TraitorMeetingRecord } from '../../../domain/models';
 import type { GameContextValue } from '../context/GameContext';
-import { storyScene } from './storyScene';
+import { shieldScene, storyScene } from './storyScene';
 
 const victim = { id: 'v1', name: 'Ana', status: 'MURDERED' } as Player;
-const draft = { conversations: [], shieldIds: [], votes: [] };
+const draft = { conversations: [], shieldIds: [], hiddenShieldIds: [], votes: [] };
 
 /** Conclave de hoje: `meeting` null = a reunião ainda não foi registrada. */
 function conclave(meeting: TraitorMeetingRecord | null): GameContextValue {
@@ -47,5 +47,30 @@ describe('arte do conclave (Estilizar para o Instagram)', () => {
     const scene = storyScene(conclave(meeting({ id: 'x', targetId: victim.id, outcome: 'SUCCESS' })), draft);
     expect(scene).toMatchObject({ kind: 'elimination', player: victim, status: 'MURDERED', headline: 'Ana foi assassinado(a)' });
     expect(storyScene(conclave(meeting({ id: 'x', targetId: 'desconhecido', outcome: 'SUCCESS' })), draft)).toMatchObject({ kind: 'wall' });
+  });
+});
+
+describe('arte dos escudos', () => {
+  const ana = { id: 'a', name: 'Ana', status: 'ACTIVE' } as Player;
+  const bia = { id: 'b', name: 'Bia', status: 'ACTIVE' } as Player;
+  const caio = { id: 'c', name: 'Caio', status: 'ACTIVE' } as Player;
+  const reward = (playerId: string, hidden = false) => ({ id: playerId, missionId: 'm', playerId, rewardType: 'SHIELD' as const, hidden });
+  const game = (missions: unknown[]): GameContextValue =>
+    ({
+      state: { phase: 'MISSION', activePlayers: [ana, bia, caio] },
+      history: { players: [ana, bia, caio] },
+      playersById: new Map([ana, bia, caio].map((p) => [p.id, p])),
+      today: { missions, roundTables: [], traitorsMeeting: null },
+    }) as unknown as GameContextValue;
+
+  it('escudo escondido vira "?" e não entra com foto', () => {
+    const g = game([{ id: 'm', name: 'Barco', prizeEarned: 0, rewards: [reward('a'), reward('b', true)] }]);
+    expect(shieldScene(g, [])).toEqual({ kind: 'shields', players: [ana], hidden: 1 });
+    expect(storyScene(g, draft)).toMatchObject({ kind: 'mission', shielded: [ana], hidden: 1 });
+  });
+
+  it('soma os escondidos do formulário e o escudo misterioso da simulação conta um "?" só', () => {
+    const g = game([{ id: 'm', name: 'Barco', prizeEarned: 0, shieldsHidden: true, rewards: [reward('a'), reward('b')] }]);
+    expect(shieldScene(g, ['c'], ['c'])).toEqual({ kind: 'shields', players: [], hidden: 2 });
   });
 });

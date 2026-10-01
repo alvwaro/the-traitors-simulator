@@ -9,6 +9,8 @@ export interface PortraitItem {
   name: string;
   imageUrl: string | null;
   status?: PlayerStatus;
+  /** Retrato com "?" no lugar da foto (ex.: escudo escondido). */
+  mystery?: boolean;
 }
 
 interface PortraitGridProps<T extends PortraitItem> {
@@ -41,6 +43,7 @@ export function PortraitGrid<T extends PortraitItem>({
           name={item.name}
           imageUrl={item.imageUrl}
           status={item.status}
+          mystery={item.mystery}
           size={size}
           selected={selectedIds.includes(item.id)}
           disabled={isDisabled?.(item)}

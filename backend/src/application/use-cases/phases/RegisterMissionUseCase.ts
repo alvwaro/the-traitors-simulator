@@ -38,9 +38,10 @@ export class RegisterMissionUseCase extends UndoableRecord<RegisterMissionInput,
       prizeAvailable: input.prizeAvailable,
       shieldsHidden: input.shieldsHidden,
     });
+    const hidden = new Set(input.hiddenShieldPlayerIds ?? []);
     for (const playerId of new Set(input.shieldedPlayerIds)) {
       roster.requireActive(playerId);
-      mission.grantShield(playerId);
+      mission.grantShield(playerId, hidden.has(playerId));
     }
     await repos.missions.create(mission);
 

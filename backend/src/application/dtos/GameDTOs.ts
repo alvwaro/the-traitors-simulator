@@ -111,6 +111,8 @@ export interface RegisterMissionInput {
   prizeEarned: number;
   prizeAvailable?: number | null;
   shieldedPlayerIds: string[];
+  /** Escudos (dentre os de shieldedPlayerIds) que ficam escondidos, aparecendo como "?". */
+  hiddenShieldPlayerIds?: string[];
   /** Simulação: os escudos desta missão ficaram misteriosos. */
   shieldsHidden?: boolean;
 }

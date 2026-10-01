@@ -184,6 +184,7 @@ export const missionBody = z.object({
   prizeEarned: money.default(0),
   prizeAvailable: money.nullable().optional(),
   shieldedPlayerIds: z.array(id).default([]),
+  hiddenShieldPlayerIds: z.array(id).default([]),
 });
 
 export const roundTableBody = z.object({

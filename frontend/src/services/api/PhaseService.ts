@@ -20,6 +20,8 @@ export interface MissionInput {
   prizeEarned: number;
   prizeAvailable?: number | null;
   shieldedPlayerIds: string[];
+  /** Escudos (dentre os de shieldedPlayerIds) que ficam escondidos: aparecem como "?". */
+  hiddenShieldPlayerIds?: string[];
 }
 
 export interface RoundTableInput {

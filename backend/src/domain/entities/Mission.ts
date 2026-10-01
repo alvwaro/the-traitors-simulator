@@ -8,6 +8,8 @@ export interface MissionRewardProps {
   missionId: string;
   playerId: string;
   rewardType: RewardType;
+  /** Escudo escondido: aparece como "?" para quem assiste. */
+  hidden: boolean;
 }
 
 export interface MissionProps {
@@ -46,10 +48,10 @@ export class Mission {
   get prizeAvailable(): number | null { return this.props.prizeAvailable; }
   get rewards(): readonly MissionRewardProps[] { return this.props.rewards; }
 
-  grantShield(playerId: string): void {
+  grantShield(playerId: string, hidden = false): void {
     const already = this.props.rewards.some((r) => r.playerId === playerId && r.rewardType === RewardType.SHIELD);
     if (already) throw new DomainError('Jogador já recebeu escudo nesta missão');
-    this.props.rewards.push({ id: randomUUID(), missionId: this.id, playerId, rewardType: RewardType.SHIELD });
+    this.props.rewards.push({ id: randomUUID(), missionId: this.id, playerId, rewardType: RewardType.SHIELD, hidden });
   }
 
   shieldedPlayerIds(): string[] {

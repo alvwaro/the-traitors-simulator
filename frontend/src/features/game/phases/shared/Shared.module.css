@@ -95,6 +95,15 @@
   width: 9rem;
 }
 
+/* esconder escudos: explicação + "esconder todos" na mesma linha */
+.hideRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
 .formStack {
   display: grid;
   gap: 1.4rem;
