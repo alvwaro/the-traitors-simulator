@@ -1,28 +1,18 @@
 import { Request, RequestHandler } from 'express';
 import { IAccessRepository } from '../../../domain/repositories';
-import { ForbiddenError, NotFoundError } from '../../../shared/errors/AppError';
+import { NotFoundError } from '../../../shared/errors/AppError';
 import { actorOf } from './session';
-
-type Mode = 'read' | 'write';
 
 /**
  * Política de acesso por rota: temporadas, casts e personagens são de quem criou.
- * Uma temporada publicada pode ser vista por qualquer pessoa logada, mas só alterada por quem criou.
- * Quem não pode ver recebe 404 (não revela que o item existe).
+ * O que vai para uma vitrine é uma cópia (lida pelas rotas de publicações), nunca o original.
+ * Quem não é dono recebe 404 (não revela que o item existe).
  */
 export class AccessGuards {
   constructor(private readonly access: IAccessRepository) {}
 
-  season(mode: Mode): RequestHandler {
-    return async (req, res, next) => {
-      const actor = actorOf(res);
-      const seasonId = String(req.params.seasonId);
-      const found = await this.access.season(seasonId);
-      const isOwner = !!found && found.ownerId === actor.id;
-      if (!found || (!isOwner && !found.published)) throw new NotFoundError('Temporada', seasonId);
-      if (mode === 'write' && !isOwner) throw new ForbiddenError('Só quem criou a temporada pode alterá-la');
-      next();
-    };
+  season(): RequestHandler {
+    return this.owned('Temporada', 'seasonId', (id) => this.access.seasonOwner(id));
   }
 
   cast(): RequestHandler {

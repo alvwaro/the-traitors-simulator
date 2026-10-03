@@ -11,7 +11,7 @@ export type HttpMethod = 'GET' | 'POST' | 'PATCH' | 'DELETE';
 export type RouteAccess = 'public' | 'user' | 'owner';
 
 /** Regra de dono do recurso (só o backend confere: depende dos dados). */
-export type ResourceGuard = 'seasonRead' | 'seasonWrite' | 'cast' | 'character';
+export type ResourceGuard = 'season' | 'cast' | 'character';
 
 /** Grupo de limite de requisições por IP (além do limite geral do gateway). */
 export type RateLimitGroup = 'auth' | 'imageProxy';
@@ -36,7 +36,7 @@ const CHARACTER = '/characters/:characterId';
 /**
  * Política de acesso. O site só funciona logado:
  *  - sem sessão: só cadastro, login, logout e "quem sou eu";
- *  - logado: vitrines (publicações), temporadas publicadas (só leitura) e a Minha Área
+ *  - logado: vitrines (publicações, cada uma uma cópia congelada) e a biblioteca
  *    (temporadas, casts e personagens de quem criou);
  *  - donos do site: alterar comportamentos e frases (valem para todos).
  */
@@ -94,45 +94,45 @@ export const API_ROUTES = {
   // Imagens externas com a mesma origem (arte do Instagram)
   'imageProxy.get': route({ method: 'GET', path: '/image-proxy', access: 'user', rateLimit: 'imageProxy' }),
 
-  // Temporadas: a lista é a Minha Área; uma temporada publicada pode ser vista por qualquer pessoa logada
+  // Temporadas: só de quem criou (a Minha Área); quem publica põe uma cópia na vitrine
   'seasons.create': route({ method: 'POST', path: '/seasons', access: 'user' }),
   'seasons.list': route({ method: 'GET', path: '/seasons', access: 'user' }),
-  'seasons.get': route({ method: 'GET', path: SEASON, access: 'user', guard: 'seasonRead' }),
-  'seasons.update': route({ method: 'PATCH', path: SEASON, access: 'user', guard: 'seasonWrite' }),
-  'seasons.remove': route({ method: 'DELETE', path: SEASON, access: 'user', guard: 'seasonWrite' }),
-  'seasons.saveAsCast': route({ method: 'POST', path: `${SEASON}/save-as-cast`, access: 'user', guard: 'seasonWrite' }),
-  'seasons.prizeAdjustment': route({ method: 'POST', path: `${SEASON}/prize-adjustments`, access: 'user', guard: 'seasonWrite' }),
+  'seasons.get': route({ method: 'GET', path: SEASON, access: 'user', guard: 'season' }),
+  'seasons.update': route({ method: 'PATCH', path: SEASON, access: 'user', guard: 'season' }),
+  'seasons.remove': route({ method: 'DELETE', path: SEASON, access: 'user', guard: 'season' }),
+  'seasons.saveAsCast': route({ method: 'POST', path: `${SEASON}/save-as-cast`, access: 'user', guard: 'season' }),
+  'seasons.prizeAdjustment': route({ method: 'POST', path: `${SEASON}/prize-adjustments`, access: 'user', guard: 'season' }),
 
   // Jogadores
-  'players.add': route({ method: 'POST', path: `${SEASON}/players`, access: 'user', guard: 'seasonWrite' }),
-  'players.list': route({ method: 'GET', path: `${SEASON}/players`, access: 'user', guard: 'seasonRead' }),
-  'players.update': route({ method: 'PATCH', path: PLAYER, access: 'user', guard: 'seasonWrite' }),
-  'players.remove': route({ method: 'DELETE', path: PLAYER, access: 'user', guard: 'seasonWrite' }),
-  'players.withdraw': route({ method: 'POST', path: `${PLAYER}/withdraw`, access: 'user', guard: 'seasonWrite' }),
+  'players.add': route({ method: 'POST', path: `${SEASON}/players`, access: 'user', guard: 'season' }),
+  'players.list': route({ method: 'GET', path: `${SEASON}/players`, access: 'user', guard: 'season' }),
+  'players.update': route({ method: 'PATCH', path: PLAYER, access: 'user', guard: 'season' }),
+  'players.remove': route({ method: 'DELETE', path: PLAYER, access: 'user', guard: 'season' }),
+  'players.withdraw': route({ method: 'POST', path: `${PLAYER}/withdraw`, access: 'user', guard: 'season' }),
 
   // Fluxo do jogo
-  'game.start': route({ method: 'POST', path: `${SEASON}/start`, access: 'user', guard: 'seasonWrite' }),
-  'game.state': route({ method: 'GET', path: `${SEASON}/state`, access: 'user', guard: 'seasonRead' }),
-  'game.history': route({ method: 'GET', path: `${SEASON}/history`, access: 'user', guard: 'seasonRead' }),
-  'game.advance': route({ method: 'POST', path: `${SEASON}/advance`, access: 'user', guard: 'seasonWrite' }),
-  'game.back': route({ method: 'POST', path: `${SEASON}/back`, access: 'user', guard: 'seasonWrite' }),
-  'game.endgame': route({ method: 'POST', path: `${SEASON}/endgame`, access: 'user', guard: 'seasonWrite' }),
+  'game.start': route({ method: 'POST', path: `${SEASON}/start`, access: 'user', guard: 'season' }),
+  'game.state': route({ method: 'GET', path: `${SEASON}/state`, access: 'user', guard: 'season' }),
+  'game.history': route({ method: 'GET', path: `${SEASON}/history`, access: 'user', guard: 'season' }),
+  'game.advance': route({ method: 'POST', path: `${SEASON}/advance`, access: 'user', guard: 'season' }),
+  'game.back': route({ method: 'POST', path: `${SEASON}/back`, access: 'user', guard: 'season' }),
+  'game.endgame': route({ method: 'POST', path: `${SEASON}/endgame`, access: 'user', guard: 'season' }),
 
   // Simulação automática e modo Jogador
-  'simulation.simulate': route({ method: 'POST', path: `${SEASON}/simulate`, access: 'user', guard: 'seasonWrite' }),
-  'simulation.interact': route({ method: 'POST', path: `${SEASON}/interactions`, access: 'user', guard: 'seasonWrite' }),
-  'simulation.answerInvite': route({ method: 'POST', path: `${SEASON}/invites`, access: 'user', guard: 'seasonWrite' }),
-  'simulation.relationships': route({ method: 'GET', path: `${SEASON}/relationships`, access: 'user', guard: 'seasonRead' }),
-  'simulation.updateRelationship': route({ method: 'PATCH', path: `${SEASON}/relationships`, access: 'user', guard: 'seasonWrite' }),
-  'simulation.regenerate': route({ method: 'POST', path: `${SEASON}/relationships/regenerate`, access: 'user', guard: 'seasonWrite' }),
+  'simulation.simulate': route({ method: 'POST', path: `${SEASON}/simulate`, access: 'user', guard: 'season' }),
+  'simulation.interact': route({ method: 'POST', path: `${SEASON}/interactions`, access: 'user', guard: 'season' }),
+  'simulation.answerInvite': route({ method: 'POST', path: `${SEASON}/invites`, access: 'user', guard: 'season' }),
+  'simulation.relationships': route({ method: 'GET', path: `${SEASON}/relationships`, access: 'user', guard: 'season' }),
+  'simulation.updateRelationship': route({ method: 'PATCH', path: `${SEASON}/relationships`, access: 'user', guard: 'season' }),
+  'simulation.regenerate': route({ method: 'POST', path: `${SEASON}/relationships/regenerate`, access: 'user', guard: 'season' }),
 
   // Registro das decisões da fase atual
-  'phase.notes': route({ method: 'POST', path: `${PHASE}/notes`, access: 'user', guard: 'seasonWrite' }),
-  'phase.traitorSelection': route({ method: 'POST', path: `${PHASE}/traitor-selection`, access: 'user', guard: 'seasonWrite' }),
-  'phase.mission': route({ method: 'POST', path: `${PHASE}/mission`, access: 'user', guard: 'seasonWrite' }),
-  'phase.roundTable': route({ method: 'POST', path: `${PHASE}/round-table`, access: 'user', guard: 'seasonWrite' }),
-  'phase.traitorsMeeting': route({ method: 'POST', path: `${PHASE}/traitors-meeting`, access: 'user', guard: 'seasonWrite' }),
-  'phase.endgameRoundTable': route({ method: 'POST', path: `${PHASE}/endgame-round-table`, access: 'user', guard: 'seasonWrite' }),
+  'phase.notes': route({ method: 'POST', path: `${PHASE}/notes`, access: 'user', guard: 'season' }),
+  'phase.traitorSelection': route({ method: 'POST', path: `${PHASE}/traitor-selection`, access: 'user', guard: 'season' }),
+  'phase.mission': route({ method: 'POST', path: `${PHASE}/mission`, access: 'user', guard: 'season' }),
+  'phase.roundTable': route({ method: 'POST', path: `${PHASE}/round-table`, access: 'user', guard: 'season' }),
+  'phase.traitorsMeeting': route({ method: 'POST', path: `${PHASE}/traitors-meeting`, access: 'user', guard: 'season' }),
+  'phase.endgameRoundTable': route({ method: 'POST', path: `${PHASE}/endgame-round-table`, access: 'user', guard: 'season' }),
 } as const satisfies Record<string, RouteSpec>;
 
 export type RouteId = keyof typeof API_ROUTES;

@@ -66,6 +66,11 @@ describe('publicações e elenco', () => {
     const seen = ok(await fan.get(`/api/publications/${pub.id}`));
     expect(seen).toMatchObject({ name: season.name, description: 'Elenco oficial', season: pub.season, snapshot: pub.snapshot });
 
+    // A temporada em si continua só de quem criou.
+    expect((await fan.get(`/api/seasons/${season.id}`)).status).toBe(404);
+    expect((await fan.get(`/api/seasons/${season.id}/history`)).status).toBe(404);
+    expect((await fan.post(`/api/seasons/${season.id}/advance`)).status).toBe(404);
+
     // Copiar o elenco leva o elenco publicado; copiar a temporada, as configurações também, pronta para começar.
     expect(ok(await fan.post(`/api/publications/${pub.id}/copy`).send({}), 201).cast.characterIds).toHaveLength(6);
     const copy = ok(await fan.post(`/api/publications/${pub.id}/copy-season`).send({}), 201);

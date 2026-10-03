@@ -130,13 +130,13 @@ describe('temporada manual do começo ao fim', () => {
     const publication = ok(await agent.post('/api/publications').send({ kind: 'SEASON', sourceId: id, description: 'Uma temporada inteira' }), 201);
     expect(ok<unknown[]>(await agent.get('/api/publications').query({ area: 'FAN', mine: 'true' })).length).toBeGreaterThan(0);
     const { agent: fan } = await signUp('leitor');
-    // Quem vê a publicação recebe o elenco e as configurações (o jogo em si não).
+    // Quem vê a publicação recebe o elenco e as configurações (o jogo em si não); a temporada continua só de quem criou.
     const seen = ok(await fan.get(`/api/publications/${publication.id}`));
     expect(seen.snapshot.characters).toHaveLength(10);
     expect(seen.season).toMatchObject({ mode: 'MANUAL', currency: 'USD', maxPrizePot: 500000 });
     expect(JSON.stringify(seen)).not.toMatch(/FINISHED|BANISHED|MURDERED/);
-    expect(ok(await fan.get(`/api/seasons/${id}/history`)).days.length).toBeGreaterThan(0);
-    expect((await fan.post(`/api/seasons/${id}/advance`)).status).toBe(403);
+    expect((await fan.get(`/api/seasons/${id}/history`)).status).toBe(404);
+    expect((await fan.post(`/api/seasons/${id}/advance`)).status).toBe(404);
     const copy = ok(await fan.post(`/api/publications/${publication.id}/copy`).send({ name: 'Minha cópia' }), 201);
     expect(copy.kind).toBe('SEASON');
     expect((await fan.delete(`/api/publications/${publication.id}`)).status).toBe(403);

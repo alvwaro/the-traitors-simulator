@@ -27,8 +27,7 @@ function middlewaresFor(spec: RouteSpec, guards: Record<ResourceGuard, RequestHa
 export function buildRouter(handlers: Handlers, access: AccessGuards): Router {
   const router = Router();
   const guards: Record<ResourceGuard, RequestHandler> = {
-    seasonRead: access.season('read'),
-    seasonWrite: access.season('write'),
+    season: access.season(),
     cast: access.cast(),
     character: access.character(),
   };
