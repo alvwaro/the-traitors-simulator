@@ -13,6 +13,11 @@ export interface SimulationSettings {
   missionPool?: MissionPool;
   interactionLimit?: number;
   withdrawals?: boolean;
+  hiddenShieldChance?: number;
+  /** Modo Jogador: revelar os acontecimentos um de cada vez. */
+  drama?: boolean;
+  /** Mostrar as falas da biblioteca de frases. */
+  showPhrases?: boolean;
 }
 
 export interface CreateSeasonInput extends PrizeSettings, SimulationSettings {

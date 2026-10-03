@@ -5,6 +5,7 @@ import { ConfirmModal, Modal, ModalActions } from '../../../components/ui/Modal'
 import type { Season } from '../../../domain/models';
 import { useAction } from '../../../hooks/useAction';
 import { PrizeFields, type PrizeDraft } from './PrizeFields';
+import { DisplayFields, displayOf, type DisplayDraft } from './SimulationFields';
 import styles from '../pages/Seasons.module.css';
 
 interface SeasonModalProps {
@@ -20,32 +21,33 @@ const draftOf = (season: Season): PrizeDraft => ({
   maxPrizePot: season.maxPrizePot === null ? '' : String(season.maxPrizePot),
 });
 
-/** Edita a temporada: o nome sempre; o prêmio só antes dos portões se abrirem. */
+/** Edita a temporada: o nome, o drama e as falas sempre; o prêmio só antes dos portões se abrirem. */
 export function EditSeasonModal({ season, open, onClose, onDone }: Readonly<SeasonModalProps>) {
   const { seasons } = useServices();
   const [name, setName] = useState(season.name);
   const [prize, setPrize] = useState<PrizeDraft>(() => draftOf(season));
+  const [display, setDisplay] = useState<DisplayDraft>(() => displayOf(season));
   const inSetup = season.status === 'SETUP';
+  const simulated = season.mode !== 'MANUAL';
 
   useEffect(() => {
     if (!open) return;
     setName(season.name);
     setPrize(draftOf(season));
+    setDisplay(displayOf(season));
   }, [open, season]);
 
   const save = useAction(
     () =>
-      seasons.update(
-        season.id,
-        inSetup
-          ? {
-              name: name.trim(),
-              currency: prize.currency,
-              initialPrizePot: Number(prize.initialPrizePot || 0),
-              maxPrizePot: prize.maxPrizePot ? Number(prize.maxPrizePot) : null,
-            }
-          : { name: name.trim() },
-      ),
+      seasons.update(season.id, {
+        name: name.trim(),
+        ...(simulated && { showPhrases: display.showPhrases, drama: season.mode === 'PLAYER' && display.drama }),
+        ...(inSetup && {
+          currency: prize.currency,
+          initialPrizePot: Number(prize.initialPrizePot || 0),
+          maxPrizePot: prize.maxPrizePot ? Number(prize.maxPrizePot) : null,
+        }),
+      }),
     { success: 'Temporada atualizada' },
   );
 
@@ -70,6 +72,7 @@ export function EditSeasonModal({ season, open, onClose, onDone }: Readonly<Seas
         ) : (
           <p className={styles.summary}>O prêmio não pode mais ser alterado: a temporada já começou.</p>
         )}
+        {simulated && <DisplayFields value={display} onChange={setDisplay} playerMode={season.mode === 'PLAYER'} />}
       </div>
     </Modal>
   );

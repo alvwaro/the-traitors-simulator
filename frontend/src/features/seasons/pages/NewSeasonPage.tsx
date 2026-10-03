@@ -12,7 +12,7 @@ import { useResource } from '../../../hooks/useResource';
 import type { CreateSeasonInput } from '../../../services/api/SeasonService';
 import type { SeasonMode } from '../../../domain/enums';
 import { ModePicker } from '../components/ModePicker';
-import { SimulationFields, type SimulationDraft } from '../components/SimulationFields';
+import { DEFAULT_DISPLAY, DisplayFields, SimulationFields, type DisplayDraft, type SimulationDraft } from '../components/SimulationFields';
 import { PlayerFields, type PlayerDraft } from '../components/PlayerFields';
 import { PrizeFields, type PrizeDraft } from '../components/PrizeFields';
 import styles from './Seasons.module.css';
@@ -33,6 +33,7 @@ export function NewSeasonPage() {
   const [mode, setMode] = useState<SeasonMode>('MANUAL');
   const [simulation, setSimulation] = useState<SimulationDraft>({ chaos: 0, missionPool: 'US_S3', withdrawals: true, hiddenShieldChance: 0 });
   const [me, setMe] = useState<PlayerDraft>({ name: '', imageUrl: '', interactionLimit: 3 });
+  const [display, setDisplay] = useState<DisplayDraft>(DEFAULT_DISPLAY);
 
   const create = useAction((input: CreateSeasonInput) => services.seasons.create(input), { success: (s) => `${s.name} criada com ${s.players.length} jogadores` });
 
@@ -45,7 +46,7 @@ export function NewSeasonPage() {
     const season = await create.run({
       name: name.trim(),
       mode,
-      ...(mode !== 'MANUAL' ? simulation : {}),
+      ...(mode !== 'MANUAL' ? { ...simulation, showPhrases: display.showPhrases, drama: mode === 'PLAYER' && display.drama } : {}),
       ...(mode === 'PLAYER' ? { interactionLimit: me.interactionLimit, human: { name: me.name.trim(), imageUrl: me.imageUrl.trim() || null } } : {}),
       currency: prize.currency,
       initialPrizePot: Number(prize.initialPrizePot || 0),
@@ -98,6 +99,7 @@ export function NewSeasonPage() {
               <ModePicker value={mode} onChange={setMode} />
               {mode === 'PLAYER' && <PlayerFields value={me} onChange={setMe} />}
               {mode !== 'MANUAL' && <SimulationFields value={simulation} onChange={setSimulation} />}
+              {mode !== 'MANUAL' && <DisplayFields value={display} onChange={setDisplay} playerMode={mode === 'PLAYER'} />}
               <PrizeFields value={prize} onChange={setPrize} />
             </div>
           </Panel>

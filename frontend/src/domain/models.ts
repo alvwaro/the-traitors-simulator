@@ -124,6 +124,8 @@ export interface PublishedSeason {
   currency: string;
   initialPrizePot: number;
   maxPrizePot: number | null;
+  drama?: boolean;
+  showPhrases?: boolean;
 }
 
 /** Algo publicado numa área pública: sempre uma cópia do momento da publicação. */
@@ -173,6 +175,10 @@ export interface Season {
   withdrawals: boolean;
   /** Chance (0 a 100) de os escudos de uma missão ficarem misteriosos na simulação. */
   hiddenShieldChance?: number;
+  /** Modo Jogador: os acontecimentos de cada momento aparecem um de cada vez. */
+  drama?: boolean;
+  /** Falas da biblioteca de frases na narrativa (desligado: foco nas eliminações). */
+  showPhrases?: boolean;
   status: SeasonStatus;
   currentDay: number | null;
   currentPhase: GamePhase | null;

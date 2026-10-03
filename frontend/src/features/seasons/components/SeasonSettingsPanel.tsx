@@ -8,7 +8,7 @@ import type { SeasonDetails } from '../../../domain/models';
 import { useAction } from '../../../hooks/useAction';
 import type { SeasonMode } from '../../../domain/enums';
 import { ModePicker } from './ModePicker';
-import { SimulationFields, type SimulationDraft } from './SimulationFields';
+import { DisplayFields, displayOf, SimulationFields, type DisplayDraft, type SimulationDraft } from './SimulationFields';
 import { PrizeFields, type PrizeDraft } from './PrizeFields';
 import { SaveAsCastModal } from './SaveAsCastModal';
 import { DeleteSeasonModal } from './SeasonModals';
@@ -27,6 +27,7 @@ export function SeasonSettingsPanel({ season, onChanged }: Readonly<{ season: Se
   const [mode, setMode] = useState<SeasonMode>(season.mode);
   const [simulation, setSimulation] = useState<SimulationDraft>({ chaos: season.chaos, missionPool: season.missionPool, withdrawals: season.withdrawals, hiddenShieldChance: season.hiddenShieldChance ?? 0 });
   const [interactionLimit, setInteractionLimit] = useState(season.interactionLimit);
+  const [display, setDisplay] = useState<DisplayDraft>(() => displayOf(season));
   const [savingCast, setSavingCast] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -36,7 +37,7 @@ export function SeasonSettingsPanel({ season, onChanged }: Readonly<{ season: Se
         name: name.trim(),
         mode,
         ...(mode === 'PLAYER' ? { interactionLimit } : {}),
-        ...(mode !== 'MANUAL' ? simulation : {}),
+        ...(mode !== 'MANUAL' ? { ...simulation, showPhrases: display.showPhrases, drama: mode === 'PLAYER' && display.drama } : {}),
         currency: prize.currency,
         initialPrizePot: Number(prize.initialPrizePot || 0),
         maxPrizePot: prize.maxPrizePot ? Number(prize.maxPrizePot) : null,
@@ -56,6 +57,7 @@ export function SeasonSettingsPanel({ season, onChanged }: Readonly<{ season: Se
           <ModePicker value={mode} onChange={setMode} withPlayer={false} />
         )}
         {mode !== 'MANUAL' && <SimulationFields value={simulation} onChange={setSimulation} />}
+        {mode !== 'MANUAL' && <DisplayFields value={display} onChange={setDisplay} playerMode={mode === 'PLAYER'} />}
         <PrizeFields value={prize} onChange={setPrize} />
         <div className={styles.actionsRow}>
           <Button pending={save.pending} disabled={!name.trim()} onClick={fireAndForget(async () => (await save.run()) && onChanged())}>

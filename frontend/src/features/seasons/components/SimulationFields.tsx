@@ -12,6 +12,42 @@ export interface SimulationDraft {
   hiddenShieldChance: number;
 }
 
+/** Como a simulação aparece na tela (pode mudar a qualquer momento, sem mudar o jogo). */
+export interface DisplayDraft {
+  drama: boolean;
+  showPhrases: boolean;
+}
+
+export const DEFAULT_DISPLAY: DisplayDraft = { drama: false, showPhrases: true };
+
+/** As opções de exibição de uma temporada (as que ela não tiver gravadas ficam no padrão). */
+export function displayOf(season: { drama?: boolean; showPhrases?: boolean }): DisplayDraft {
+  return { drama: season.drama ?? DEFAULT_DISPLAY.drama, showPhrases: season.showPhrases ?? DEFAULT_DISPLAY.showPhrases };
+}
+
+/**
+ * Drama (só no modo Jogador): os votos, quem desce para o café e o resto de cada momento aparecem um de cada vez.
+ * Desativar frases: as falas da biblioteca somem da narrativa (no modo Jogador, ficam só as que envolvem você).
+ */
+export function DisplayFields({ value, onChange, playerMode }: Readonly<{ value: DisplayDraft; onChange: (value: DisplayDraft) => void; playerMode: boolean }>) {
+  return (
+    <div className={styles.simulation}>
+      {playerMode && (
+        <Check
+          label="Drama: os acontecimentos aparecem um de cada vez (votos, quem desce para o café...) e você avança quando quiser"
+          checked={value.drama}
+          onChange={(e) => onChange({ ...value, drama: e.target.checked })}
+        />
+      )}
+      <Check
+        label={playerMode ? 'Desativar frases: só aparecem as falas que envolvem você' : 'Desativar frases: a narrativa fica só com o que importa (eliminações, votos, missões)'}
+        checked={!value.showPhrases}
+        onChange={(e) => onChange({ ...value, showPhrases: !e.target.checked })}
+      />
+    </div>
+  );
+}
+
 /** O que a chance de escudo misterioso significa. */
 function hiddenShieldLabel(chance: number): string {
   if (chance === 0) return 'Sempre mostra quem ganhou escudo';
