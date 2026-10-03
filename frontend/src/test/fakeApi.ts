@@ -8,7 +8,7 @@ export const fixtures = data as unknown as Fixtures;
 export interface Snapshot {
   label: string;
   details: { id: string; [key: string]: unknown };
-  state: { phase: string | null; day: number | null; season: { id: string; mode: string; status: string }; player: { need: string | null } | null; [key: string]: unknown };
+  state: { phase: string | null; day: number | null; season: { id: string; name: string; mode: string; status: string }; player: { need: string | null } | null; [key: string]: unknown };
   history: unknown;
 }
 
@@ -25,7 +25,7 @@ interface Fixtures {
   castRanking: unknown;
   publications: { official: Listed[]; fan: Listed[]; mine: Listed[] };
   castPublicationId: string;
-  seasons: { id: string }[];
+  seasons: { id: string; name: string; mode: string; status: string }[];
   games: { manual: Snapshot[]; automatic: Snapshot[]; player: Snapshot[] };
   relationships: unknown;
   fullHistory: unknown;
@@ -54,6 +54,8 @@ export class FakeApi implements IHttpClient {
   user: unknown = fixtures.me.user;
   fail = false;
   history: unknown = null;
+  /** As temporadas da biblioteca (dá para trocar o estado de cada uma). */
+  seasons: unknown[] = fixtures.seasons;
 
   get<T>(path: string, query?: Record<string, string | undefined>): Promise<T> {
     this.calls.push({ method: 'GET', path, body: query });
@@ -101,7 +103,7 @@ export class FakeApi implements IHttpClient {
     if (/^\/casts\/[^/]+\/relationships$/.test(path)) return fixtures.castRelationships;
     if (/^\/casts\/[^/]+\/ranking$/.test(path)) return fixtures.castRanking;
     if (/^\/casts\/[^/]+$/.test(path)) return fixtures.cast;
-    if (path === '/seasons') return fixtures.seasons;
+    if (path === '/seasons') return this.seasons;
     if (/^\/seasons\/[^/]+\/state$/.test(path)) return s.state;
     if (/^\/seasons\/[^/]+\/history$/.test(path)) return this.history ?? s.history;
     if (/^\/seasons\/[^/]+\/relationships$/.test(path)) return fixtures.relationships;

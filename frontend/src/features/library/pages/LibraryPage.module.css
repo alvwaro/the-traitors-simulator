@@ -17,6 +17,24 @@
   color: var(--text-muted);
 }
 
+/* ações da barra: a discreta (arquivadas) à esquerda da principal */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+/* temporadas por categoria (jogáveis, automáticas, manuais) */
+.categories {
+  display: grid;
+  gap: 1.75rem;
+}
+
+.categories > section {
+  margin-top: 0;
+}
+
 .stack {
   display: grid;
   gap: var(--gap);

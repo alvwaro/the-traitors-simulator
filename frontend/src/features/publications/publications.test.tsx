@@ -149,10 +149,60 @@ describe('biblioteca: suas temporadas e o que você publicou', () => {
     expect(screen.getByRole('link', { name: me }).getAttribute('href')).toBe('/biblioteca');
   });
 
-  async function openPublishModal(api: FakeApi) {
+  it('separa as temporadas em jogáveis, automáticas e manuais; as encerradas ficam em Arquivadas', async () => {
+    const api = new FakeApi();
+    // Duas ainda em andamento (uma jogável e uma manual); as outras três já terminaram.
+    api.seasons = fixtures.seasons.map((s, i) => (i === 0 || i === 4 ? { ...s, status: 'IN_PROGRESS' } : s));
     const view = renderApp('/biblioteca', api);
     await settled();
-    await view.user.click(within(screen.getByRole('region', { name: 'Minhas temporadas' })).getAllByRole('button', { name: 'Publicar' })[0]);
+    const current = screen.getByRole('region', { name: 'Minhas temporadas' });
+    expect(within(current).getByText('2 temporadas')).toBeInTheDocument();
+    expect(within(current).getAllByRole('heading', { level: 2 }).map((h) => h.textContent)).toEqual(['Jogáveis', 'Manuais']);
+    const playable = within(current).getByRole('region', { name: 'Jogáveis' });
+    expect(within(playable).getAllByRole('heading', { level: 3 }).map((h) => h.textContent)).toEqual([fixtures.seasons[0].name]);
+
+    // "Arquivadas" fica à esquerda de "Nova temporada", discreto (não é o botão verde).
+    const archive = within(current).getByRole('link', { name: 'Arquivadas (3)' });
+    const create = within(current).getByRole('link', { name: 'Nova temporada' });
+    expect(archive.compareDocumentPosition(create) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(archive.className).toMatch(/\bghost\b/);
+    expect(create.className).toMatch(/\bprimary\b/);
+
+    await view.user.click(archive);
+    expect(view.router.state.location.search).toBe('?arquivadas');
+    const archived = screen.getByRole('region', { name: 'Temporadas arquivadas' });
+    expect(within(archived).getByText('3 temporadas arquivadas')).toBeInTheDocument();
+    expect(within(archived).getAllByRole('heading', { level: 2 }).map((h) => h.textContent)).toEqual(['Jogáveis', 'Automáticas']);
+    expect(screen.queryByRole('region', { name: 'Minhas publicações' })).not.toBeInTheDocument();
+
+    await view.user.click(within(archived).getByRole('link', { name: 'Voltar às temporadas' }));
+    expect(view.router.state.location.search).toBe('');
+    expect(screen.getByRole('region', { name: 'Minhas publicações' })).toBeInTheDocument();
+  });
+
+  it('avisa quando não há temporada em andamento, nenhuma arquivada ou nenhuma ainda', async () => {
+    // As gravadas já terminaram todas: a lista principal fica vazia e aponta para as arquivadas.
+    const first = renderApp('/biblioteca');
+    await settled();
+    expect(screen.getByText('Nenhuma temporada em andamento')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Arquivadas (5)' })).toBeInTheDocument();
+    first.unmount();
+
+    const api = new FakeApi();
+    api.seasons = [];
+    const second = renderApp('/biblioteca?arquivadas', api);
+    await settled();
+    expect(screen.getByText('Nenhuma temporada arquivada')).toBeInTheDocument();
+    expect(screen.getByText('0 temporadas arquivadas')).toBeInTheDocument();
+    await second.user.click(screen.getByRole('link', { name: 'Voltar às temporadas' }));
+    expect(screen.getByText('Nenhuma temporada ainda')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Arquivadas' })).toBeInTheDocument();
+  });
+
+  async function openPublishModal(api: FakeApi) {
+    const view = renderApp('/biblioteca?arquivadas', api);
+    await settled();
+    await view.user.click(within(screen.getByRole('region', { name: 'Temporadas arquivadas' })).getAllByRole('button', { name: 'Publicar' })[0]);
     return { view, dialog: await screen.findByRole('dialog') };
   }
 

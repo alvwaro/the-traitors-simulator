@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { countryOfSeason } from '@traitors/shared';
-import { phaseLabel, seasonModeLabel, seasonStatusLabel } from '../../../domain/labels';
+import { phaseLabel, seasonStatusLabel } from '../../../domain/labels';
 import type { Publication, Season } from '../../../domain/models';
 import { cx } from '../../../lib/cx';
 import { formatDate, toRoman } from '../../../lib/format';
-import { areaLabel } from '../../publications/labels';
 import { PublishModal } from '../../publications/PublishModal';
 import { DeleteSeasonModal, EditSeasonModal } from './SeasonModals';
 import styles from './SeasonCard.module.css';
@@ -33,10 +32,8 @@ export function SeasonCard({ season, publication, onChanged }: Readonly<SeasonCa
       <Link to={`/temporadas/${season.id}`} className={cx(styles.card, styles[season.status], publication && styles.featured)}>
         <span className={styles.badges}>
           <span className={styles.status}>{seasonStatusLabel[season.status]}</span>
-          {season.mode === 'AUTOMATIC' && <span className={styles.mode}>{seasonModeLabel[season.mode]}</span>}
-          {publication && <span className={styles.mode}>{areaLabel[publication.area]}</span>}
         </span>
-        <h2 className={styles.name}>{season.name}</h2>
+        <h3 className={styles.name}>{season.name}</h3>
         <p className={styles.where}>{where}</p>
         <p className={styles.date}>Criada em {formatDate(season.createdAt)}</p>
       </Link>
