@@ -18,6 +18,13 @@
   gap: var(--gap);
 }
 
+/* modo drama: o elenco espera a história do momento terminar */
+.waiting {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
 /* temporadas oficiais: links para a página de cada participante real */
 .participants {
   display: flex;

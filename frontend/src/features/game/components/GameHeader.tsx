@@ -5,6 +5,7 @@ import { phaseLabel } from '../../../domain/labels';
 import { formatMoney, toRoman } from '../../../lib/format';
 import { DeleteSeasonModal, EditSeasonModal } from '../../seasons/components/SeasonModals';
 import { useGame } from '../context/GameContext';
+import { useScoreboard } from '../drama/DramaContext';
 import styles from './GameHeader.module.css';
 
 export function GameHeader() {
@@ -13,6 +14,7 @@ export function GameHeader() {
   const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const score = useScoreboard();
 
   return (
     <header className={styles.header}>
@@ -32,15 +34,15 @@ export function GameHeader() {
       <dl className={styles.stats}>
         <div className={styles.stat}>
           <dt>Prêmio</dt>
-          <dd className={styles.pot}>{formatMoney(state.prizePot, season.currency)}</dd>
+          <dd className={styles.pot}>{formatMoney(score.prizePot, season.currency)}</dd>
         </div>
         <div className={styles.stat}>
           <dt>No castelo</dt>
-          <dd>{state.activePlayers.length}</dd>
+          <dd>{score.active}</dd>
         </div>
         <div className={styles.stat}>
           <dt>Eliminados</dt>
-          <dd>{state.eliminatedPlayers.length}</dd>
+          <dd>{score.eliminated}</dd>
         </div>
       </dl>
 

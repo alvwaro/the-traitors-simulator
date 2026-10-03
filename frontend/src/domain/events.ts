@@ -17,6 +17,13 @@ export function renderEvent(event: SimulationEventRecord, playersById: Map<strin
   return { event, players: unique, parts: fillTemplate(event.text, players) };
 }
 
+/** As suas conversas no modo Jogador: o que você falou e as respostas que recebeu. */
+const TALK_KINDS: SimulationEventKind[] = ['PLAYER', 'REACTION'];
+
+export function isTalk(event: SimulationEventRecord): boolean {
+  return TALK_KINDS.includes(event.kind);
+}
+
 export function eventsOf(day: DayHistory | undefined, phase: GamePhase): SimulationEventRecord[] {
   return day?.events.filter((e) => e.phase === phase) ?? [];
 }

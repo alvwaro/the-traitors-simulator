@@ -1,0 +1,31 @@
+/* modo drama: um acontecimento de cada vez; a barra acompanha a tela */
+
+/* ponto logo depois do último acontecimento: a tela rola até ele, deixando espaço para a barra fixa */
+.anchor {
+  scroll-margin-bottom: 7rem;
+}
+
+.bar {
+  position: sticky;
+  bottom: 1rem;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.8rem;
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-left: 4px solid var(--gold);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+.count {
+  margin-right: auto;
+  white-space: nowrap;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}

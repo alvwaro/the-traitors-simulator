@@ -5,6 +5,7 @@ import { Button } from '../../../components/ui/Button';
 import { ErrorState, Loading } from '../../../components/ui/States';
 import { useResource } from '../../../hooks/useResource';
 import { GameProvider } from '../context/GameContext';
+import { DramaProvider } from '../drama/DramaContext';
 import { AdvanceBar } from './AdvanceBar';
 import { GameHeader } from './GameHeader';
 import { InfoSection } from './InfoSection';
@@ -23,7 +24,7 @@ export function GameView({ seasonId }: Readonly<{ seasonId: string }>) {
   const services = useServices();
   const { game } = services;
   // Estado e história chegam juntos: a tela nunca mistura um estado novo com a história antiga
-  // (por um instante, a fase aparecia simulada sem os acontecimentos dela).
+  // (uma fase "simulada" sem os acontecimentos dela confundiria o drama e o placar).
   const loaded = useResource(() => Promise.all([game.state(seasonId), game.history(seasonId)]), [seasonId]);
   const phrases = useResource(() => services.phrases.list(), []);
   const [showInfo, setShowInfo] = useState(false);
@@ -41,38 +42,40 @@ export function GameView({ seasonId }: Readonly<{ seasonId: string }>) {
 
   return (
     <GameProvider seasonId={seasonId} state={state} history={history} phrases={phrases.data ?? NO_PHRASES} refresh={refresh}>
-      <StoryProvider>
-        <PortraitStyleProvider value="framed">
-          <div className={styles.page}>
-            <GameHeader />
-            <PhaseTrack />
-            <PhaseStage />
-            <AdvanceBar />
-            <div className={styles.toggle}>
-              {automatic && (
-                <Button variant="ghost" aria-expanded={showCastle} onClick={() => setShowCastle((v) => !v)}>
-                  {showCastle ? 'Ocultar termômetro do castelo' : 'Termômetro do castelo'}
+      <DramaProvider>
+        <StoryProvider>
+          <PortraitStyleProvider value="framed">
+            <div className={styles.page}>
+              <GameHeader />
+              <PhaseTrack />
+              <PhaseStage />
+              <AdvanceBar />
+              <div className={styles.toggle}>
+                {automatic && (
+                  <Button variant="ghost" aria-expanded={showCastle} onClick={() => setShowCastle((v) => !v)}>
+                    {showCastle ? 'Ocultar termômetro do castelo' : 'Termômetro do castelo'}
+                  </Button>
+                )}
+                <Button variant="ghost" aria-expanded={showInfo} onClick={() => setShowInfo((v) => !v)}>
+                  {showInfo ? 'Ocultar informações' : 'Exibir informações'}
                 </Button>
+              </div>
+              {automatic && showCastle && (
+                <RelationshipsPanel
+                  seasonId={seasonId}
+                  players={history.players}
+                  version={state}
+                  inGame={state.phase !== 'ARRIVAL' && state.phase !== 'TRAITOR_SELECTION'}
+                  title="Termômetro do castelo"
+                />
               )}
-              <Button variant="ghost" aria-expanded={showInfo} onClick={() => setShowInfo((v) => !v)}>
-                {showInfo ? 'Ocultar informações' : 'Exibir informações'}
-              </Button>
+              {showInfo && <InfoSection />}
+              {/* artes do Instagram só na temporada manual (registro do programa); nas simuladas não aparecem */}
+              {manual && <StoryButton />}
             </div>
-            {automatic && showCastle && (
-              <RelationshipsPanel
-                seasonId={seasonId}
-                players={history.players}
-                version={state}
-                inGame={state.phase !== 'ARRIVAL' && state.phase !== 'TRAITOR_SELECTION'}
-                title="Termômetro do castelo"
-              />
-            )}
-            {showInfo && <InfoSection />}
-            {/* artes do Instagram só na temporada manual (registro do programa); nas simuladas não aparecem */}
-            {manual && <StoryButton />}
-          </div>
-        </PortraitStyleProvider>
-      </StoryProvider>
+          </PortraitStyleProvider>
+        </StoryProvider>
+      </DramaProvider>
     </GameProvider>
   );
 }

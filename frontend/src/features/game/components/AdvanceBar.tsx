@@ -9,6 +9,7 @@ import { useAction } from '../../../hooks/useAction';
 import { cx } from '../../../lib/cx';
 import { toRoman } from '../../../lib/format';
 import { useGame } from '../context/GameContext';
+import { useDrama } from '../drama/DramaContext';
 import { EliminationReveal, type Elimination } from './EliminationReveal';
 import styles from './AdvanceBar.module.css';
 import { fireAndForget } from '../../../lib/async';
@@ -19,6 +20,7 @@ export function AdvanceBar() {
   const { game, simulation } = useServices();
   const [revealed, setRevealed] = useState<Elimination | null>(null);
   const [confirmingAll, setConfirmingAll] = useState(false);
+  const drama = useDrama();
 
   const advance = useAction(() => game.advance(seasonId), {
     success: (s) => (s.phase === 'FINALE' ? 'O jogo terminou' : `Agora: dia ${toRoman(s.day ?? 1)}, ${phaseLabel[s.phase!]}`),
@@ -39,9 +41,12 @@ export function AdvanceBar() {
   const waitingDecision = playing && !!me.need;
   const next = nextPhase(state.day, state.phase, state.season.status === 'ENDGAME');
   const ready = !state.pendingRequirement;
+  // Drama: só dá para avançar depois de ver toda a história do momento.
+  const telling = !!drama && !drama.done;
 
-  /** Mostra a saída de quem foi eliminado nesta fase (banido na mesa, morto na torre). */
+  /** Mostra a saída de quem foi eliminado nesta fase (banido na mesa, morto na torre). No drama, ela vem na história. */
   function revealNewEliminations(after: GameState) {
+    if (drama) return;
     const before = new Set(state.eliminatedPlayers.map((p) => p.id));
     const out = after.eliminatedPlayers.filter((p) => !before.has(p.id));
     const last = out.at(-1);
@@ -88,7 +93,7 @@ export function AdvanceBar() {
     <div className={cx(styles.bar, (ready || needsSimulation) && styles.ready)}>
       <div>
         <p className={styles.status}>
-          {statusText({ waitingDecision, needsSimulation, playing, ready, phaseName: phaseLabel[state.phase], pending: state.pendingRequirement })}
+          {statusText({ telling, waitingDecision, needsSimulation, playing, ready, phaseName: phaseLabel[state.phase], pending: state.pendingRequirement })}
         </p>
         {next && (
           <p className={styles.next}>
@@ -110,7 +115,7 @@ export function AdvanceBar() {
         )}
         {backButton}
         {!waitingDecision && !needsSimulation && (
-          <Button size="lg" pending={advance.pending} disabled={back.pending || !ready || simulateAll.pending} onClick={fireAndForget(handleAdvance)}>
+          <Button size="lg" pending={advance.pending} disabled={back.pending || !ready || telling || simulateAll.pending} onClick={fireAndForget(handleAdvance)}>
             Avançar
           </Button>
         )}
@@ -124,8 +129,9 @@ export function AdvanceBar() {
   );
 }
 
-/** A frase da barra: sua vez, pronto para simular/continuar, tudo registrado ou o que ainda falta. */
-function statusText(o: { waitingDecision: boolean; needsSimulation: boolean; playing: boolean; ready: boolean; phaseName: string; pending: string | null }): string | null {
+/** A frase da barra: história em andamento, sua vez, pronto para simular/continuar, tudo registrado ou o que ainda falta. */
+function statusText(o: { telling: boolean; waitingDecision: boolean; needsSimulation: boolean; playing: boolean; ready: boolean; phaseName: string; pending: string | null }): string | null {
+  if (o.telling) return 'A história deste momento ainda não terminou: continue acima';
   if (o.waitingDecision) return 'Sua vez: faça a sua escolha acima';
   if (o.needsSimulation) return o.playing ? `Quando estiver pronto(a), continue: ${o.phaseName}` : `Pronto para simular: ${o.phaseName}`;
   return o.ready ? 'Tudo registrado nesta fase' : o.pending;

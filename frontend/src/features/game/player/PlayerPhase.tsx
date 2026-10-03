@@ -1,6 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react';
-import type { GamePhase, SimulationEventKind } from '../../../domain/enums';
-import { eventsOf } from '../../../domain/events';
+import type { GamePhase } from '../../../domain/enums';
+import { eventsOf, isTalk } from '../../../domain/events';
 import type { Player, PlayerNeed, PlayerView, RoundTableRecord, SimulationEventRecord } from '../../../domain/models';
 import { AutoPhase, PhaseResult } from '../auto/AutoPhase';
 import { EndgameFeed } from '../auto/EndgameFeed';
@@ -14,6 +14,8 @@ import { SeerAnnouncePanel, SeerPanel } from './panels/SeerPanels';
 import { TalkPanel } from './panels/TalkPanel';
 import { TowerPanel } from './panels/TowerPanel';
 import { FireOfTruthPanel, VotePanel } from './panels/VotePanels';
+import { DramaControls } from '../drama/DramaControls';
+import { useDrama } from '../drama/DramaContext';
 import type { OnResult } from './useDecision';
 import { RoleReveal, SpectatorBanner, YouCard } from './YouCard';
 import styles from './Player.module.css';
@@ -28,9 +30,6 @@ const PROMPT: Partial<Record<GamePhase, string>> = {
   TRAITORS_MEETING: 'A noite cai sobre o castelo. Você vai dormir sem saber quem estará no café amanhã.',
   ENDGAME_ROUND_TABLE: 'A reta final. Primeiro, a última mesa redonda: quem sair não revela o papel. Depois, o Fogo da Verdade: para encerrar o jogo, todos precisam concordar.',
 };
-
-/** O que você falou e as respostas que recebeu. */
-const MY_TALK: SimulationEventKind[] = ['PLAYER', 'REACTION'];
 
 /** Momentos que mostram a parede de fotos do elenco. */
 const WALL_PHASES: GamePhase[] = ['ARRIVAL', 'BREAKFAST'];
@@ -54,8 +53,11 @@ export function PlayerPhase() {
   const me = state.player!;
   const phase = state.phase!;
   const events = useMemo(() => eventsOf(today, phase), [today, phase]);
+  const talk = useMemo(() => events.filter(isTalk), [events]);
+  const story = useMemo(() => events.filter((e) => !isTalk(e)), [events]);
   const simulated = state.phaseSimulated;
   const [revealed, setRevealed] = useState<Elimination | null>(null);
+  const drama = useDrama();
 
   if (me.spectator) {
     return (
@@ -67,21 +69,33 @@ export function PlayerPhase() {
   }
 
   const faithfulNight = phase === 'TRAITORS_MEETING' && me.role !== 'TRAITOR' && !me.pendingOffer && me.need !== 'SEER';
-  const showResult = shouldShowResult(phase, me, simulated, faithfulNight);
-  const talk = events.filter((e) => MY_TALK.includes(e.kind));
-  const story = events.filter((e) => !MY_TALK.includes(e.kind));
+  // Drama: enquanto a história do momento aparece aos poucos, o resultado e as escolhas esperam.
+  const playing = !!drama && !drama.done;
+  const showResult = shouldShowResult(phase, me, simulated, faithfulNight) && !playing;
   // A página segue a ordem dos acontecimentos: no café, primeiro a revelação e depois as conversas;
   // nos outros momentos, primeiro as conversas, depois o que aconteceu e, por último, a escolha da vez.
   const breakfast = phase === 'BREAKFAST';
   const wall = WALL_PHASES.includes(phase);
   const finalRounds = today?.roundTables.filter((t) => t.kind === 'ENDGAME') ?? [];
   const storyFeed = (
-    <StoryFeed phase={phase} story={story} rounds={finalRounds} playersById={playersById} focus={me.finalStage} prompt={!simulated && talk.length === 0 && me.need !== 'MISSION'} />
+    <>
+      <StoryFeed
+        phase={phase}
+        story={drama ? story.slice(0, drama.shown) : story}
+        rounds={finalRounds}
+        playersById={playersById}
+        focus={me.finalStage}
+        prompt={!simulated && talk.length === 0 && me.need !== 'MISSION'}
+        staged={!playing}
+      />
+      <DramaControls />
+    </>
   );
-  const decision = me.need && DECISION_PANELS[me.need](me, setRevealed);
+  // No drama, quem saiu aparece na própria história, passo a passo (a cena de eliminação entregaria antes).
+  const decision = me.need && !playing && DECISION_PANELS[me.need](me, drama ? noReveal : setRevealed);
   const conversation = (
     <>
-      {me.canTalk && <TalkPanel me={me} />}
+      {me.canTalk && !playing && <TalkPanel me={me} />}
       {talk.length > 0 && <EventFeed events={talk} playersById={playersById} />}
     </>
   );
@@ -90,10 +104,10 @@ export function PlayerPhase() {
     <>
       <YouCard me={me} phase={phase} />
 
-      {phase === 'TRAITOR_SELECTION' && simulated && <RoleReveal me={me} playersById={playersById} />}
+      {phase === 'TRAITOR_SELECTION' && simulated && !playing && <RoleReveal me={me} playersById={playersById} />}
       {/* A parede de fotos (chegada e café) fica sempre no topo. */}
       {showResult && wall && <PhaseResult phase={phase} simulated={simulated} />}
-      {me.pendingOffer && <OfferPanel me={me} onResult={setRevealed} />}
+      {me.pendingOffer && !playing && <OfferPanel me={me} onResult={drama ? noReveal : setRevealed} />}
 
       {breakfast ? (
         <>
@@ -112,7 +126,7 @@ export function PlayerPhase() {
       {faithfulNight && simulated && <p className={styles.prompt}>A noite passou. O que aconteceu na torre você só vai descobrir no café da manhã.</p>}
 
       {/* Pedidos de aliança sempre no fim da página, para não se perderem no meio da história. */}
-      {me.invites.length > 0 && !me.need && <InvitesPanel me={me} />}
+      {me.invites.length > 0 && !me.need && !playing && <InvitesPanel me={me} />}
 
       <EliminationReveal elimination={revealed} onClose={() => setRevealed(null)} />
     </>
@@ -129,7 +143,13 @@ function shouldShowResult(phase: GamePhase, me: PlayerView, simulated: boolean, 
   return !me.canTalk && (phase !== 'BREAKFAST' || simulated);
 }
 
-/** A história da fase (a reta final em blocos: última mesa e rodadas do fogo) ou, antes de simular, o convite. */
+/** Sem a cena de eliminação (no drama, a saída já aparece na história). */
+const noReveal: OnResult = () => undefined;
+
+/**
+ * A história da fase (a reta final em blocos: última mesa e rodadas do fogo) ou, antes de simular, o convite.
+ * `staged`: false enquanto o drama ainda revela a história (os blocos da reta final mostram o resultado antes).
+ */
 function StoryFeed({
   phase,
   story,
@@ -137,8 +157,9 @@ function StoryFeed({
   playersById,
   focus,
   prompt,
-}: Readonly<{ phase: GamePhase; story: SimulationEventRecord[]; rounds: RoundTableRecord[]; playersById: Map<string, Player>; focus: PlayerView['finalStage']; prompt: boolean }>) {
+  staged,
+}: Readonly<{ phase: GamePhase; story: SimulationEventRecord[]; rounds: RoundTableRecord[]; playersById: Map<string, Player>; focus: PlayerView['finalStage']; prompt: boolean; staged: boolean }>) {
   if (story.length === 0) return prompt ? <p className={styles.prompt}>{PROMPT[phase]}</p> : null;
-  if (phase === 'ENDGAME_ROUND_TABLE') return <EndgameFeed events={story} rounds={rounds} playersById={playersById} focus={focus ?? undefined} key={focus ?? 'none'} />;
+  if (phase === 'ENDGAME_ROUND_TABLE' && staged) return <EndgameFeed events={story} rounds={rounds} playersById={playersById} focus={focus ?? undefined} key={focus ?? 'none'} />;
   return <EventFeed events={story} playersById={playersById} />;
 }

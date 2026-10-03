@@ -10,6 +10,8 @@ import { MissionSummary } from '../phases/MissionPhase';
 import { RoundTableResult } from '../phases/RoundTablePhase';
 import { MeetingResult } from '../phases/TraitorsMeetingPhase';
 import { useShareConversations } from '../story/StoryContext';
+import { DramaControls } from '../drama/DramaControls';
+import { storyPrefix, useDrama } from '../drama/DramaContext';
 import { EndgameFeed } from './EndgameFeed';
 import { EventFeed } from './EventFeed';
 import sharedStyles from '../phases/shared/Shared.module.css';
@@ -35,6 +37,8 @@ export function AutoPhase() {
   const phase = state.phase!;
   const events = useMemo(() => eventsOf(today, phase), [today, phase]);
   const simulated = useGame().state.phaseSimulated;
+  // Modo Jogador com drama (inclusive depois de sair do jogo): a história aparece aos poucos.
+  const drama = useDrama();
 
   const conversations = useMemo(
     () => (STORY_PHASES.includes(phase) ? eventsAsConversations(events, playersById).slice(0, STORY_MAX_CONVERSATIONS) : []),
@@ -44,15 +48,18 @@ export function AutoPhase() {
 
   if (phase === 'FINALE') return <FinalePhase />;
 
-  // Fotos sempre no topo; no café, só depois de simular (antes, entregariam quem morreu).
-  const showResult = phase !== 'BREAKFAST' || simulated;
+  // Fotos sempre no topo; no café, só depois de simular (antes, entregariam quem morreu). No drama, só no fim.
+  const playing = !!drama && !drama.done;
+  const showResult = (phase !== 'BREAKFAST' || simulated) && !playing;
   const finalRounds = today?.roundTables.filter((t) => t.kind === 'ENDGAME') ?? [];
+  const shown = drama ? storyPrefix(events, drama.shown) : events;
   return (
     <>
       {showResult && <PhaseResult phase={phase} simulated={simulated} />}
       {!simulated && <p className={styles.prompt}>{PROMPT[phase]}</p>}
-      {simulated && phase === 'ENDGAME_ROUND_TABLE' && <EndgameFeed events={events} rounds={finalRounds} playersById={playersById} />}
-      {simulated && phase !== 'ENDGAME_ROUND_TABLE' && <EventFeed events={events} playersById={playersById} />}
+      {simulated && phase === 'ENDGAME_ROUND_TABLE' && !playing && <EndgameFeed events={events} rounds={finalRounds} playersById={playersById} />}
+      {simulated && (phase !== 'ENDGAME_ROUND_TABLE' || playing) && <EventFeed events={shown} playersById={playersById} />}
+      {simulated && <DramaControls />}
     </>
   );
 }
