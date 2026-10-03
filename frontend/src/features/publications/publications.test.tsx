@@ -29,11 +29,11 @@ const someoneElses = (seasonId: string) => new PatchedApi({ [`/seasons/${seasonI
 const posted = (api: FakeApi, path: string) => api.calls.find((c) => c.method === 'POST' && c.path === path);
 
 describe('Temporadas Oficiais', () => {
-  it('separa as temporadas entre EUA e Reino Unido, sem casts nem personagens', async () => {
+  it('separa as temporadas entre EUA e Reino Unido, sem casts, personagens nem Minha Área', async () => {
     renderApp('/');
     await settled();
     const tabs = screen.getByRole('navigation', { name: 'Áreas do site' });
-    expect(within(tabs).getAllByRole('link').map((a) => a.textContent)).toEqual(['Temporadas Oficiais', 'Área de Fãs', 'Minha Área']);
+    expect(within(tabs).getAllByRole('link').map((a) => a.textContent)).toEqual(['Temporadas Oficiais', 'Área de Fãs']);
     for (const [season, title] of [[usSeason, 'Estados Unidos'], [ukSeason, 'Reino Unido']] as const) {
       const section = screen.getByRole('region', { name: title });
       expect(within(section).getByRole('button', { name: season.name })).toBeInTheDocument();
@@ -136,9 +136,21 @@ describe('página da temporada publicada', () => {
   });
 });
 
-describe('publicar uma temporada', () => {
+describe('biblioteca: suas temporadas e o que você publicou', () => {
+  it('a Minha Área virou a aba Temporadas da biblioteca, e o nome no topo leva até ela', async () => {
+    const view = renderApp('/minha-area');
+    await waitFor(() => expect(view.router.state.location.pathname).toBe('/biblioteca'));
+    await settled();
+    const tabs = screen.getByRole('navigation', { name: 'Seções da biblioteca' });
+    expect(within(tabs).getAllByRole('link').map((a) => a.textContent)).toEqual(['Temporadas', 'Casts', 'Personagens', 'Comportamentos', 'Frases']);
+    expect(screen.getByRole('region', { name: 'Minhas temporadas' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Minhas publicações' })).toBeInTheDocument();
+    const me = (fixtures.me.user as { username: string }).username;
+    expect(screen.getByRole('link', { name: me }).getAttribute('href')).toBe('/biblioteca');
+  });
+
   async function openPublishModal(api: FakeApi) {
-    const view = renderApp('/minha-area', api);
+    const view = renderApp('/biblioteca', api);
     await settled();
     await view.user.click(within(screen.getByRole('region', { name: 'Minhas temporadas' })).getAllByRole('button', { name: 'Publicar' })[0]);
     return { view, dialog: await screen.findByRole('dialog') };

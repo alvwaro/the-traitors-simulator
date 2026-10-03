@@ -17,7 +17,7 @@ export function FanAreaPage() {
   const all = list.data;
   return (
     <>
-      <p className={styles.intro}>Temporadas, casts e personagens publicados pela comunidade. Para publicar os seus, use a Minha Área.</p>
+      <p className={styles.intro}>Temporadas, casts e personagens publicados pela comunidade. Para publicar os seus, use a Biblioteca.</p>
       <div className={styles.sections}>
         {KINDS.map((kind) => (
           <HomeSection key={kind} title={SECTION[kind].title}>

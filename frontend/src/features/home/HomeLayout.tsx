@@ -4,10 +4,9 @@ import { TabNav } from '../../components/layout/TabNav';
 const TABS = [
   { to: '/', label: 'Temporadas Oficiais', end: true },
   { to: '/fas', label: 'Área de Fãs' },
-  { to: '/minha-area', label: 'Minha Área' },
 ];
 
-/** Página inicial em três áreas: as temporadas oficiais (montadas pelos donos do site), a dos fãs e a de quem está logado. */
+/** Página inicial em duas áreas: as temporadas oficiais (montadas pelos donos do site) e a dos fãs. O que é seu fica na biblioteca. */
 export function HomeLayout() {
   return (
     <>

@@ -35,10 +35,11 @@ export function AppShell() {
             ))}
             {user && (
               <span className={styles.account}>
-                <NavLink to="/minha-area" className={({ isActive }) => cx(styles.link, isActive && styles.active)}>
+                {/* O nome leva às suas coisas: a biblioteca (o destaque fica no link "Biblioteca"). */}
+                <Link to="/biblioteca" className={styles.link}>
                   {user.username}
                   {user.role === 'OWNER' && <span className={styles.ownerBadge}>dono</span>}
-                </NavLink>
+                </Link>
                 <button type="button" className={styles.logout} onClick={fireAndForget(handleLogout)}>
                   Sair
                 </button>

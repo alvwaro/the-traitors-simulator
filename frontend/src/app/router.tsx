@@ -4,10 +4,10 @@ import { LoginPage } from '../features/auth/LoginPage';
 import { FanAreaPage } from '../features/home/FanAreaPage';
 import { FanListPage } from '../features/home/FanListPage';
 import { HomeLayout } from '../features/home/HomeLayout';
-import { MyAreaPage } from '../features/home/MyAreaPage';
 import { OfficialSeasonsPage } from '../features/home/OfficialSeasonsPage';
 import { PublishedSeasonPage } from '../features/publications/PublishedSeasonPage';
 import { LibraryLayout } from '../features/library/pages/LibraryLayout';
+import { SeasonsPage } from '../features/library/pages/SeasonsPage';
 import { CastsPage } from '../features/library/pages/CastsPage';
 import { CastPage } from '../features/library/pages/CastPage';
 import { BehaviorsPage } from '../features/library/pages/BehaviorsPage';
@@ -34,23 +34,25 @@ export const routes: RouteObject[] = [
     ),
     children: [
       {
-        // página inicial: Temporadas Oficiais (EUA e Reino Unido), Fãs (com a lista completa de cada seção) e Minha Área
+        // página inicial: Temporadas Oficiais (EUA e Reino Unido) e Fãs (com a lista completa de cada seção)
         element: <HomeLayout />,
         children: [
           { path: '/', element: <OfficialSeasonsPage /> },
           { path: '/fas', element: <FanAreaPage /> },
           { path: '/fas/:kind', element: <FanListPage /> },
-          { path: '/minha-area', element: <MyAreaPage /> },
         ],
       },
       // as listas antigas das oficiais (/oficial/temporadas...): agora tudo cabe na página inicial
       { path: '/oficial/*', element: <Navigate to="/" replace /> },
+      // a Minha Área virou a aba de temporadas da biblioteca
+      { path: '/minha-area', element: <Navigate to="/biblioteca" replace /> },
       { path: '/publicacoes/:publicationId', element: <PublishedSeasonPage /> },
       {
         path: '/biblioteca',
         element: <LibraryLayout />,
         children: [
-          { index: true, element: <CastsPage /> },
+          { index: true, element: <SeasonsPage /> },
+          { path: 'casts', element: <CastsPage /> },
           { path: 'casts/:castId', element: <CastPage /> },
           { path: 'personagens', element: <CharactersPage /> },
           { path: 'comportamentos', element: <BehaviorsPage /> },

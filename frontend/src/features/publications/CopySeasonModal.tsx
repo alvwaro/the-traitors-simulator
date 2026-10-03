@@ -10,7 +10,7 @@ import type { Publication, SeasonDetails } from '../../domain/models';
 import { useAction } from '../../hooks/useAction';
 
 /**
- * Copia uma temporada publicada inteira para a Minha Área: uma temporada nova, em preparação, com as mesmas
+ * Copia uma temporada publicada inteira para a biblioteca: uma temporada nova, em preparação, com as mesmas
  * configurações e o elenco publicado. No modo Jogador, pede o nome de quem vai entrar no castelo.
  */
 export function CopySeasonModal({ publication, onClose }: Readonly<{ publication: Publication | null; onClose: () => void }>) {
@@ -27,7 +27,7 @@ export function CopySeasonModal({ publication, onClose }: Readonly<{ publication
         name: name.trim() || undefined,
         human: playerMode ? { name: you.trim() || (user?.username ?? '') } : undefined,
       }),
-    { success: (s) => `Temporada "${s.name}" na Minha Área` },
+    { success: (s) => `Temporada "${s.name}" na sua biblioteca` },
   );
 
   function close() {
@@ -59,7 +59,7 @@ export function CopySeasonModal({ publication, onClose }: Readonly<{ publication
         }
       >
         <p>
-          "{created.name}" está nas suas temporadas, na <Link to="/minha-area">Minha Área</Link>, com as mesmas configurações e o elenco. Ajuste o que quiser e comece quando estiver pronto(a).
+          "{created.name}" está nas suas temporadas, na <Link to="/biblioteca">biblioteca</Link>, com as mesmas configurações e o elenco. Ajuste o que quiser e comece quando estiver pronto(a).
         </p>
       </Modal>
     );
@@ -81,7 +81,7 @@ export function CopySeasonModal({ publication, onClose }: Readonly<{ publication
         </Field>
       )}
       <p>
-        A temporada vai para a Minha Área com as mesmas configurações (missões, prêmio, moeda...) e o elenco publicado, pronta para começar.
+        A temporada vai para a sua biblioteca com as mesmas configurações (missões, prêmio, moeda...) e o elenco publicado, pronta para começar.
         Personagens que você já tem (mesmo nome) são reaproveitados; os outros são criados.
       </p>
     </Modal>

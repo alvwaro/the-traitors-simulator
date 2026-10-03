@@ -138,7 +138,7 @@ export function PublishedSeasonPage() {
           {byline && <p className={styles.muted}>{byline}</p>}
           <div className={styles.heroActions}>
             <Button onClick={() => setCopying('season')}>Copiar temporada</Button>
-            <span className={styles.muted}>Vai para a Minha Área com as mesmas configurações e o elenco, pronta para começar.</span>
+            <span className={styles.muted}>Vai para a sua biblioteca com as mesmas configurações e o elenco, pronta para começar.</span>
           </div>
         </div>
       </header>

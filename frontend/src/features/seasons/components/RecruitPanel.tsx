@@ -72,7 +72,7 @@ function FromLibrary({ season, onChanged, add }: Readonly<TabProps & { season: S
   if (!available.length) {
     return (
       <EmptyState title="Todos já estão na temporada">
-        Cadastre mais personagens na <Link to="/biblioteca">biblioteca</Link>.
+        Cadastre mais personagens na <Link to="/biblioteca/personagens">biblioteca</Link>.
       </EmptyState>
     );
   }

@@ -80,7 +80,7 @@
   border-bottom-color: var(--accent-bright);
 }
 
-/* conta logada: nome (leva à Minha Área) e sair */
+/* conta logada: nome (leva à biblioteca) e sair */
 .account {
   display: inline-flex;
   align-items: center;

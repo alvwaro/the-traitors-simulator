@@ -4,13 +4,14 @@ import { TabNav } from '../../../components/layout/TabNav';
 import styles from './LibraryPage.module.css';
 
 const TABS = [
-  { to: '/biblioteca', label: 'Casts', end: true },
+  { to: '/biblioteca', label: 'Temporadas', end: true },
+  { to: '/biblioteca/casts', label: 'Casts' },
   { to: '/biblioteca/personagens', label: 'Personagens' },
   { to: '/biblioteca/comportamentos', label: 'Comportamentos' },
   { to: '/biblioteca/frases', label: 'Frases' },
 ];
 
-/** Biblioteca da Minha Área: casts e personagens seus; comportamentos e frases do site. */
+/** Biblioteca de quem está logado: temporadas, casts e personagens seus (e o que publicou); comportamentos e frases do site. */
 export function LibraryLayout() {
   return (
     <div className={styles.page}>

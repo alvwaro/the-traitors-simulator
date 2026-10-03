@@ -19,7 +19,7 @@ async function openSeason(snapshot: Snapshot) {
 
 describe('detalhes que só aparecem depois de um clique', () => {
   it('abre o detalhe do cast: relacionamentos, comportamentos e ranking', async () => {
-    const view = renderApp('/biblioteca');
+    const view = renderApp('/biblioteca/casts');
     await settled();
     const card = await screen.findByText('Quarteto');
     await view.user.click(card);
@@ -32,7 +32,7 @@ describe('detalhes que só aparecem depois de um clique', () => {
   });
 
   it('cria um personagem direto na página do cast', async () => {
-    const view = renderApp('/biblioteca');
+    const view = renderApp('/biblioteca/casts');
     await settled();
     await view.user.click(await screen.findByText('Quarteto'));
     await view.user.type(await screen.findByLabelText(/Nome/i), 'Lady Morag');

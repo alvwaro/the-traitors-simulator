@@ -55,7 +55,7 @@ export function CopyModal({ publication, onClose }: Readonly<{ publication: Publ
       >
         {result.cast ? (
           <p>
-            O cast "{result.cast.name}" está na sua <Link to="/biblioteca">biblioteca</Link>, pronto para jogar.
+            O cast "{result.cast.name}" está na sua <Link to="/biblioteca/casts">biblioteca</Link>, pronto para jogar.
           </p>
         ) : (
           <p>"{result.character?.name}" está na sua biblioteca de personagens.</p>

@@ -25,6 +25,7 @@ const ROUTES = [
   '/oficial/temporadas',
   '/minha-area',
   '/biblioteca',
+  '/biblioteca/casts',
   '/biblioteca/casts/sem-cast',
   `/participantes/${fixtures.characters[0].id}`,
   '/biblioteca/personagens',

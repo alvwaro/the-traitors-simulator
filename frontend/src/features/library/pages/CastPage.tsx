@@ -34,7 +34,7 @@ export function CastPage() {
   if (error) return <ErrorState error={error} onRetry={() => { reloadAll(); behaviors.reload(); }} />;
   if (!casts.data || !characters.data || !behaviors.data) return <Loading />;
 
-  const back = () => navigate('/biblioteca');
+  const back = () => navigate('/biblioteca/casts');
 
   if (castId === NO_CAST_ID) {
     return (
