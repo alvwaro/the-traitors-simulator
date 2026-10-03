@@ -1,13 +1,27 @@
 import { describe, expect, it } from 'vitest';
-import { GamePhase, PlayerRole } from '../../src/domain/enums';
+import { GamePhase, PhrasePhase, PhraseTone, PlayerRole, SimulationEventKind } from '../../src/domain/enums';
 import { AllianceBook } from '../../src/domain/simulation/alliances';
-import { answerInvite, expireInvites, HUMAN_ACTIONS, HumanAction, HumanMemory, performHumanAction, SUBJECT_ACTIONS, TOWER_ACTIONS, actionsFor } from '../../src/domain/simulation/humanActions';
+import { approachHuman } from '../../src/domain/simulation/approaches';
+import { APPROACH_TOO_NICE, ASIDE_TOO_NICE, REPLY_TOO_NICE } from '../../src/domain/simulation/dialogue/replies-wary';
+import {
+  answerInvite,
+  coolKindness,
+  expireInvites,
+  HUMAN_ACTIONS,
+  HumanAction,
+  HumanMemory,
+  performHumanAction,
+  SUBJECT_ACTIONS,
+  TOWER_ACTIONS,
+  actionsFor,
+} from '../../src/domain/simulation/humanActions';
 import { EDITIONS, editionFor, finaleFor, missionFor, missionSequence, seerMissionFor } from '../../src/domain/simulation/missions/catalog';
 import { MissionDefinition } from '../../src/domain/simulation/missions/MissionContext';
 import { fillMissingRelationships, RelationshipMatrix } from '../../src/domain/simulation/RelationshipMatrix';
 import { seededRng } from '../../src/domain/simulation/random';
 import { SimulationEngine, SimulationFlags } from '../../src/domain/simulation/SimulationEngine';
-import { SimPlayer, traitsOf } from '../../src/domain/simulation/traits';
+import { Social } from '../../src/domain/simulation/social';
+import { Attributes, boldTaste, SimPlayer, traitsOf, wariness } from '../../src/domain/simulation/traits';
 
 /** Elenco de teste: os primeiros `traitors` são Traidores; traços variados por posição. */
 function cast(size: number, traitors = 2): SimPlayer[] {
@@ -193,5 +207,118 @@ describe('ações do jogador', () => {
     const memory: HumanMemory = { invites: [{ fromId: 'p2', groupId: null, memberIds: ['p2'], day: 1, phase: GamePhase.ARRIVAL }] };
     expireInvites(matrix, memory, 'p4', 1, GamePhase.BREAKFAST);
     expect(memory.invites?.length ?? 0).toBe(0);
+  });
+});
+
+describe('confiança e amizade: gentileza demais e coragem', () => {
+  /** Personagem com os traços escolhidos (o resto no meio). */
+  function person(id: string, traits: Partial<Attributes> = {}): SimPlayer {
+    return { id, name: id.toUpperCase(), role: PlayerRole.FAITHFUL, behaviorIds: [], traits: { ...traitsOf([]), ...traits } };
+  }
+
+  /** Todo mundo neutro com todo mundo. */
+  function neutral(players: readonly SimPlayer[]): RelationshipMatrix {
+    const matrix = new RelationshipMatrix();
+    for (const from of players) for (const to of players) matrix.set(from.id, to.id, { trust: 50, liking: 50, hatred: 0, allied: false });
+    return matrix;
+  }
+
+  const human = person('eu');
+  const wary = person('desconfiada', { insight: 95, paranoia: 95 });
+  const fan = person('brava', { aggression: 90, conformity: 10 });
+  const calm = person('calma', { aggression: 10, conformity: 90 });
+  const castle = [human, wary, fan, calm, person('neutro')];
+
+  /** O jogador fala com alguém na mesa redonda (todo mundo ouve). */
+  function act(action: HumanAction, target: SimPlayer, memory: HumanMemory, seed = 'x') {
+    const matrix = neutral(castle);
+    const alliances = new AllianceBook(matrix, {}, castle.map((p) => p.id));
+    const events = performHumanAction({ rng: seededRng(seed), matrix, alliances, human, target, present: castle, active: castle, action, phase: GamePhase.ROUND_TABLE, day: 3, memory });
+    return { matrix, events };
+  }
+
+  it('gentileza demais vira suspeita: quem recebe e quem ouve confia menos, e alguém deixa isso claro', () => {
+    expect(wariness(wary)).toBeGreaterThan(wariness(calm));
+    const first = act('PRAISE', wary, {});
+    const memory: HumanMemory = { kindness: 6 };
+    const later = act('PRAISE', wary, memory);
+    expect(memory.kindness).toBe(7);
+    // O elogio em si não mexe na confiança; a fama de bonzinho(a), sim (mais em quem é desconfiado).
+    expect(later.matrix.get(wary.id, human.id).trust).toBeLessThan(first.matrix.get(wary.id, human.id).trust - 6);
+    for (const p of [fan, calm]) expect(later.matrix.get(p.id, human.id).trust).toBeLessThan(first.matrix.get(p.id, human.id).trust);
+
+    const suspicious = [...REPLY_TOO_NICE, ...ASIDE_TOO_NICE];
+    const tries = (kindness?: number) => Array.from({ length: 8 }, (_, i) => act('PRAISE', wary, { kindness }, `n${i}`).events).flat();
+    const noticed = tries(6).filter((e) => suspicious.includes(e.text));
+    expect(noticed.length).toBeGreaterThan(0);
+    expect(noticed.every((e) => e.tone === PhraseTone.SUSPICION)).toBe(true);
+    // Sem a fama, ninguém estranha.
+    expect(tries().some((e) => suspicious.includes(e.text))).toBe(false);
+    // Quem estranha pode ser alguém que só ouviu: comenta à parte.
+    const asides = Array.from({ length: 8 }, (_, i) => act('PRAISE', calm, { kindness: 6 }, 'a' + i).events)
+      .flat()
+      .filter((e) => ASIDE_TOO_NICE.includes(e.text));
+    expect(asides.length).toBeGreaterThan(0);
+    expect(asides.every((e) => e.kind === SimulationEventKind.REACTION && e.playerIds[0] === wary.id)).toBe(true);
+
+    // Tomar partido apaga boa parte da fama; e ela esfria a cada manhã.
+    const harsh: HumanMemory = { kindness: 3 };
+    act('ACCUSE', calm, harsh);
+    expect(harsh.kindness).toBe(1);
+    const cooling: HumanMemory = { kindness: 5 };
+    coolKindness(cooling);
+    expect(cooling.kindness).toBe(3);
+    const almost: HumanMemory = { kindness: 0.5 };
+    coolKindness(almost);
+    expect(almost.kindness).toBe(0);
+  });
+
+  it('acusar e provocar não pegam mal com todo mundo: quem gosta de gente brava admira', () => {
+    expect(boldTaste(fan)).toBeGreaterThan(1);
+    expect(boldTaste(calm)).toBeLessThan(-0.9);
+    for (const action of ['ACCUSE', 'INSULT', 'SUSPECT'] as const) {
+      const { matrix } = act(action, wary, {});
+      expect(matrix.get(fan.id, human.id).liking).toBeGreaterThan(50);
+      expect(matrix.get(calm.id, human.id).liking).toBeLessThan(50);
+    }
+  });
+
+  it('entre os personagens: quem acusa ganha fãs entre os bravos, e quem é querido(a) demais desperta suspeita', () => {
+    const accuser = person('acusa');
+    const accused = person('acusado');
+    const table = [accuser, accused, fan, calm];
+    const matrix = neutral(table);
+    const social = new Social(() => 0.99, matrix, () => table, new AllianceBook(matrix, {}, table.map((p) => p.id)));
+    const phrase = { id: 'f', phase: PhrasePhase.ROUND_TABLE, tone: PhraseTone.ACCUSATION, behaviorId: null, text: '{user} acusou {user1}.' };
+    social.applyLine({ phrase, speaker: accuser, target: accused, event: { kind: SimulationEventKind.DIALOGUE, tone: phrase.tone, text: phrase.text, playerIds: [accuser.id, accused.id] } });
+    expect(matrix.get(fan.id, accuser.id).liking).toBeGreaterThan(50);
+    expect(matrix.get(calm.id, accuser.id).liking).toBeLessThan(50);
+
+    // A mesma pessoa, adorada por todos, perde mais confiança de quem observa do que alguém comum.
+    const darling = person('querida');
+    const plain = person('comum');
+    const observer = person('observa', { insight: 95, paranoia: 95 });
+    const fans = [1, 2, 3].map((i) => person(`fã${i}`));
+    const everyone = [darling, plain, observer, ...fans];
+    const feelings = neutral(everyone);
+    for (const p of [plain, observer, ...fans]) feelings.set(p.id, darling.id, { liking: 100 });
+    feelings.set(observer.id, plain.id, { liking: 100 });
+    new Social(() => 0.5, feelings, () => everyone, new AllianceBook(feelings, {}, everyone.map((p) => p.id))).dailyDrift();
+    expect(feelings.get(observer.id, darling.id).trust).toBeLessThan(feelings.get(observer.id, plain.id).trust);
+  });
+
+  it('quem é bonzinho(a) demais recebe visita: tanta gentileza assusta', () => {
+    const visits = (kindness: number) =>
+      Array.from({ length: 10 }, (_, i) => {
+        const matrix = neutral(castle);
+        const alliances = new AllianceBook(matrix, {}, castle.map((p) => p.id));
+        const byId = new Map(castle.map((p) => [p.id, p]));
+        return approachHuman({ rng: seededRng(`v${i}`), matrix, alliances, human, active: castle, byId, moment: 'BREAKFAST', phase: GamePhase.BREAKFAST, day: 3, memory: { kindness } }).events;
+      }).flat();
+    const tooNice = (kindness: number) => visits(kindness).filter((e) => APPROACH_TOO_NICE.includes(e.text));
+    const warned = tooNice(8);
+    expect(warned.length).toBeGreaterThan(0);
+    expect(warned.every((e) => e.tone === PhraseTone.SUSPICION && e.playerIds.includes(human.id))).toBe(true);
+    expect(tooNice(0)).toHaveLength(0);
   });
 });

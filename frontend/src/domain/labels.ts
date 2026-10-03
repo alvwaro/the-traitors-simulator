@@ -108,11 +108,11 @@ export const seasonModeLabel: Record<SeasonMode, string> = {
 };
 
 export const humanActionLabel: Record<HumanAction, { label: string; hint: string }> = {
-  ACCUSE: { label: 'Acusar', hint: 'Diz na frente de todos que é traidor(a). A mesa desconfia; ele(a) passa a te odiar.' },
+  ACCUSE: { label: 'Acusar', hint: 'Diz na frente de todos que é traidor(a). A mesa desconfia; ele(a) passa a te odiar, mas quem gosta de coragem admira.' },
   SUSPECT: { label: 'Dizer que desconfia', hint: 'Uma suspeita mais leve. Planta a dúvida sem fazer um inimigo.' },
   DEFEND: { label: 'Defender', hint: 'O castelo confia mais nele(a), e ele(a) em você.' },
   TRUST: { label: 'Dizer que confia', hint: 'Aproxima vocês dois. Ótimo para quem você quer ao seu lado.' },
-  PRAISE: { label: 'Elogiar', hint: 'Faz a pessoa gostar mais de você (e quem ouve também).' },
+  PRAISE: { label: 'Elogiar', hint: 'Faz a pessoa gostar mais de você (e quem ouve também). Gentileza demais, porém, levanta suspeita.' },
   JOKE: { label: 'Fazer uma piada', hint: 'Pode aproximar muito, ou cair mal com quem não gosta de você.' },
   INSULT: { label: 'Xingar', hint: 'Ódio na hora. Quem também não gosta dele(a) pode até aplaudir.' },
   ALLIANCE: { label: 'Propor aliança', hint: 'Aliados se protegem na mesa. Ele(a) aceita se confiar em você.' },

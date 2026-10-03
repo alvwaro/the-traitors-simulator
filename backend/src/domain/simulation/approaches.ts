@@ -2,7 +2,7 @@ import { userSlots } from '@traitors/shared';
 import { GamePhase, PhraseTone, SimulationEventKind } from '../enums';
 import { surprises } from './chaos';
 import { publicSuspicion } from './decisions';
-import { HumanInvite, HumanMemory } from './humanActions';
+import { HumanInvite, HumanMemory, TOO_NICE } from './humanActions';
 import { NarratedEvent } from './narration';
 import { RelationshipMatrix } from './RelationshipMatrix';
 import { chance, pickOne, Rng, weightedPick } from './random';
@@ -38,8 +38,9 @@ import {
   APPROACH_WARNING_LEADER,
 } from './dialogue/approach-social';
 import { pickLine } from './dialogue/lines';
+import { APPROACH_TOO_NICE } from './dialogue/replies-wary';
 import { tokenList } from './tokens';
-import { isTraitor, SimPlayer } from './traits';
+import { isTraitor, SimPlayer, wariness } from './traits';
 
 /** A última mesa redonda (fica gravada na temporada para as conversas do dia seguinte). */
 export interface LastTable {
@@ -133,6 +134,7 @@ const GAME_RULES: readonly ApproachRule[] = [
   voteFalloutRule,
   allyRule,
   partnerRule,
+  tooNiceRule,
   (ctx) => rumorRule(ctx, 1),
 ];
 
@@ -309,6 +311,21 @@ function suspicionRule({ input, npcs, pressure, toHuman, add, say, pick }: Appro
     add('suspicion', npc, (doubt - 40) * 0.5 + f.trust * 0.15 + (agrees ? 12 : 0), () => {
       matrix.adjust(npc.id, human.id, { trust: agrees ? 4 : 2 });
       say(pick(agrees ? APPROACH_AGREE : APPROACH_SUSPICION), agrees ? PhraseTone.ALLIANCE : PhraseTone.SUSPICION, [npc, human, suspect]);
+    });
+  }
+}
+
+/** Bonzinho(a) demais: alguém desconfiado vem dizer que tanta gentileza assusta (e fica de pé atrás). */
+function tooNiceRule({ input, npcs, toHuman, add, say, pick }: ApproachContext): void {
+  const { matrix, human, memory } = input;
+  const excess = (memory.kindness ?? 0) - (TOO_NICE - 1);
+  if (excess <= 0) return;
+  for (const npc of npcs) {
+    const f = toHuman(npc);
+    if (f.allied || f.hatred > 60) continue;
+    add('tooNice', npc, excess * 8 * wariness(npc) - Math.max(0, f.liking - 70) * 0.5, () => {
+      matrix.adjust(npc.id, human.id, { trust: -3 });
+      say(pick(APPROACH_TOO_NICE), PhraseTone.SUSPICION, [npc, human]);
     });
   }
 }

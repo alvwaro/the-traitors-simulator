@@ -20,7 +20,7 @@ import { DialogueScene, NarratedEvent, Narrator, PhraseTemplate } from './narrat
 import { RelationshipMatrix } from './RelationshipMatrix';
 import { chance, clamp, pickOne, Rng, shuffle, softmaxPick, weightedPick } from './random';
 import { Social } from './social';
-import { HumanMemory } from './humanActions';
+import { coolKindness, HumanMemory } from './humanActions';
 import { isTraitor, SimPlayer } from './traits';
 import { tokenList } from './tokens';
 import { HIDDEN_ROLE_TABLE } from '../rules';
@@ -612,10 +612,11 @@ export class SimulationEngine {
 
   /**
    * Modo Jogador: sem conversa, a relação esfria. A cada manhã, o que o castelo sente pelo jogador
-   * volta um pouco para o neutro (menos com os aliados, que cobram no café).
+   * volta um pouco para o neutro (menos com os aliados, que cobram no café), e a fama de bonzinho(a) esfria.
    */
   private coolTowardHuman(): void {
     if (!this.humanId || !this.active.some((p) => this.isHuman(p))) return;
+    if (this.flags.human) coolKindness(this.flags.human);
     for (const npc of this.npcs) {
       const f = this.matrix.get(npc.id, this.humanId);
       const rate = f.allied ? 0.02 : 0.06;

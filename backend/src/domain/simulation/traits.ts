@@ -66,3 +66,17 @@ export interface SimPlayer {
 }
 
 export const isTraitor = (p: SimPlayer): boolean => p.role === PlayerRole.TRAITOR;
+
+/**
+ * Gosto por gente brava (de -1 a 1,5): quem é agressivo(a) ou do contra admira quem fala o que pensa,
+ * acusa e provoca (até com maldade); os calmos e conformistas torcem o nariz para quem compra briga.
+ * Perto de zero, tanto faz.
+ */
+export function boldTaste(p: SimPlayer): number {
+  return clamp((p.traits.aggression - 50) / 50 + (50 - p.traits.conformity) / 100, -1, 1.5);
+}
+
+/** Desconfiança natural (0,4 a 1,4): intuitivos e paranoicos estranham quem é bonzinho(a) demais. */
+export function wariness(p: SimPlayer): number {
+  return 0.4 + (p.traits.insight + p.traits.paranoia) / 200;
+}

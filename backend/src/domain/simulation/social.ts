@@ -5,10 +5,11 @@ import { SimVote } from './decisions';
 import { Narrator, SpokenLine } from './narration';
 import { FeelingDelta, RelationshipMatrix } from './RelationshipMatrix';
 import { chance, pickOne, Rng, shuffle } from './random';
-import { isTraitor, SimPlayer } from './traits';
+import { boldTaste, isTraitor, SimPlayer, wariness } from './traits';
 import { tokenList } from './tokens';
 
-/** "{user2}, {user3} e {user4}" a partir do marcador `first`. */
+/** Simpatia média (0 a 100) a partir da qual ser querido(a) por todos começa a despertar suspeita. */
+const POPULAR_SUSPICION_FROM = 66;
 
 /**
  * Como os acontecimentos mexem nos relacionamentos.
@@ -47,6 +48,19 @@ export class Social {
     this.broadcast(accused, accuser, delta);
   }
 
+  /**
+   * Quem assiste a alguém comprar briga nem sempre o(a) reprova: os que gostam de gente brava
+   * passam a gostar (e a confiar um pouco) de quem falou; os calmos e conformistas, o contrário.
+   */
+  private audienceTaste(speaker: SimPlayer, target: SimPlayer, strength: number): void {
+    for (const listener of this.active()) {
+      if (listener.id === speaker.id || listener.id === target.id) continue;
+      const taste = boldTaste(listener);
+      if (Math.abs(taste) < 0.15) continue;
+      this.matrix.adjust(listener.id, speaker.id, { liking: taste * 3, trust: taste * 1.2 }, strength);
+    }
+  }
+
   broadcast(speaker: SimPlayer, target: SimPlayer, delta: FeelingDelta, strength = 1): void {
     for (const listener of this.active()) {
       if (listener.id === speaker.id || listener.id === target.id) continue;
@@ -83,6 +97,7 @@ export class Social {
           this.matrix.adjust(target.id, speaker.id, { trust: -5, hatred: 4 }, this.intensity(target) * this.rancor(target));
           this.broadcast(speaker, target, { trust: -7 * sign });
           if (backfire) this.backfire(target, speaker, { trust: -5 });
+          else this.audienceTaste(speaker, target, 0.5);
         }
         break;
       case PhraseTone.ACCUSATION:
@@ -90,6 +105,7 @@ export class Social {
           this.matrix.adjust(target.id, speaker.id, { trust: -10, hatred: 10 }, this.intensity(target) * this.rancor(target));
           this.broadcast(speaker, target, { trust: -12 * sign }, vol);
           if (backfire) this.backfire(target, speaker, { trust: -8, liking: -4 });
+          else this.audienceTaste(speaker, target, 1);
           if (second) this.matrix.adjust(second.id, speaker.id, { hatred: 4 });
         }
         break;
@@ -97,6 +113,7 @@ export class Social {
         if (target) {
           this.matrix.adjust(speaker.id, target.id, { hatred: 8, liking: -6, trust: -4 }, vol * this.rancor(speaker));
           this.matrix.adjust(target.id, speaker.id, { hatred: 8, liking: -6, trust: -4 }, this.intensity(target) * this.rancor(target));
+          this.audienceTaste(speaker, target, 0.8);
         }
         break;
       case PhraseTone.DEFENSE:
@@ -189,10 +206,13 @@ export class Social {
    *  - paranoicos desconfiam de todos;
    *  - reciprocidade: quem é bem tratado tende a gostar de volta;
    *  - aliados pensam parecido: a opinião de um puxa a do outro;
+   *  - querido(a) demais por todo mundo vira suspeito(a) para os intuitivos e paranoicos
+   *    (agradar a todos é o jogo de um traidor);
    *  - o tempo esfria as emoções (menos nos rancorosos) e aproxima a confiança do neutro.
    */
   dailyDrift(): void {
     const active = this.active();
+    const popularity = new Map(active.map((p) => [p.id, this.publicLiking(p, active)]));
     for (const observer of active) {
       const t = observer.traits;
       const allies = active.filter((p) => p.id !== observer.id && this.matrix.isAllied(observer.id, p.id));
@@ -207,6 +227,9 @@ export class Social {
             ? -(1.5 + this.rng() * 4.5) * (1.25 - other.traits.deception / 100) * (0.3 + t.paranoia / 200 + t.insight / 120)
             : this.rng() * 2.5 - 0.8;
           delta.trust! -= (t.paranoia - 50) / 40;
+          // Bonzinho(a) demais: quanto mais querido(a) pelo castelo, mais os desconfiados estranham (aliados não).
+          const sweetness = (popularity.get(other.id) ?? 50) - POPULAR_SUSPICION_FROM;
+          if (sweetness > 0 && !f.allied) delta.trust! -= sweetness * 0.05 * wariness(observer);
         }
         if (f.allied) delta.trust! += 2;
 
@@ -224,6 +247,13 @@ export class Social {
         this.matrix.adjust(observer.id, other.id, delta);
       }
     }
+  }
+
+  /** O quanto o castelo parece gostar de alguém: a simpatia secreta entre traidores não aparece em público. */
+  private publicLiking(p: SimPlayer, active: readonly SimPlayer[]): number {
+    const fans = active.filter((q) => q.id !== p.id && !(isTraitor(q) && isTraitor(p)));
+    if (!fans.length) return 50;
+    return fans.reduce((sum, q) => sum + this.matrix.get(q.id, p.id).liking, 0) / fans.length;
   }
 
   /** Depois de um assassinato: quem a vítima desconfiava passa a ser olhado com suspeita. */

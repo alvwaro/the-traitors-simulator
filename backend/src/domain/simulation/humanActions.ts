@@ -37,8 +37,9 @@ import {
   TOWER_SPARE_NO,
   TOWER_SPARE_YES,
 } from './dialogue/replies-tower';
+import { ASIDE_TOO_NICE, REPLY_TOO_NICE } from './dialogue/replies-wary';
 import { tokenList } from './tokens';
-import { isTraitor, SimPlayer } from './traits';
+import { boldTaste, isTraitor, SimPlayer, wariness } from './traits';
 
 // As ações do jogador são as mesmas dos botões do site: vêm do kernel compartilhado.
 export { ARRIVAL_ACTIONS, HUMAN_ACTIONS, SUBJECT_ACTIONS, TOWER_ACTIONS } from '@traitors/shared';
@@ -65,7 +66,15 @@ export interface HumanMemory {
   invites?: HumanInvite[];
   /** Último dia em que o jogador conversou com cada um (aliado esquecido cobra). */
   talkedOn?: Record<string, number>;
+  /** Fama de bonzinho(a): gentilezas seguidas sem tomar partido (esfria um pouco a cada dia). */
+  kindness?: number;
 }
+
+/** Gentilezas que somam na fama de bonzinho(a); acusar e provocar tiram. */
+const GENTLE: readonly HumanAction[] = ['PRAISE', 'DEFEND', 'TRUST', 'JOKE', 'ALLIANCE'];
+const HARSH: readonly HumanAction[] = ['ACCUSE', 'SUSPECT', 'INSULT', 'PERSUADE_GUILTY'];
+/** A partir de quanta gentileza seguida o castelo começa a estranhar. */
+export const TOO_NICE = 3;
 
 /** Um personagem chamou o jogador para a aliança dele(a). */
 export interface HumanInvite {
@@ -207,11 +216,27 @@ type Reply = (text: string, tone?: PhraseTone | null, subject?: SimPlayer) => vo
 export function performHumanAction(input: HumanActionInput): NarratedEvent[] {
   const talk = new Conversation(input);
   input.memory.talkedOn = { ...(input.memory.talkedOn ?? {}), [input.target.id]: input.day };
-  // Fala do jogador; depois, o efeito da ação (Command: um handler por ação) e a reação da sala.
+  rememberKindness(input);
+  // Fala do jogador; depois, o efeito da ação (Command: um handler por ação), a desconfiança de
+  // quem acha tanta gentileza estranha e a reação da sala.
   talk.say(specialSay(input, talk.pressure) ?? talk.pick(SAYS[input.action]), toneOf(input.action));
   ACTION_HANDLERS[input.action](talk);
+  talk.tooNice();
   talk.roomReaction();
   return talk.events;
+}
+
+/** Fama de bonzinho(a): cada gentileza soma; tomar partido (acusar, provocar) apaga boa parte. Na chegada não conta. */
+function rememberKindness({ action, memory, phase }: HumanActionInput): void {
+  if (phase === GamePhase.ARRIVAL) return;
+  if (GENTLE.includes(action)) memory.kindness = (memory.kindness ?? 0) + 1;
+  else if (HARSH.includes(action)) memory.kindness = Math.max(0, (memory.kindness ?? 0) - 2);
+}
+
+/** A fama de bonzinho(a) esfria a cada manhã. */
+export function coolKindness(memory: HumanMemory): void {
+  if (!memory.kindness) return;
+  memory.kindness = memory.kindness < 1 ? 0 : memory.kindness * 0.6;
 }
 
 /** Tudo que uma conversa precisa: quem ouve, o quanto acredita e como a sala reage. */
@@ -293,6 +318,35 @@ class Conversation {
     }
   }
 
+  /** Quem viu você comprar briga: os que gostam de gente brava aprovam; os calmos e conformistas torcem o nariz. */
+  boldness(strength: number): void {
+    const { matrix, human } = this.input;
+    for (const l of this.hearers) {
+      const taste = boldTaste(l);
+      if (Math.abs(taste) < 0.15) continue;
+      matrix.adjust(l.id, human.id, { liking: taste * 4, trust: taste * 1.5 }, strength);
+      if (taste >= 0.6) this.pleased.push(l);
+      else if (taste <= -0.6) this.upset.push(l);
+    }
+  }
+
+  /**
+   * Bonzinho(a) demais: depois de várias gentilezas seguidas sem tomar partido, quem recebe e quem ouve
+   * estranha (mais os intuitivos e paranoicos). Às vezes alguém deixa isso claro.
+   */
+  tooNice(): void {
+    const { rng, matrix, human, target, memory, action } = this.input;
+    const excess = (memory.kindness ?? 0) - (TOO_NICE - 1);
+    if (!GENTLE.includes(action) || excess <= 0) return;
+    const witnesses = [target, ...this.hearers];
+    for (const w of witnesses) matrix.adjust(w.id, human.id, { trust: -Math.min(6, 1.5 * excess) * wariness(w) });
+    if (!chance(rng, Math.min(0.75, 0.25 * excess))) return;
+    const noticer = [...witnesses].sort((a, b) => wariness(b) - wariness(a))[0];
+    if (wariness(noticer) < 0.9) return;
+    if (noticer.id === target.id) this.reply(this.pick(REPLY_TOO_NICE), PhraseTone.SUSPICION);
+    else this.emit(SimulationEventKind.REACTION, PhraseTone.SUSPICION, this.pick(ASIDE_TOO_NICE), { user: noticer, user1: human });
+  }
+
   /** Quem ouviu muda a opinião sobre `about` na medida em que acredita no jogador. */
   sway(about: SimPlayer, base: number, perCredibility: number): void {
     const { matrix } = this.input;
@@ -346,6 +400,7 @@ const ACTION_HANDLERS: Record<HumanAction, (talk: Conversation) => void> = {
     matrix.adjust(human.id, target.id, { trust: -10 });
     talk.sway(target, -5, -10);
     talk.ripple(target, -1, 0.5);
+    talk.boldness(0.5);
     talk.reply(talk.pick(REPLY_SUSPECT[talk.mood()]));
   },
   DEFEND: (talk) => {
@@ -380,6 +435,8 @@ const ACTION_HANDLERS: Record<HumanAction, (talk: Conversation) => void> = {
     matrix.adjust(human.id, target.id, { hatred: 15, liking: -8 });
     if (matrix.isAllied(human.id, target.id)) alliances.leaveWith(human.id, target.id);
     talk.ripple(target, -1, 1.2);
+    // Maldade também tem fã: quem gosta de gente brava se diverte.
+    talk.boldness(1.2);
     talk.reply(talk.pick(REPLY_INSULT[talk.mood()]), PhraseTone.CONFLICT);
   },
   ALLIANCE: proposeAlliance,
@@ -404,6 +461,7 @@ function accuse(talk: Conversation): void {
   matrix.adjust(human.id, target.id, { trust: -20 });
   talk.sway(target, -7, -17);
   talk.ripple(target, -1);
+  talk.boldness(1);
   // Acusar logo na chegada, sem motivo, pega mal.
   if (talk.moment === 'ARRIVAL') for (const l of talk.hearers) matrix.adjust(l.id, human.id, { trust: -4 });
   // Quem acusa todo mundo vira alvo: cada acusação nova pesa mais para quem não se convenceu.
