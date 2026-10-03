@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { useServices } from '../../../app/services';
 import { PortraitStyleProvider } from '../../../components/player/PortraitStyle';
 import { Button } from '../../../components/ui/Button';
@@ -22,29 +22,25 @@ const NO_PHRASES: Phrase[] = [];
 export function GameView({ seasonId }: Readonly<{ seasonId: string }>) {
   const services = useServices();
   const { game } = services;
-  const state = useResource(() => game.state(seasonId), [seasonId]);
-  const history = useResource(() => game.history(seasonId), [seasonId]);
+  // Estado e história chegam juntos: a tela nunca mistura um estado novo com a história antiga
+  // (por um instante, a fase aparecia simulada sem os acontecimentos dela).
+  const loaded = useResource(() => Promise.all([game.state(seasonId), game.history(seasonId)]), [seasonId]);
   const phrases = useResource(() => services.phrases.list(), []);
   const [showInfo, setShowInfo] = useState(false);
   const [showCastle, setShowCastle] = useState(false);
 
-  const reloadState = state.reload;
-  const reloadHistory = history.reload;
-  const refresh = useCallback(() => {
-    reloadState();
-    reloadHistory();
-  }, [reloadState, reloadHistory]);
+  const refresh = loaded.reload;
 
-  const error = state.error ?? history.error;
-  if (error) return <ErrorState error={error} onRetry={refresh} />;
-  if (!state.data || !history.data) return <Loading />;
+  if (loaded.error) return <ErrorState error={loaded.error} onRetry={refresh} />;
+  if (!loaded.data) return <Loading />;
+  const [state, history] = loaded.data;
 
   // Participante não vê o termômetro (os sentimentos do castelo são segredo) até sair do jogo.
-  const manual = state.data.season.mode === 'MANUAL';
-  const automatic = !manual && (!state.data.player || state.data.player.spectator);
+  const manual = state.season.mode === 'MANUAL';
+  const automatic = !manual && (!state.player || state.player.spectator);
 
   return (
-    <GameProvider seasonId={seasonId} state={state.data} history={history.data} phrases={phrases.data ?? NO_PHRASES} refresh={refresh}>
+    <GameProvider seasonId={seasonId} state={state} history={history} phrases={phrases.data ?? NO_PHRASES} refresh={refresh}>
       <StoryProvider>
         <PortraitStyleProvider value="framed">
           <div className={styles.page}>
@@ -65,9 +61,9 @@ export function GameView({ seasonId }: Readonly<{ seasonId: string }>) {
             {automatic && showCastle && (
               <RelationshipsPanel
                 seasonId={seasonId}
-                players={history.data.players}
-                version={state.data}
-                inGame={state.data.phase !== 'ARRIVAL' && state.data.phase !== 'TRAITOR_SELECTION'}
+                players={history.players}
+                version={state}
+                inGame={state.phase !== 'ARRIVAL' && state.phase !== 'TRAITOR_SELECTION'}
                 title="Termômetro do castelo"
               />
             )}
