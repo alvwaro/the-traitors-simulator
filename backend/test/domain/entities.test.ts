@@ -1,5 +1,25 @@
 import { describe, expect, it } from 'vitest';
-import { Behavior, Cast, Character, DayPhase, Mission, Phrase, Player, PrizeTransaction, RoundTable, Season, TraitorMeeting, User, normalizeMissionPool } from '../../src/domain/entities';
+import {
+  Behavior,
+  Cast,
+  Character,
+  DayPhase,
+  Mission,
+  Phrase,
+  placeFor,
+  Player,
+  PrizeTransaction,
+  Publication,
+  PublicationArea,
+  PublicationCountry,
+  PublicationKind,
+  RoundTable,
+  Season,
+  TraitorMeeting,
+  User,
+  normalizeMissionPool,
+} from '../../src/domain/entities';
+import { UserRole } from '@traitors/shared';
 import { EndgameChoice, GamePhase, PhrasePhase, PhraseTone, PlayerRole, PlayerStatus, PrizeTransactionType, RoundTableKind, SeasonMode } from '../../src/domain/enums';
 import { PhaseFlowPolicy, WinnerPolicy } from '../../src/domain/services';
 import { ensureBanishedMatchesVotes } from '../../src/application/services/roundTableVotes';
@@ -111,6 +131,23 @@ describe('regras das entidades', () => {
     expect(user.isOwner()).toBe(false);
     user.promoteToOwner();
     expect(user.toPublic().role).toBe('OWNER');
+  });
+
+  it('publicações: onde entram e o que uma temporada publicada precisa levar', () => {
+    const season = { kind: 'SEASON' as const, seasonId: 's1' };
+    expect(placeFor(UserRole.OWNER, PublicationKind.SEASON, { country: PublicationCountry.UK })).toEqual({ area: 'OFFICIAL', country: 'UK' });
+    expect(placeFor(UserRole.OWNER, PublicationKind.CAST, {})).toEqual({ area: 'FAN', country: null });
+    expect(placeFor(UserRole.FAN, PublicationKind.SEASON, { country: PublicationCountry.US })).toEqual({ area: 'FAN', country: null });
+    expect(() => placeFor(UserRole.OWNER, PublicationKind.SEASON, {})).toThrow(/EUA ou do Reino Unido/);
+    expect(() => placeFor(UserRole.OWNER, PublicationKind.CHARACTER, { area: PublicationArea.OFFICIAL })).toThrow(/só entram temporadas/);
+    expect(() => placeFor(UserRole.FAN, PublicationKind.SEASON, { area: PublicationArea.OFFICIAL, country: PublicationCountry.US })).toThrow(/donos/);
+
+    const place = { area: PublicationArea.FAN, country: null };
+    const snapshot = { characters: [], relationships: [] };
+    expect(() => Publication.publish({ name: 'Sem configurações', snapshot, source: season, publisherId: 'u', place })).toThrow(/configurações/);
+    const settings = { mode: SeasonMode.MANUAL, chaos: 0, missionPool: 'US_S4' as const, interactionLimit: 3, withdrawals: true, hiddenShieldChance: 0, currency: 'USD', initialPrizePot: 0, maxPrizePot: null };
+    const published = Publication.publish({ name: 'Com configurações', snapshot, season: settings, source: season, publisherId: 'u', place });
+    expect(published.toJSON()).toMatchObject({ kind: 'SEASON', seasonId: 's1', season: settings, area: 'FAN', country: null });
   });
 
   it('fluxo das fases, apuração de votos e divisão do prêmio', () => {

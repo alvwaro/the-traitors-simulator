@@ -1,7 +1,7 @@
 import { CharacterPhoto, ParticipantSeason } from '../../domain/entities';
 
-/** Uma temporada lida da wiki, com o código do programa (US4, UK2) para ligar à temporada do site. */
-export interface WikiSeason extends Omit<ParticipantSeason, 'seasonId'> {
+/** Uma temporada lida da wiki, com o código do programa (US4, UK2) para ligar à temporada oficial do site. */
+export interface WikiSeason extends Omit<ParticipantSeason, 'publicationId'> {
   code: string | null;
 }
 

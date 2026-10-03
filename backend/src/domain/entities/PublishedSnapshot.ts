@@ -1,4 +1,6 @@
+import { SeasonMode } from '../enums';
 import { BehaviorEffects } from './Behavior';
+import { MissionPool } from './Season';
 
 /** Comportamento guardado pelo conteúdo: quem copia recebe o mesmo efeito mesmo sem ter a tag. */
 export interface PublishedBehavior {
@@ -13,6 +15,8 @@ export interface PublishedCharacter {
   name: string;
   imageUrl: string | null;
   behaviors: PublishedBehavior[];
+  /** Temporadas: o personagem de origem na biblioteca de quem publicou (a página do participante, nas oficiais). */
+  characterId?: string | null;
 }
 
 export interface PublishedRelationship {
@@ -24,8 +28,25 @@ export interface PublishedRelationship {
   allied: boolean;
 }
 
-/** Cópia congelada de um elenco (um cast inteiro ou um personagem só). */
+/** Cópia congelada de um elenco (um cast inteiro, um personagem só ou os participantes de uma temporada). */
 export interface PublishedSnapshot {
   characters: PublishedCharacter[];
   relationships: PublishedRelationship[];
+}
+
+/**
+ * As configurações de uma temporada publicada, do jeito que estavam ao publicar: quem copia a temporada
+ * recebe as mesmas. O andamento do jogo não vai junto.
+ */
+export interface PublishedSeason {
+  mode: SeasonMode;
+  chaos: number;
+  /** A temporada do programa que ela reproduz (missões e reviravoltas). */
+  missionPool: MissionPool;
+  interactionLimit: number;
+  withdrawals: boolean;
+  hiddenShieldChance: number;
+  currency: string;
+  initialPrizePot: number;
+  maxPrizePot: number | null;
 }

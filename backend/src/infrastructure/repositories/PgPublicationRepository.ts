@@ -1,4 +1,4 @@
-import { Publication, PublicationArea, PublicationKind, PublicationSource, PublishedSnapshot } from '../../domain/entities';
+import { Publication, PublicationArea, PublicationCountry, PublicationKind, PublicationSource, PublishedSeason, PublishedSnapshot } from '../../domain/entities';
 import { IPublicationRepository, PublicationFilter } from '../../domain/repositories';
 import { Queryable } from '../database/connection';
 import { query, queryOne } from '../database/query';
@@ -7,6 +7,7 @@ interface PublicationRow {
   id: string;
   kind: PublicationKind;
   area: PublicationArea;
+  country: PublicationCountry | null;
   publisher_id: string | null;
   season_id: string | null;
   cast_id: string | null;
@@ -14,7 +15,8 @@ interface PublicationRow {
   name: string;
   description: string | null;
   image_url: string | null;
-  snapshot: PublishedSnapshot | null;
+  snapshot: PublishedSnapshot;
+  season: PublishedSeason | null;
   published_at: Date;
 }
 
@@ -23,6 +25,7 @@ const toEntity = (r: PublicationRow): Publication =>
     id: r.id,
     kind: r.kind,
     area: r.area,
+    country: r.country,
     publisherId: r.publisher_id,
     seasonId: r.season_id,
     castId: r.cast_id,
@@ -31,6 +34,7 @@ const toEntity = (r: PublicationRow): Publication =>
     description: r.description,
     imageUrl: r.image_url,
     snapshot: r.snapshot,
+    season: r.season,
     publishedAt: r.published_at,
   });
 
@@ -82,15 +86,16 @@ export class PgPublicationRepository implements IPublicationRepository {
     const p = publication.toJSON();
     await query(
       this.db,
-      `INSERT INTO publications (id, kind, area, publisher_id, season_id, cast_id, character_id, name, description, image_url, snapshot, published_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      `INSERT INTO publications (id, kind, area, country, publisher_id, season_id, cast_id, character_id, name, description, image_url, snapshot, season, published_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
        ON CONFLICT (id) DO UPDATE
-          SET area = EXCLUDED.area, name = EXCLUDED.name, description = EXCLUDED.description, image_url = EXCLUDED.image_url,
-              snapshot = EXCLUDED.snapshot, published_at = EXCLUDED.published_at`,
+          SET area = EXCLUDED.area, country = EXCLUDED.country, name = EXCLUDED.name, description = EXCLUDED.description,
+              image_url = EXCLUDED.image_url, snapshot = EXCLUDED.snapshot, season = EXCLUDED.season, published_at = EXCLUDED.published_at`,
       [
         p.id,
         p.kind,
         p.area,
+        p.country,
         p.publisherId,
         p.seasonId,
         p.castId,
@@ -98,7 +103,8 @@ export class PgPublicationRepository implements IPublicationRepository {
         p.name,
         p.description,
         p.imageUrl,
-        p.snapshot === null ? null : JSON.stringify(p.snapshot),
+        JSON.stringify(p.snapshot),
+        p.season === null ? null : JSON.stringify(p.season),
         p.publishedAt,
       ],
     );

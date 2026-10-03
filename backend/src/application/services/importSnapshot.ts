@@ -1,5 +1,6 @@
 import { Behavior, Cast, Character, PublishedBehavior, PublishedCharacter, PublishedSnapshot } from '../../domain/entities';
 import { Repositories } from '../ports/IUnitOfWork';
+import { CastMember } from './seasonSetup';
 
 const CAST_NAME_MAX = 120;
 
@@ -36,6 +37,22 @@ export async function importCharacters(repos: Repositories, ownerId: string, sna
   const byKey = new Map<string, Character>();
   for (const c of snapshot.characters) byKey.set(c.key, await importCharacter(repos, ownerId, c, behaviorId));
   return byKey;
+}
+
+/**
+ * O elenco de uma temporada publicada pronto para entrar numa temporada nova: cada participante como foi
+ * publicado (nome, foto e comportamentos), ligado ao personagem que ele vira na biblioteca da pessoa.
+ */
+export async function importMembers(repos: Repositories, ownerId: string, snapshot: PublishedSnapshot): Promise<CastMember[]> {
+  const behaviorId = await behaviorResolver(repos);
+  const members: CastMember[] = [];
+  for (const c of snapshot.characters) {
+    const character = await importCharacter(repos, ownerId, c, behaviorId);
+    const behaviorIds: string[] = [];
+    for (const b of c.behaviors) behaviorIds.push(await behaviorId(b));
+    members.push({ name: c.name, imageUrl: c.imageUrl, characterId: character.id, behaviorIds });
+  }
+  return members;
 }
 
 /** O nome do cast é único na biblioteca da pessoa: acrescenta (2), (3)... se já existir. */

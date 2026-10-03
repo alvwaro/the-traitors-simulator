@@ -1,12 +1,21 @@
 import { IUseCase } from '../../contracts/IUseCase';
 import { IUnitOfWork, Repositories } from '../../ports/IUnitOfWork';
-import { CopyPublicationInput, CopyPublicationOutput, ListPublicationsInput, PublicationActionInput, PublicationOutput } from '../../dtos/PublicationDTOs';
+import {
+  CopyPublicationInput,
+  CopyPublicationOutput,
+  CopySeasonInput,
+  ListPublicationsInput,
+  PublicationActionInput,
+  PublicationIdInput,
+  PublicationOutput,
+} from '../../dtos/PublicationDTOs';
+import { SeasonDetailsOutput } from '../../dtos/SeasonDTOs';
+import { DomainError } from '../../../domain/errors/DomainError';
 import { ForbiddenError } from '../../../shared/errors/AppError';
 import { requirePublication } from '../../services/libraryGuards';
-import { requireSeason } from '../../services/gameGuards';
 import { toPublicationOutputs } from '../../services/publicationOutput';
-import { importCast, importCharacters } from '../../services/importSnapshot';
-import { seasonSnapshot } from '../../services/publishedSnapshot';
+import { importCast, importCharacters, importMembers } from '../../services/importSnapshot';
+import { setUpSeason } from '../../services/seasonSetup';
 import { toCastOutput } from '../../services/castOutput';
 
 /** Vitrines públicas (não precisa estar logado para ver). */
@@ -18,7 +27,17 @@ export class ListPublicationsUseCase implements IUseCase<ListPublicationsInput, 
   }
 }
 
-/** Tira da vitrine. Quem já copiou continua com a cópia; a temporada volta a ser só de quem criou. */
+/** Uma publicação (a página de uma temporada publicada). */
+export class GetPublicationUseCase implements IUseCase<PublicationIdInput, PublicationOutput> {
+  constructor(private readonly repos: Repositories) {}
+
+  async execute(input: PublicationIdInput): Promise<PublicationOutput> {
+    const [output] = await toPublicationOutputs(this.repos, [await requirePublication(this.repos, input.publicationId)]);
+    return output;
+  }
+}
+
+/** Tira da vitrine. Quem já copiou continua com a cópia; a origem continua com quem criou. */
 export class UnpublishUseCase implements IUseCase<PublicationActionInput, void> {
   constructor(private readonly uow: IUnitOfWork) {}
 
@@ -32,9 +51,9 @@ export class UnpublishUseCase implements IUseCase<PublicationActionInput, void> 
 }
 
 /**
- * Copia para a Minha Área de quem está logado:
+ * Copia para a biblioteca de quem está logado:
  *  - cast: vira um cast com o mesmo elenco e relacionamentos;
- *  - temporada: o elenco atual dela vira um cast, pronto para jogar a própria versão;
+ *  - temporada: o elenco publicado vira um cast, pronto para jogar a própria versão;
  *  - personagem: entra na biblioteca de personagens.
  */
 export class CopyPublicationUseCase implements IUseCase<CopyPublicationInput, CopyPublicationOutput> {
@@ -47,18 +66,35 @@ export class CopyPublicationUseCase implements IUseCase<CopyPublicationInput, Co
       const ownerId = input.actor.id;
 
       if (props.kind === 'CHARACTER') {
-        const [character] = [...(await importCharacters(repos, ownerId, props.snapshot!)).values()];
+        const [character] = [...(await importCharacters(repos, ownerId, props.snapshot)).values()];
         return { kind: props.kind, cast: null, character: character.toJSON() };
       }
 
-      const season = props.seasonId ? await requireSeason(repos, props.seasonId) : null;
-      const snapshot = season ? await seasonSnapshot(repos, season) : props.snapshot!;
-      const cast = await importCast(repos, ownerId, snapshot, {
-        name: input.name ?? season?.name ?? props.name,
+      const cast = await importCast(repos, ownerId, props.snapshot, {
+        name: input.name ?? props.name,
         description: props.description,
         imageUrl: props.imageUrl,
       });
       return { kind: props.kind, cast: await toCastOutput(repos, cast), character: null };
+    });
+  }
+}
+
+/**
+ * Copia uma temporada publicada inteira para a biblioteca: uma temporada nova, em preparação, com as mesmas
+ * configurações (modo, missões, prêmio, moeda...) e o elenco publicado. Os personagens entram na biblioteca.
+ */
+export class CopySeasonUseCase implements IUseCase<CopySeasonInput, SeasonDetailsOutput> {
+  constructor(private readonly uow: IUnitOfWork) {}
+
+  execute(input: CopySeasonInput): Promise<SeasonDetailsOutput> {
+    return this.uow.run(async (repos) => {
+      const publication = await requirePublication(repos, input.publicationId);
+      const settings = publication.season;
+      if (!settings) throw new DomainError('Só uma temporada publicada pode ser copiada como temporada');
+      const ownerId = input.actor.id;
+      const members = await importMembers(repos, ownerId, publication.snapshot);
+      return setUpSeason(repos, { ...settings, name: input.name ?? publication.name, ownerId, human: input.human }, members);
     });
   }
 }

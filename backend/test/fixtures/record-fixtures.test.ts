@@ -11,7 +11,7 @@ import { getState, playAsHuman, State } from '../player-bot';
 const OUT = join(process.cwd(), '..', 'frontend', 'src', 'test', 'fixtures', 'api.json');
 
 type History = { days: { day: { number: number }; events: unknown[] }[] };
-type Snapshot = { label: string; details: unknown; state: unknown; history: History };
+type Snapshot = { label: string; details: { id: string }; state: unknown; history: History };
 
 /** O que a tela do jogo carrega: a temporada, o estado e a crônica (só hoje e ontem, para o arquivo não crescer). */
 async function snapshot(agent: Agent, id: string, label: string): Promise<Snapshot> {
@@ -141,8 +141,12 @@ describe.runIf(import.meta.env.MODE === 'fixtures')('gravação das fixtures do 
     const manual = await recordManual(agent);
     const automatic = await recordAutomatic(agent);
     const player = [...(await recordPlayer(agent, 'US_S3', 3)), ...(await recordPlayer(agent, 'UK_S2', 8)), ...(await recordPlayer(agent, 'US_S3', 11))];
-    const official = await createSeason(owner, 5);
-    ok(await owner.post('/api/publications').send({ kind: 'SEASON', sourceId: official.id, description: 'Temporada oficial' }), 201);
+    // Temporadas oficiais (uma de cada país, ainda no elenco) e a simulação inteira publicada por um fã.
+    const officialUs = await createSeason(owner, 5, { missionPool: 'US_S4', currency: 'USD', initialPrizePot: 250000 });
+    const officialUk = await createSeason(owner, 6, { missionPool: 'UK_S2', currency: 'GBP' });
+    ok(await owner.post('/api/publications').send({ kind: 'SEASON', sourceId: officialUs.id, description: 'Temporada oficial' }), 201);
+    ok(await owner.post('/api/publications').send({ kind: 'SEASON', sourceId: officialUk.id }), 201);
+    ok(await agent.post('/api/publications').send({ kind: 'SEASON', sourceId: automatic.shots[0].details.id, description: 'Simulação completa' }), 201);
 
     const data = {
       me: ok(await agent.get('/api/auth/me')),
@@ -171,7 +175,8 @@ describe.runIf(import.meta.env.MODE === 'fixtures')('gravação das fixtures do 
     expect(manual.some((s) => s.label === 'final')).toBe(true);
     expect(automatic.shots.length).toBeGreaterThan(2);
     expect(player.length).toBeGreaterThan(3);
-    expect(data.publications.official).not.toHaveLength(0);
+    expect(data.publications.official).toHaveLength(2);
+    expect(data.publications.fan.some((p: { kind: string }) => p.kind === 'SEASON')).toBe(true);
 
     mkdirSync(join(OUT, '..'), { recursive: true });
     writeFileSync(OUT, JSON.stringify(data));

@@ -29,11 +29,11 @@ describe('página do participante, fotos por cast e wiki', () => {
     const [dorinda] = await createCharacters(owner, ['Dorinda Medley']);
     // Uma temporada oficial com as missões da 4ª temporada americana.
     const season = await createSeason(owner, 4, { missionPool: 'US_S4' });
-    ok(await owner.post('/api/publications').send({ kind: 'SEASON', sourceId: season.id }), 201);
+    const publication = ok(await owner.post('/api/publications').send({ kind: 'SEASON', sourceId: season.id }), 201);
 
     const imported = ok(await owner.post(`/api/characters/${dorinda}/wiki`).send({ url: DORINDA.wikiUrl }));
     expect(imported.profile.seasons.map((s: { label: string }) => s.label)).toEqual(['EUA · 3ª temporada', 'EUA · 4ª temporada']);
-    expect(imported.profile.seasons[1].seasonId).toBe(season.id);
+    expect(imported.profile.seasons[1].publicationId).toBe(publication.id);
     expect(imported.photos).toHaveLength(2);
     expect(imported.imageUrl).toBe(DORINDA.photos[0].url);
 
@@ -71,20 +71,6 @@ describe('página do participante, fotos por cast e wiki', () => {
     ok(await agent.patch(`/api/casts/${cast.id}/members/${ids[0]}/photo`).send({ imageUrl: null }));
     expect(ok(await agent.get(`/api/casts/${cast.id}`)).characters[0].imageUrl).toBe('https://example.com/a.png');
     expect((await agent.patch(`/api/casts/${cast.id}/members/${ids[1]}/photo`).send({ imageUrl: 'ftp://x' })).status).toBe(400);
-  });
-
-  it('donos escolhem publicar como oficial ou de fã; fãs não publicam como oficial', async () => {
-    const { agent: owner } = await signUp('areadono', true);
-    const [character] = await createCharacters(owner, ['Escolha de Área']);
-    const asFan = ok(await owner.post('/api/publications').send({ kind: 'CHARACTER', sourceId: character, area: 'FAN' }), 201);
-    expect(asFan.area).toBe('FAN');
-    const moved = ok(await owner.post('/api/publications').send({ kind: 'CHARACTER', sourceId: character, area: 'OFFICIAL' }), 201);
-    expect(moved.id).toBe(asFan.id);
-    expect(moved.area).toBe('OFFICIAL');
-
-    const { agent: fan } = await signUp('areafa');
-    const [fanCharacter] = await createCharacters(fan, ['Fã Oficial']);
-    expect((await fan.post('/api/publications').send({ kind: 'CHARACTER', sourceId: fanCharacter, area: 'OFFICIAL' })).status).toBe(422);
   });
 });
 

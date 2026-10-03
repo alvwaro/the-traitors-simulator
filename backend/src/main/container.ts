@@ -53,7 +53,13 @@ import { ListPlayersUseCase } from '../application/use-cases/player/ListPlayersU
 import { RemovePlayerUseCase } from '../application/use-cases/player/RemovePlayerUseCase';
 import { UpdatePlayerUseCase } from '../application/use-cases/player/UpdatePlayerUseCase';
 import { WithdrawPlayerUseCase } from '../application/use-cases/player/WithdrawPlayerUseCase';
-import { CopyPublicationUseCase, ListPublicationsUseCase, UnpublishUseCase } from '../application/use-cases/publication/PublicationUseCases';
+import {
+  CopyPublicationUseCase,
+  CopySeasonUseCase,
+  GetPublicationUseCase,
+  ListPublicationsUseCase,
+  UnpublishUseCase,
+} from '../application/use-cases/publication/PublicationUseCases';
 import { PublishUseCase } from '../application/use-cases/publication/PublishUseCase';
 import { CreateSeasonUseCase } from '../application/use-cases/season/CreateSeasonUseCase';
 import { DeleteSeasonUseCase } from '../application/use-cases/season/DeleteSeasonUseCase';
@@ -125,9 +131,11 @@ export function buildContainer(overrides: ContainerOverrides = {}): Container {
     }),
     ...publicationController({
       list: new ListPublicationsUseCase(repos),
+      get: new GetPublicationUseCase(repos),
       publish: new PublishUseCase(uow),
       unpublish: new UnpublishUseCase(uow),
       copy: new CopyPublicationUseCase(uow),
+      copySeason: new CopySeasonUseCase(uow),
     }),
     ...characterController({
       create: new CreateCharacterUseCase(uow),

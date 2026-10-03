@@ -1,5 +1,4 @@
-import { CharacterProps, PublicationArea, PublicationKind, PublicationProps } from '../../domain/entities';
-import { GamePhase, SeasonMode, SeasonStatus } from '../../domain/enums';
+import { CharacterProps, PublicationArea, PublicationCountry, PublicationKind, PublicationProps } from '../../domain/entities';
 import { Actor } from './AuthDTOs';
 import { CastOutput } from './LibraryDTOs';
 
@@ -9,8 +8,10 @@ export interface PublishInput {
   /** Id da temporada, do cast ou do personagem, conforme o tipo. */
   sourceId: string;
   description?: string | null;
-  /** Donos escolhem entre a área oficial e a de fãs (padrão: oficial). */
+  /** Donos escolhem entre as Temporadas Oficiais e a Área de Fãs (padrão para temporadas: oficial). */
   area?: PublicationArea;
+  /** Temporada oficial: EUA ou Reino Unido (padrão: pelas missões da temporada). */
+  country?: PublicationCountry;
 }
 
 export interface ListPublicationsInput {
@@ -19,9 +20,12 @@ export interface ListPublicationsInput {
   publisherId?: string;
 }
 
-export interface PublicationActionInput {
-  actor: Actor;
+export interface PublicationIdInput {
   publicationId: string;
+}
+
+export interface PublicationActionInput extends PublicationIdInput {
+  actor: Actor;
 }
 
 export interface CopyPublicationInput extends PublicationActionInput {
@@ -29,19 +33,15 @@ export interface CopyPublicationInput extends PublicationActionInput {
   name?: string;
 }
 
-/** Situação atual de uma temporada publicada (lida ao vivo). */
-export interface PublishedSeasonSummary {
-  id: string;
-  name: string;
-  mode: SeasonMode;
-  status: SeasonStatus;
-  currentDay: number | null;
-  currentPhase: GamePhase | null;
+export interface CopySeasonInput extends PublicationActionInput {
+  /** Nome da temporada criada (padrão: o nome publicado). */
+  name?: string;
+  /** Modo Jogador: o participante que a pessoa vai controlar. */
+  human?: { name: string } | null;
 }
 
 export interface PublicationOutput extends PublicationProps {
   publisherName: string | null;
-  season: PublishedSeasonSummary | null;
 }
 
 /** Resultado da cópia: um cast (de cast ou temporada) ou um personagem. */

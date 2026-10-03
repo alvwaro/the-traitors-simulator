@@ -1,4 +1,4 @@
-import { Cast, Character, PublishedBehavior, PublishedSnapshot, Season } from '../../domain/entities';
+import { Cast, Character, PublishedBehavior, PublishedSeason, PublishedSnapshot, Season } from '../../domain/entities';
 import { Repositories } from '../ports/IUnitOfWork';
 
 /** Comportamentos pelo conteúdo, por id (os apagados somem da cópia). */
@@ -35,13 +35,19 @@ export async function characterSnapshot(repos: Repositories, character: Characte
 
 /**
  * Elenco de uma temporada para copiar e jogar: os participantes (menos quem jogava no modo Jogador),
- * sem os relacionamentos, que mudaram ao longo do jogo.
+ * sem os relacionamentos, que mudaram ao longo do jogo. Cada um leva o personagem de origem (página do participante).
  */
 export async function seasonSnapshot(repos: Repositories, season: Season): Promise<PublishedSnapshot> {
   const players = (await repos.players.findBySeason(season.id)).filter((p) => !p.isHuman);
   const behaviors = await behaviorsById(repos, players.flatMap((p) => p.behaviorIds));
   return {
-    characters: players.map((p) => ({ key: p.id, name: p.name, imageUrl: p.imageUrl, behaviors: pick(behaviors, p.behaviorIds) })),
+    characters: players.map((p) => ({ key: p.id, name: p.name, imageUrl: p.imageUrl, behaviors: pick(behaviors, p.behaviorIds), characterId: p.characterId })),
     relationships: [],
   };
+}
+
+/** As configurações da temporada, que vão junto na publicação (o andamento do jogo não). */
+export function seasonSettings(season: Season): PublishedSeason {
+  const { mode, chaos, missionPool, interactionLimit, withdrawals, hiddenShieldChance, currency, initialPrizePot, maxPrizePot } = season.toJSON();
+  return { mode, chaos, missionPool, interactionLimit, withdrawals, hiddenShieldChance, currency, initialPrizePot, maxPrizePot };
 }

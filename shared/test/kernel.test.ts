@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  countryOfSeason,
   enumOf,
   GamePhase,
   isBehaviorEffectKey,
@@ -21,6 +22,13 @@ describe('enums', () => {
     expect(Color).toEqual({ RED: 'RED', BLUE: 'BLUE' });
     expect(Object.isFrozen(Color)).toBe(true);
     expect(GamePhase.ROUND_TABLE).toBe('ROUND_TABLE');
+  });
+
+  it('acha a versão do programa pelas missões e, nas misturadas, pela moeda', () => {
+    expect(countryOfSeason('US_S4', 'GBP')).toBe('US');
+    expect(countryOfSeason('UK_S2', 'BRL')).toBe('UK');
+    expect(countryOfSeason('MIX', 'GBP')).toBe('UK');
+    expect(countryOfSeason('MIX', 'USD')).toBe('US');
   });
 });
 

@@ -47,11 +47,14 @@ export const API_ROUTES = {
   'auth.logout': route({ method: 'POST', path: '/auth/logout', access: 'public' }),
   'auth.me': route({ method: 'GET', path: '/auth/me', access: 'public' }),
 
-  // Áreas públicas: Castelo (oficial) e Fãs
+  // Áreas públicas: Temporadas Oficiais e Fãs
   'publications.list': route({ method: 'GET', path: '/publications', access: 'user' }),
+  'publications.get': route({ method: 'GET', path: '/publications/:publicationId', access: 'user' }),
   'publications.publish': route({ method: 'POST', path: '/publications', access: 'user' }),
   'publications.remove': route({ method: 'DELETE', path: '/publications/:publicationId', access: 'user' }),
   'publications.copy': route({ method: 'POST', path: '/publications/:publicationId/copy', access: 'user' }),
+  // Temporada publicada copiada inteira: configurações e elenco, pronta para começar
+  'publications.copySeason': route({ method: 'POST', path: '/publications/:publicationId/copy-season', access: 'user' }),
 
   // Minha Área: personagens e casts
   'characters.create': route({ method: 'POST', path: '/characters', access: 'user' }),

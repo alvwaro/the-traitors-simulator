@@ -33,12 +33,14 @@ function poolOf(code: string | null): string | null {
   return pool && (MISSION_POOLS as readonly string[]).includes(pool) ? pool : null;
 }
 
-/** Temporadas oficiais publicadas, por conjunto de missões (a temporada do programa que ela reproduz). */
+/** Temporadas oficiais publicadas (a mais recente de cada), por conjunto de missões: a temporada do programa que reproduzem. */
 async function officialSeasonsByPool(repos: Repositories): Promise<Map<string, string>> {
   const published = await repos.publications.findAll({ area: PublicationArea.OFFICIAL, kind: PublicationKind.SEASON });
-  const seasons = await repos.seasons.findByIds(published.flatMap((p) => (p.seasonId ? [p.seasonId] : [])));
   const byPool = new Map<string, string>();
-  for (const s of seasons) if (!byPool.has(s.missionPool)) byPool.set(s.missionPool, s.id);
+  for (const p of published) {
+    const pool = p.season?.missionPool;
+    if (pool && !byPool.has(pool)) byPool.set(pool, p.id);
+  }
   return byPool;
 }
 
@@ -47,10 +49,10 @@ async function officialSeasonsByPool(repos: Repositories): Promise<Map<string, s
  * senão, liga à temporada oficial publicada que reproduz a mesma temporada do programa.
  */
 function merge(current: ParticipantProfile | null, wikiUrl: string, seasons: WikiSeason[], otherShows: string[], byPool: Map<string, string>): ParticipantProfile {
-  const linked = new Map((current?.seasons ?? []).map((s) => [s.label, s.seasonId]));
+  const linked = new Map((current?.seasons ?? []).map((s) => [s.label, s.publicationId]));
   const fromWiki: ParticipantSeason[] = seasons.map(({ code, ...s }) => {
     const pool = poolOf(code);
-    return { ...s, seasonId: linked.get(s.label) ?? (pool ? (byPool.get(pool) ?? null) : null) };
+    return { ...s, publicationId: linked.get(s.label) ?? (pool ? (byPool.get(pool) ?? null) : null) };
   });
   // Temporadas cadastradas à mão que a wiki não conhece continuam no fim.
   const manual = (current?.seasons ?? []).filter((s) => !fromWiki.some((w) => w.label === s.label));

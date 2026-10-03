@@ -5,7 +5,7 @@ import { BEHAVIOR_EFFECT_KEYS, BEHAVIOR_EFFECT_LIMIT } from '../../../domain/ent
 import { PHRASE_MAX_LENGTH } from '../../../domain/entities/Phrase';
 import { MISSION_POOLS } from '../../../domain/entities/Season';
 import { HUMAN_ACTIONS } from '../../../domain/simulation/humanActions';
-import { PASSWORD_MAX_LENGTH, PublicationArea, PublicationKind } from '../../../domain/entities';
+import { PASSWORD_MAX_LENGTH, PublicationArea, PublicationCountry, PublicationKind } from '../../../domain/entities';
 
 const id = z.uuid();
 const money = z.number().nonnegative();
@@ -44,7 +44,7 @@ const shortText = (max: number) => z.string().trim().max(max).nullable().optiona
 const photos = z.array(z.object({ url: httpUrl, label: shortText(80) })).max(20);
 const participantSeason = z.object({
   label: z.string().trim().min(1).max(120),
-  seasonId: id.nullable().optional(),
+  publicationId: id.nullable().optional(),
   role: z.enum(['FAITHFUL', 'TRAITOR', 'RECRUITED']).nullable().optional(),
   roleDetail: shortText(200),
   fate: shortText(200),
@@ -229,6 +229,8 @@ export const publishBody = z.object({
   description: notes,
   /** Só donos escolhem; fãs publicam sempre na Área de Fãs. */
   area: publicationArea.optional(),
+  /** Temporada oficial: EUA ou Reino Unido. */
+  country: z.enum([PublicationCountry.US, PublicationCountry.UK]).optional(),
 });
 export const publicationsQuery = z.object({
   area: z.enum([PublicationArea.OFFICIAL, PublicationArea.FAN]).optional(),
@@ -237,3 +239,4 @@ export const publicationsQuery = z.object({
   mine: z.enum(['true', 'false']).optional(),
 });
 export const copyPublicationBody = z.object({ name: title.optional() });
+export const copySeasonBody = z.object({ name: title.optional(), human: z.object({ name: personName }).nullable().optional() });

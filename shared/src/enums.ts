@@ -100,7 +100,7 @@ export const SimulationEventKind = enumOf(
 );
 export type SimulationEventKind = EnumValue<typeof SimulationEventKind>;
 
-/** Contas: fãs criam temporadas na Minha Área; donos do site publicam na Área Oficial e editam frases/comportamentos. */
+/** Contas: fãs criam temporadas na biblioteca; donos do site publicam nas Temporadas Oficiais e editam frases/comportamentos. */
 export const UserRole = enumOf('OWNER', 'FAN');
 export type UserRole = EnumValue<typeof UserRole>;
 
@@ -108,10 +108,21 @@ export type UserRole = EnumValue<typeof UserRole>;
 export const PublicationKind = enumOf('SEASON', 'CAST', 'CHARACTER');
 export type PublicationKind = EnumValue<typeof PublicationKind>;
 
-/** Área Oficial (donos do site) e Área de Fãs. */
+/** Temporadas Oficiais (donos do site) e Área de Fãs. */
 export const PublicationArea = enumOf('OFFICIAL', 'FAN');
 export type PublicationArea = EnumValue<typeof PublicationArea>;
+
+/** Versão do programa de uma temporada oficial: EUA ou Reino Unido. */
+export const PublicationCountry = enumOf('US', 'UK');
+export type PublicationCountry = EnumValue<typeof PublicationCountry>;
 
 /** Conjuntos de missões e reviravoltas: uma temporada de cada versão do programa (EUA/Reino Unido) ou a mistura. */
 export const MISSION_POOLS = ['US_S1', 'UK_S1', 'US_S2', 'UK_S2', 'US_S3', 'UK_S3', 'US_S4', 'MIX'] as const;
 export type MissionPool = (typeof MISSION_POOLS)[number];
+
+/** A versão do programa que uma temporada reproduz: pelas missões (US_S4 → EUA) ou, nas misturadas, pela moeda. */
+export function countryOfSeason(missionPool: MissionPool, currency: string): PublicationCountry {
+  if (missionPool.startsWith('UK_')) return PublicationCountry.UK;
+  if (missionPool.startsWith('US_')) return PublicationCountry.US;
+  return currency === 'GBP' ? PublicationCountry.UK : PublicationCountry.US;
+}

@@ -19,8 +19,8 @@ export type ParticipantRole = 'FAITHFUL' | 'TRAITOR' | 'RECRUITED';
 export interface ParticipantSeason {
   /** Ex.: "EUA · 4ª temporada". */
   label: string;
-  /** Temporada publicada no site que corresponde a esta (a página mostra o cartão dela). */
-  seasonId: string | null;
+  /** Publicação (temporada oficial do site) que corresponde a esta: a página mostra o cartão dela. */
+  publicationId: string | null;
   role: ParticipantRole | null;
   /** Ex.: "Recrutado(a) no episódio 9". */
   roleDetail: string | null;
@@ -91,7 +91,7 @@ export function normalizeProfile(input: ParticipantProfileInput | null): Partici
       if (s.role && !ROLES.includes(s.role)) throw new DomainError('Papel inválido');
       return {
         label: requiredText(s.label, 'Cada temporada precisa de um nome'),
-        seasonId: s.seasonId ?? null,
+        publicationId: s.publicationId ?? null,
         role: s.role ?? null,
         roleDetail: optionalText(s.roleDetail),
         fate: optionalText(s.fate),
