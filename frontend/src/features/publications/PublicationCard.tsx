@@ -1,10 +1,9 @@
 import type { ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { phaseLabel, seasonStatusLabel } from '../../domain/labels';
 import type { Publication } from '../../domain/models';
-import { formatDate, toRoman } from '../../lib/format';
+import { formatDate } from '../../lib/format';
 import { CardCover } from '../library/components/CardCover';
-import { areaLabel } from './labels';
+import { placeLabel, playersText, publishedSeasonPath } from './labels';
 import styles from '../library/components/Library.module.css';
 
 interface PublicationCardProps {
@@ -17,33 +16,29 @@ interface PublicationCardProps {
   showArea?: boolean;
 }
 
-/** Linha de situação: temporadas mostram onde estão; casts e personagens, o elenco. */
+/** Linha de baixo do nome: o tamanho do elenco (temporadas e casts) ou os comportamentos do personagem. */
 function metaOf(p: Publication): string {
-  if (p.season) {
-    const where = p.season.currentDay && p.season.currentPhase ? ` · Dia ${toRoman(p.season.currentDay)}, ${phaseLabel[p.season.currentPhase]}` : '';
-    return `${seasonStatusLabel[p.season.status]}${where}`;
-  }
-  const characters = p.snapshot?.characters ?? [];
+  const characters = p.snapshot.characters;
+  if (p.kind === 'SEASON') return playersText(characters.length);
   if (p.kind === 'CHARACTER') return characters[0]?.behaviors.map((b) => b.name).join(', ') || 'Personagem';
   return `${characters.length} personagens`;
 }
 
-/** Cartão de uma publicação na Área Oficial, na Área de Fãs ou na lista da Minha Área. */
+/** Cartão de uma publicação nas Temporadas Oficiais, na Área de Fãs ou nas suas publicações (biblioteca). */
 export function PublicationCard({ publication: p, canRemove, onView, onCopy, onRemove, showArea }: Readonly<PublicationCardProps>) {
   const navigate = useNavigate();
-  const imageUrl = p.imageUrl ?? (p.kind === 'CHARACTER' ? (p.snapshot?.characters[0]?.imageUrl ?? null) : null);
-  const watchUrl = `/temporadas/${p.seasonId}`;
+  const imageUrl = p.imageUrl ?? (p.kind === 'CHARACTER' ? (p.snapshot.characters[0]?.imageUrl ?? null) : null);
   const official = p.area === 'OFFICIAL';
-  // Participante real: abre a página de informações dele.
+  // Participante real (publicações oficiais de antes): abre a página de informações dele.
   const participantUrl = official && p.kind === 'CHARACTER' && p.characterId ? `/participantes/${p.characterId}` : null;
   let open = onView;
-  if (p.kind === 'SEASON') open = () => navigate(watchUrl);
+  if (p.kind === 'SEASON') open = () => navigate(publishedSeasonPath(p.id));
   else if (participantUrl) open = () => navigate(participantUrl);
   let primary: ReactNode = null;
   if (p.kind === 'SEASON') {
     primary = (
-      <Link to={watchUrl} className={styles.inlineLink}>
-        Assistir
+      <Link to={publishedSeasonPath(p.id)} className={styles.inlineLink}>
+        Ver temporada
       </Link>
     );
   } else if (participantUrl) {
@@ -74,7 +69,7 @@ export function PublicationCard({ publication: p, canRemove, onView, onCopy, onR
         {/* Nas oficiais, quem publicou e quando não importam: são as temporadas do programa. */}
         {(showArea || !official) && (
           <p className={styles.castMeta}>
-            {showArea ? `${areaLabel[p.area]} · ` : ''}
+            {showArea ? `${placeLabel(p)} · ` : ''}
             {p.publisherName && !showArea ? `por ${p.publisherName} · ` : ''}
             {formatDate(p.publishedAt)}
           </p>

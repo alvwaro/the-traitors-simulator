@@ -2,7 +2,7 @@ import { Outlet } from 'react-router-dom';
 import { TabNav } from '../../components/layout/TabNav';
 
 const TABS = [
-  { to: '/', label: 'Castelo · Temporadas Oficiais', end: true },
+  { to: '/', label: 'Temporadas Oficiais', end: true },
   { to: '/fas', label: 'Área de Fãs' },
   { to: '/minha-area', label: 'Minha Área' },
 ];

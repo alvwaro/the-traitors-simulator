@@ -23,12 +23,19 @@ interface Fixtures {
   cast: { id: string };
   castRelationships: unknown;
   castRanking: unknown;
-  publications: { official: unknown[]; fan: unknown[]; mine: unknown[] };
+  publications: { official: Listed[]; fan: Listed[]; mine: Listed[] };
   castPublicationId: string;
   seasons: { id: string }[];
   games: { manual: Snapshot[]; automatic: Snapshot[]; player: Snapshot[] };
   relationships: unknown;
   fullHistory: unknown;
+}
+
+/** O que os testes leem de uma publicação gravada. */
+interface Listed {
+  id: string;
+  kind: string;
+  [key: string]: unknown;
 }
 
 export interface Call {
@@ -82,10 +89,8 @@ export class FakeApi implements IHttpClient {
   private read(path: string, query?: Record<string, string | undefined>): unknown {
     const s = this.snapshot;
     if (path === '/auth/me') return { user: this.user };
-    if (path === '/publications') {
-      if (query?.mine === 'true') return fixtures.publications.mine;
-      return query?.area === 'OFFICIAL' ? fixtures.publications.official : fixtures.publications.fan;
-    }
+    if (path === '/publications') return publicationList(query);
+    if (/^\/publications\/[^/]+$/.test(path)) return publicationList().find((p) => path.endsWith(p.id)) ?? new ApiError('Publicação não encontrada', 404);
     if (path === '/behaviors') return fixtures.behaviors;
     if (path === '/phrases') return fixtures.phrases;
     if (path === '/editions') return fixtures.editions;
@@ -121,6 +126,7 @@ export class FakeApi implements IHttpClient {
     if (/^\/seasons\/[^/]+\/players/.test(path)) return (s.details as { players?: unknown[] }).players?.[0] ?? {};
     if (/^\/seasons\/[^/]+\/prize-adjustments$/.test(path)) return { transaction: {}, prizePot: 0 };
     if (/^\/publications\/[^/]+\/copy$/.test(path)) return { kind: 'CAST', cast: fixtures.cast, character: null };
+    if (/^\/publications\/[^/]+\/copy-season$/.test(path)) return fixtures.games.manual[0].details;
     if (path.startsWith('/publications')) return fixtures.publications.fan[0] ?? {};
     if (path.startsWith('/characters')) return fixtures.characters[0];
     if (path.startsWith('/casts')) return fixtures.cast;
@@ -130,10 +136,33 @@ export class FakeApi implements IHttpClient {
   }
 }
 
+/** A temporada oficial gravada de um país (EUA ou Reino Unido). */
+export function officialSeason(country: 'US' | 'UK'): Listed {
+  const found = fixtures.publications.official.find((p) => p.kind === 'SEASON' && p.country === country);
+  if (!found) throw new Error(`nenhuma temporada oficial (${country}) nas fixtures`);
+  return found;
+}
+
+/** A temporada publicada por um fã nas fixtures (a simulação inteira). */
+export function fanSeason(): Listed {
+  const found = fixtures.publications.fan.find((p) => p.kind === 'SEASON');
+  if (!found) throw new Error('nenhuma temporada de fã nas fixtures');
+  return found;
+}
+
+/** As publicações gravadas, filtradas como a API filtra (área, tipo ou só as de quem está logado). */
+function publicationList(query?: Record<string, string | undefined>): Listed[] {
+  const { official, fan, mine } = fixtures.publications;
+  let list = [...official, ...fan];
+  if (query?.mine === 'true') list = mine;
+  else if (query?.area) list = query.area === 'OFFICIAL' ? official : fan;
+  return list.filter((p) => !query?.kind || p.kind === query.kind);
+}
+
 /** Página de participante de exemplo: duas temporadas (uma com recrutamento), fotos e outro reality. */
 function participantFixture(canEdit: boolean): unknown {
   const character = fixtures.characters[0] as { id: string; name?: string; imageUrl?: string | null };
-  const seasonId = (fixtures.publications.official.find((p) => (p as { kind: string }).kind === 'SEASON') as { seasonId?: string } | undefined)?.seasonId ?? null;
+  const publicationId = officialSeason('US').id;
   return {
     id: character.id,
     name: character.name ?? 'Participante',
@@ -142,8 +171,8 @@ function participantFixture(canEdit: boolean): unknown {
     profile: {
       wikiUrl: 'https://thetraitors.fandom.com/wiki/Dorinda_Medley',
       seasons: [
-        { label: 'EUA · 3ª temporada', seasonId: null, role: 'FAITHFUL', roleDetail: null, fate: 'Assassinado(a) no episódio 2', placement: '23º de 23', shieldWins: 0, episodes: 2 },
-        { label: 'EUA · 4ª temporada', seasonId, role: 'RECRUITED', roleDetail: 'Recrutado(a) no episódio 9', fate: 'Banido(a) no episódio 11', placement: '3º de 23', shieldWins: 2, episodes: 11 },
+        { label: 'EUA · 3ª temporada', publicationId: null, role: 'FAITHFUL', roleDetail: null, fate: 'Assassinado(a) no episódio 2', placement: '23º de 23', shieldWins: 0, episodes: 2 },
+        { label: 'EUA · 4ª temporada', publicationId, role: 'RECRUITED', roleDetail: 'Recrutado(a) no episódio 9', fate: 'Banido(a) no episódio 11', placement: '3º de 23', shieldWins: 2, episodes: 11 },
       ],
       otherShows: ['The Real Housewives of New York City'],
     },

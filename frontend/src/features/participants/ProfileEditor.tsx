@@ -15,7 +15,7 @@ interface ProfileEditorProps {
   onImported: () => void;
 }
 
-const EMPTY_SEASON: ParticipantSeason = { label: '', seasonId: null, role: null, roleDetail: null, fate: null, placement: null, shieldWins: null, episodes: null };
+const EMPTY_SEASON: ParticipantSeason = { label: '', publicationId: null, role: null, roleDetail: null, fate: null, placement: null, shieldWins: null, episodes: null };
 const ROLES: { value: ParticipantRole | ''; label: string }[] = [
   { value: '', label: 'Não informado' },
   { value: 'FAITHFUL', label: 'Fiel' },
@@ -85,10 +85,10 @@ export function ProfileEditor({ participant, seasons, onSaved, onImported }: Rea
             <Field label="Temporada">{(id) => <Input id={id} value={s.label} onChange={(e) => set(i, { label: e.target.value })} placeholder="EUA · 4ª temporada" maxLength={120} required />}</Field>
             <Field label="Cartão da temporada no site">
               {(id) => (
-                <Select id={id} value={s.seasonId ?? ''} onChange={(e) => set(i, { seasonId: e.target.value || null })}>
+                <Select id={id} value={s.publicationId ?? ''} onChange={(e) => set(i, { publicationId: e.target.value || null })}>
                   <option value="">Nenhum</option>
                   {seasons.map((p) => (
-                    <option key={p.id} value={p.seasonId ?? ''}>
+                    <option key={p.id} value={p.id}>
                       {p.name}
                     </option>
                   ))}

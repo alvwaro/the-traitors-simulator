@@ -14,10 +14,10 @@ import type {
   SeasonStatus,
   SimulationEventKind,
 } from './enums';
-import type { BehaviorEffects, CharacterStats, MissionPool, PublicationArea, PublicationKind, UserRole } from '@traitors/shared';
+import type { BehaviorEffects, CharacterStats, MissionPool, PublicationArea, PublicationCountry, PublicationKind, UserRole } from '@traitors/shared';
 
 // Tipos que o backend define igual (kernel compartilhado).
-export type { BehaviorEffects, CharacterStats, MissionPool, PublicationArea, PublicationKind, UserRole } from '@traitors/shared';
+export type { BehaviorEffects, CharacterStats, MissionPool, PublicationArea, PublicationCountry, PublicationKind, UserRole } from '@traitors/shared';
 
 // Formatos devolvidos pela API (datas chegam como string ISO).
 
@@ -33,8 +33,8 @@ export type ParticipantRole = 'FAITHFUL' | 'TRAITOR' | 'RECRUITED';
 /** Uma temporada de The Traitors em que o participante real esteve. */
 export interface ParticipantSeason {
   label: string;
-  /** Temporada publicada no site que corresponde a esta (a página mostra o cartão dela). */
-  seasonId: string | null;
+  /** Temporada oficial publicada no site que corresponde a esta (a página mostra o cartão dela). */
+  publicationId: string | null;
   role: ParticipantRole | null;
   roleDetail: string | null;
   fate: string | null;
@@ -108,31 +108,51 @@ export interface PublishedCharacter {
   name: string;
   imageUrl: string | null;
   behaviors: PublishedBehavior[];
+  /** Temporadas: o personagem de origem (a página do participante, nas oficiais). */
+  characterId?: string | null;
 }
 
-/** Algo publicado numa área pública. Casts e personagens são cópias; temporadas são lidas ao vivo. */
+/** As configurações de uma temporada publicada: quem copia a temporada recebe as mesmas. */
+export interface PublishedSeason {
+  mode: SeasonMode;
+  chaos: number;
+  /** A temporada do programa que ela reproduz. */
+  missionPool: MissionPool;
+  interactionLimit: number;
+  withdrawals: boolean;
+  hiddenShieldChance: number;
+  currency: string;
+  initialPrizePot: number;
+  maxPrizePot: number | null;
+}
+
+/** Algo publicado numa área pública: sempre uma cópia do momento da publicação. */
 export interface Publication {
   id: string;
   kind: PublicationKind;
   area: PublicationArea;
+  /** Temporadas oficiais: EUA ou Reino Unido. */
+  country: PublicationCountry | null;
   publisherId: string | null;
   publisherName: string | null;
+  /** De onde veio (null se a origem foi apagada). */
   seasonId: string | null;
   castId: string | null;
   characterId: string | null;
   name: string;
   description: string | null;
   imageUrl: string | null;
+  /** O elenco: o cast, o personagem ou os participantes da temporada. */
   snapshot: {
     characters: PublishedCharacter[];
     relationships: { fromKey: string; toKey: string; trust: number; liking: number; hatred: number; allied: boolean }[];
-  } | null;
-  /** Temporadas: situação atual. */
-  season: { id: string; name: string; mode: SeasonMode; status: SeasonStatus; currentDay: number | null; currentPhase: GamePhase | null } | null;
+  };
+  /** Temporadas: as configurações quando foi publicada. */
+  season: PublishedSeason | null;
   publishedAt: string;
 }
 
-/** Resultado de copiar uma publicação para a Minha Área. */
+/** Resultado de copiar uma publicação para a biblioteca. */
 export interface CopyResult {
   kind: PublicationKind;
   cast: Cast | null;

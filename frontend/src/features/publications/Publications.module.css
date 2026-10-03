@@ -1,4 +1,4 @@
-/* escolha da área na hora de publicar (só donos do site) */
+/* escolha de onde publicar (só donos do site, nas temporadas) */
 .areaChoice {
   display: grid;
   gap: 0.4rem;
@@ -10,4 +10,11 @@
 .areaChoice legend {
   margin-bottom: 0.4rem;
   font-weight: 600;
+}
+
+/* data da cópia que está na vitrine */
+.since {
+  margin-top: 0.4rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
 }

@@ -1,7 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { FetchHttpClient } from '../services/http/FetchHttpClient';
-import { FakeApi, fixtures, type Snapshot } from '../test/fakeApi';
+import { FakeApi, fixtures, officialSeason, type Snapshot } from '../test/fakeApi';
 import { exercise, fillEverything } from '../test/exercise';
 import { renderApp, settled } from '../test/render';
 
@@ -53,6 +53,8 @@ describe('detalhes que só aparecem depois de um clique', () => {
     expect(screen.getByText('Banido(a) no episódio 11')).toBeTruthy();
     expect(screen.getByText('Recrutado(a)')).toBeTruthy();
     expect(screen.getByText('The Real Housewives of New York City')).toBeTruthy();
+    // O cartão da temporada abre a publicação oficial (uma cópia), não a temporada de quem publicou.
+    expect(screen.getByText('Ver a temporada no site').closest('a')?.getAttribute('href')).toBe(`/publicacoes/${officialSeason('US').id}`);
 
     await view.user.click(screen.getByRole('button', { name: 'Editar informações' }));
     await view.user.click(await screen.findByRole('button', { name: 'Importar da wiki' }));

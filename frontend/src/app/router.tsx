@@ -1,10 +1,12 @@
-import { createBrowserRouter, type RouteObject } from 'react-router-dom';
+import { createBrowserRouter, Navigate, type RouteObject } from 'react-router-dom';
 import { AppShell } from '../components/layout/AppShell';
 import { LoginPage } from '../features/auth/LoginPage';
+import { FanAreaPage } from '../features/home/FanAreaPage';
+import { FanListPage } from '../features/home/FanListPage';
 import { HomeLayout } from '../features/home/HomeLayout';
 import { MyAreaPage } from '../features/home/MyAreaPage';
-import { PublicAreaPage } from '../features/home/PublicAreaPage';
-import { PublicListPage } from '../features/home/PublicListPage';
+import { OfficialSeasonsPage } from '../features/home/OfficialSeasonsPage';
+import { PublishedSeasonPage } from '../features/publications/PublishedSeasonPage';
 import { LibraryLayout } from '../features/library/pages/LibraryLayout';
 import { CastsPage } from '../features/library/pages/CastsPage';
 import { CastPage } from '../features/library/pages/CastPage';
@@ -32,16 +34,18 @@ export const routes: RouteObject[] = [
     ),
     children: [
       {
-        // página inicial: Castelo (temporadas oficiais), Fãs e Minha Área, e a lista completa de cada seção
+        // página inicial: Temporadas Oficiais (EUA e Reino Unido), Fãs (com a lista completa de cada seção) e Minha Área
         element: <HomeLayout />,
         children: [
-          { path: '/', element: <PublicAreaPage area="OFFICIAL" /> },
-          { path: '/fas', element: <PublicAreaPage area="FAN" /> },
-          { path: '/oficial/:kind', element: <PublicListPage area="OFFICIAL" /> },
-          { path: '/fas/:kind', element: <PublicListPage area="FAN" /> },
+          { path: '/', element: <OfficialSeasonsPage /> },
+          { path: '/fas', element: <FanAreaPage /> },
+          { path: '/fas/:kind', element: <FanListPage /> },
           { path: '/minha-area', element: <MyAreaPage /> },
         ],
       },
+      // as listas antigas das oficiais (/oficial/temporadas...): agora tudo cabe na página inicial
+      { path: '/oficial/*', element: <Navigate to="/" replace /> },
+      { path: '/publicacoes/:publicationId', element: <PublishedSeasonPage /> },
       {
         path: '/biblioteca',
         element: <LibraryLayout />,

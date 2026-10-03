@@ -1,6 +1,6 @@
 import { waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { FakeApi, fixtures } from '../test/fakeApi';
+import { FakeApi, fanSeason, fixtures, officialSeason } from '../test/fakeApi';
 import { exercise, fillEverything } from '../test/exercise';
 import { renderApp, settled } from '../test/render';
 
@@ -18,9 +18,11 @@ async function visit(path: string, setup: (api: FakeApi) => void = () => {}) {
 const ROUTES = [
   '/',
   '/fas',
-  '/oficial/temporadas',
-  '/oficial/casts',
+  `/publicacoes/${officialSeason('US').id}`,
+  `/publicacoes/${fanSeason().id}`,
+  '/fas/temporadas',
   '/fas/personagens',
+  '/oficial/temporadas',
   '/minha-area',
   '/biblioteca',
   '/biblioteca/casts/sem-cast',

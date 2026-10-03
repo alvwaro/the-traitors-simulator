@@ -3,6 +3,7 @@ import { BehaviorService } from './api/BehaviorService';
 import { CastService } from './api/CastService';
 import { CharacterService } from './api/CharacterService';
 import { PhraseService } from './api/PhraseService';
+import { PublicationService } from './api/PublicationService';
 import type { IHttpClient } from './http/HttpClient';
 
 /** Cliente HTTP que só anota o que foi pedido. */
@@ -61,5 +62,24 @@ describe('serviços REST da biblioteca', () => {
     await new BehaviorService(http).list();
     await new PhraseService(http).remove('p1');
     expect(calls).toEqual(['GET /characters {"search":"Ana"}', 'GET /phrases {"phase":"ARRIVAL"}', 'GET /behaviors', 'DELETE /phrases/p1']);
+  });
+
+  it('publicações: a vitrine, uma publicação inteira e o lugar escolhido ao publicar', async () => {
+    const { calls, http } = recorder();
+    const publications = new PublicationService(http);
+    await publications.list({ area: 'OFFICIAL', kind: 'SEASON' });
+    await publications.get('p1');
+    await publications.publish('SEASON', 's1', 'Elenco', { area: 'OFFICIAL', country: 'UK' });
+    await publications.publish('CAST', 'c1');
+    await publications.copySeason('p1');
+    await publications.copySeason('p1', { name: 'Minha', human: { name: 'Eu' } });
+    expect(calls).toEqual([
+      'GET /publications {"area":"OFFICIAL","kind":"SEASON"}',
+      'GET /publications/p1',
+      'POST /publications {"kind":"SEASON","sourceId":"s1","description":"Elenco","area":"OFFICIAL","country":"UK"}',
+      'POST /publications {"kind":"CAST","sourceId":"c1"}',
+      'POST /publications/p1/copy-season {}',
+      'POST /publications/p1/copy-season {"name":"Minha","human":{"name":"Eu"}}',
+    ]);
   });
 });

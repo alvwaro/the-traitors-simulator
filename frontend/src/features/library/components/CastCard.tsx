@@ -8,7 +8,7 @@ interface CastCardProps {
   onOpen: () => void;
   onEdit: () => void;
   onDelete: () => void;
-  /** Abre a publicação (Área Oficial para donos, Área de Fãs para fãs). */
+  /** Abre a publicação (casts vão para a Área de Fãs). */
   onPublish: () => void;
   /** Já está na vitrine (publicar de novo atualiza a cópia). */
   published: boolean;

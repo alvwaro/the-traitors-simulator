@@ -8,16 +8,12 @@ import { seasonStatusLabel } from '../../../domain/labels';
 import { useResource } from '../../../hooks/useResource';
 import { formatMoney } from '../../../lib/format';
 import { DayChronicle } from '../components/DayChronicle';
-import { WatchActions } from '../components/WatchActions';
 import styles from '../components/Chronicle.module.css';
 
 const TX_LABEL = { MISSION: 'Missão', PENALTY: 'Penalidade', ADJUSTMENT: 'Ajuste' } as const;
 
-/**
- * Crônica completa da temporada, dia a dia.
- * `watching`: temporada publicada de outra pessoa, só para assistir (e copiar o elenco).
- */
-export function HistoryPage({ watching = false }: Readonly<{ watching?: boolean }>) {
+/** Crônica completa da temporada (de quem criou), dia a dia. */
+export function HistoryPage() {
   const { seasonId = '' } = useParams();
   const { game } = useServices();
   const history = useResource(() => game.history(seasonId), [seasonId]);
@@ -32,18 +28,12 @@ export function HistoryPage({ watching = false }: Readonly<{ watching?: boolean 
   return (
     <>
       <PageHeader
-        eyebrow={`${watching ? 'Assistindo · ' : ''}${seasonStatusLabel[season.status]} · prêmio de ${formatMoney(prizePot, season.currency)}`}
-        title={watching ? season.name : `Crônica de ${season.name}`}
-        actions={watching ? <WatchActions seasonId={season.id} /> : <Link to={`/temporadas/${season.id}`}>Voltar ao castelo</Link>}
+        eyebrow={`${seasonStatusLabel[season.status]} · prêmio de ${formatMoney(prizePot, season.currency)}`}
+        title={`Crônica de ${season.name}`}
+        actions={<Link to={`/temporadas/${season.id}`}>Voltar ao castelo</Link>}
       />
 
       <div className={styles.list}>
-        {watching && (
-          <Panel title="Elenco">
-            <PortraitGrid items={players} size="sm" />
-          </Panel>
-        )}
-
         {winnerPlayers.length > 0 && (
           <Panel tone="blood" title="Vencedores">
             <PortraitGrid

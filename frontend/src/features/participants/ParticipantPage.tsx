@@ -10,6 +10,7 @@ import type { Participant, ParticipantRole, ParticipantSeason, Publication } fro
 import { useResource } from '../../hooks/useResource';
 import { cx } from '../../lib/cx';
 import { CardCover } from '../library/components/CardCover';
+import { publishedSeasonPath } from '../publications/labels';
 import { ProfileEditor } from './ProfileEditor';
 import styles from './Participant.module.css';
 
@@ -19,14 +20,13 @@ export const roleLabel: Record<ParticipantRole, string> = {
   RECRUITED: 'Recrutado(a)',
 };
 
-/** O cartão da temporada publicada no site que corresponde a esta participação. */
+/** O cartão da temporada oficial publicada no site que corresponde a esta participação. */
 function SeasonLink({ publication }: Readonly<{ publication: Publication }>) {
-  const to = `/temporadas/${publication.seasonId}`;
   return (
-    <Link to={to} className={styles.seasonCard}>
-      <CardCover name={publication.name} imageUrl={publication.imageUrl} label={`Assistir ${publication.name}`} onOpen={() => undefined} />
+    <Link to={publishedSeasonPath(publication.id)} className={styles.seasonCard}>
+      <CardCover name={publication.name} imageUrl={publication.imageUrl} label={`Ver ${publication.name}`} onOpen={() => undefined} />
       <span className={styles.seasonCardName}>{publication.name}</span>
-      <span className={styles.seasonCardMeta}>Assistir no site</span>
+      <span className={styles.seasonCardMeta}>Ver a temporada no site</span>
     </Link>
   );
 }
@@ -62,7 +62,7 @@ function SeasonEntry({ season, publication, spoiler }: Readonly<{ season: Partic
 function ParticipantView({ participant, seasons }: Readonly<{ participant: Participant; seasons: Publication[] }>) {
   const [spoiler, setSpoiler] = useState(false);
   const profile = participant.profile;
-  const bySeason = new Map(seasons.map((p) => [p.seasonId, p]));
+  const byId = new Map(seasons.map((p) => [p.id, p]));
   const list = profile?.seasons ?? [];
   return (
     <div className={styles.page}>
@@ -93,7 +93,7 @@ function ParticipantView({ participant, seasons }: Readonly<{ participant: Parti
         {list.length ? (
           <ul className={styles.seasons}>
             {list.map((s, i) => (
-              <SeasonEntry key={`${s.label}-${i}`} season={s} publication={s.seasonId ? bySeason.get(s.seasonId) : undefined} spoiler={spoiler} />
+              <SeasonEntry key={`${s.label}-${i}`} season={s} publication={s.publicationId ? byId.get(s.publicationId) : undefined} spoiler={spoiler} />
             ))}
           </ul>
         ) : (

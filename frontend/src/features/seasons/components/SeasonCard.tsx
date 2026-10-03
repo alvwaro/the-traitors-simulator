@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { countryOfSeason } from '@traitors/shared';
 import { phaseLabel, seasonModeLabel, seasonStatusLabel } from '../../../domain/labels';
 import type { Publication, Season } from '../../../domain/models';
 import { cx } from '../../../lib/cx';
@@ -55,7 +56,7 @@ export function SeasonCard({ season, publication, onChanged }: Readonly<SeasonCa
       <EditSeasonModal season={season} open={editing} onClose={() => setEditing(false)} onDone={onChanged} />
       <DeleteSeasonModal season={season} open={deleting} onClose={() => setDeleting(false)} onDone={onChanged} />
       <PublishModal
-        target={publishing ? { kind: 'SEASON', id: season.id, name: season.name } : null}
+        target={publishing ? { kind: 'SEASON', id: season.id, name: season.name, country: countryOfSeason(season.missionPool, season.currency) } : null}
         current={publication}
         onClose={() => setPublishing(false)}
         onDone={onChanged}

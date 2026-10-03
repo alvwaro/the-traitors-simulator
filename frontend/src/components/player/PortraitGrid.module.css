@@ -23,3 +23,15 @@
 .xl {
   grid-template-columns: repeat(auto-fill, minmax(206px, 1fr));
 }
+
+/* foto que abre uma página (ex.: a do participante) */
+.link {
+  color: inherit;
+  text-decoration: none;
+  border-radius: var(--radius);
+  transition: transform 0.15s var(--ease);
+}
+
+.link:hover {
+  transform: translateY(-3px);
+}

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Link } from 'react-router-dom';
 import type { PlayerStatus } from '../../domain/enums';
 import { cx } from '../../lib/cx';
 import { Portrait } from './Portrait';
@@ -20,6 +21,8 @@ interface PortraitGridProps<T extends PortraitItem> {
   isDisabled?: (item: T) => boolean;
   caption?: (item: T) => ReactNode;
   badge?: (item: T) => ReactNode;
+  /** Página que cada foto abre (ex.: a do participante); undefined = foto sem link. */
+  linkTo?: (item: T) => string | undefined;
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
 }
@@ -32,26 +35,37 @@ export function PortraitGrid<T extends PortraitItem>({
   isDisabled,
   caption,
   badge,
+  linkTo,
   size = 'md',
   className,
 }: Readonly<PortraitGridProps<T>>) {
   return (
     <div className={cx(styles.grid, styles[size], className)}>
-      {items.map((item) => (
-        <Portrait
-          key={item.id}
-          name={item.name}
-          imageUrl={item.imageUrl}
-          status={item.status}
-          mystery={item.mystery}
-          size={size}
-          selected={selectedIds.includes(item.id)}
-          disabled={isDisabled?.(item)}
-          caption={caption?.(item)}
-          badge={badge?.(item)}
-          onClick={onToggle ? () => onToggle(item.id) : undefined}
-        />
-      ))}
+      {items.map((item) => {
+        const portrait = (
+          <Portrait
+            key={item.id}
+            name={item.name}
+            imageUrl={item.imageUrl}
+            status={item.status}
+            mystery={item.mystery}
+            size={size}
+            selected={selectedIds.includes(item.id)}
+            disabled={isDisabled?.(item)}
+            caption={caption?.(item)}
+            badge={badge?.(item)}
+            onClick={onToggle ? () => onToggle(item.id) : undefined}
+          />
+        );
+        const to = linkTo?.(item);
+        return to ? (
+          <Link key={item.id} to={to} className={styles.link}>
+            {portrait}
+          </Link>
+        ) : (
+          portrait
+        );
+      })}
     </div>
   );
 }

@@ -9,7 +9,7 @@ import type { CopyResult, Publication } from '../../domain/models';
 import { useAction } from '../../hooks/useAction';
 
 /**
- * Copia uma publicação para a Minha Área. Casts e temporadas viram um cast pronto para jogar;
+ * Copia uma publicação para a biblioteca. Casts e temporadas viram um cast pronto para jogar;
  * personagens entram na biblioteca. Personagens com o mesmo nome dos seus são reaproveitados.
  */
 export function CopyModal({ publication, onClose }: Readonly<{ publication: Publication | null; onClose: () => void }>) {
@@ -38,7 +38,7 @@ export function CopyModal({ publication, onClose }: Readonly<{ publication: Publ
     return (
       <Modal
         open={!!publication}
-        title="Copiado para a Minha Área"
+        title="Copiado para a sua biblioteca"
         onClose={close}
         footer={
           <>
@@ -77,7 +77,7 @@ export function CopyModal({ publication, onClose }: Readonly<{ publication: Publ
         </Field>
       )}
       <p>
-        {publication?.kind === 'SEASON' ? 'O elenco atual da temporada vira um cast na sua biblioteca. ' : ''}
+        {publication?.kind === 'SEASON' ? 'O elenco da temporada, como foi publicado, vira um cast na sua biblioteca. ' : ''}
         Personagens que você já tem (mesmo nome) são reaproveitados; os outros são criados com foto e comportamentos.
       </p>
     </Modal>
