@@ -14,6 +14,8 @@ interface SeasonRow {
   interaction_limit: number;
   allow_withdrawals: boolean;
   hidden_shield_chance: number | null;
+  drama: boolean;
+  show_phrases: boolean;
   sim_state: Record<string, unknown>;
   status: SeasonStatus;
   current_day: number | null;
@@ -38,6 +40,8 @@ const toEntity = (r: SeasonRow): Season =>
     interactionLimit: r.interaction_limit,
     withdrawals: r.allow_withdrawals ?? true,
     hiddenShieldChance: r.hidden_shield_chance ?? 0,
+    drama: r.drama ?? false,
+    showPhrases: r.show_phrases ?? true,
     simState: r.sim_state ?? {},
     status: r.status,
     currentDay: r.current_day,
@@ -77,11 +81,13 @@ export class PgSeasonRepository implements ISeasonRepository {
       this.db,
       `INSERT INTO seasons (id, name, cast_id, status, current_day, current_phase, currency,
                             initial_prize_pot, max_prize_pot, created_at, started_at, finished_at, mode,
-                            chaos, mission_pool, sim_state, interaction_limit, owner_id, allow_withdrawals, hidden_shield_chance)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)`,
+                            chaos, mission_pool, sim_state, interaction_limit, owner_id, allow_withdrawals, hidden_shield_chance,
+                            drama, show_phrases)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)`,
       [s.id, s.name, s.castId, s.status, s.currentDay, s.currentPhase, s.currency,
        s.initialPrizePot, s.maxPrizePot, s.createdAt, s.startedAt, s.finishedAt, s.mode,
-       s.chaos, s.missionPool, JSON.stringify(s.simState), s.interactionLimit, s.ownerId, s.withdrawals, s.hiddenShieldChance],
+       s.chaos, s.missionPool, JSON.stringify(s.simState), s.interactionLimit, s.ownerId, s.withdrawals, s.hiddenShieldChance,
+       s.drama, s.showPhrases],
     );
   }
 
@@ -93,11 +99,11 @@ export class PgSeasonRepository implements ISeasonRepository {
           SET name = $2, cast_id = $3, status = $4, current_day = $5, current_phase = $6, currency = $7,
               initial_prize_pot = $8, max_prize_pot = $9, started_at = $10, finished_at = $11, mode = $12,
               chaos = $13, mission_pool = $14, sim_state = $15, interaction_limit = $16, allow_withdrawals = $17,
-              hidden_shield_chance = $18
+              hidden_shield_chance = $18, drama = $19, show_phrases = $20
         WHERE id = $1`,
       [s.id, s.name, s.castId, s.status, s.currentDay, s.currentPhase, s.currency,
        s.initialPrizePot, s.maxPrizePot, s.startedAt, s.finishedAt, s.mode,
-       s.chaos, s.missionPool, JSON.stringify(s.simState), s.interactionLimit, s.withdrawals, s.hiddenShieldChance],
+       s.chaos, s.missionPool, JSON.stringify(s.simState), s.interactionLimit, s.withdrawals, s.hiddenShieldChance, s.drama, s.showPhrases],
     );
   }
 

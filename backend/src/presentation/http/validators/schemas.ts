@@ -116,6 +116,8 @@ const seasonSettings = {
   interactionLimit: z.number().int().min(0).max(20).optional(),
   withdrawals: z.boolean().optional(),
   hiddenShieldChance: z.number().int().min(0).max(100).optional(),
+  drama: z.boolean().optional(),
+  showPhrases: z.boolean().optional(),
   currency: z.string().length(3).optional(),
   initialPrizePot: money.optional(),
   maxPrizePot: money.nullable().optional(),

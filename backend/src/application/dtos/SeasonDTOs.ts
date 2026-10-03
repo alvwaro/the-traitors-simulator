@@ -15,6 +15,10 @@ export interface CreateSeasonInput {
   withdrawals?: boolean;
   /** Chance (0 a 100) de os escudos de uma missão ficarem em segredo. */
   hiddenShieldChance?: number;
+  /** Modo Jogador: revelar os acontecimentos um de cada vez. */
+  drama?: boolean;
+  /** Mostrar as falas da biblioteca de frases (desligado: foco nas eliminações). */
+  showPhrases?: boolean;
   /** Modo Jogador: o participante que o usuário controla. */
   human?: { name: string; imageUrl?: string | null } | null;
   currency?: string;
@@ -35,6 +39,8 @@ export interface UpdateSeasonInput {
   interactionLimit?: number;
   withdrawals?: boolean;
   hiddenShieldChance?: number;
+  drama?: boolean;
+  showPhrases?: boolean;
   currency?: string;
   initialPrizePot?: number;
   maxPrizePot?: number | null;

@@ -95,16 +95,16 @@ describe('publicações e elenco', () => {
 
   it('copiar uma temporada do modo Jogador pede o nome de quem vai jogar', async () => {
     const { agent: author } = await signUp('jogadora');
-    const played = await createSeason(author, 5, { mode: 'PLAYER', human: { name: 'Eu Mesma' }, interactionLimit: 2, chaos: 10 });
+    const played = await createSeason(author, 5, { mode: 'PLAYER', human: { name: 'Eu Mesma' }, interactionLimit: 2, chaos: 10, drama: true, showPhrases: false });
     const pub = ok(await author.post('/api/publications').send({ kind: 'SEASON', sourceId: played.id }), 201);
     // Quem jogava não entra no elenco publicado.
     expect(pub.snapshot.characters.map((c: Member) => c.name)).not.toContain('Eu Mesma');
-    expect(pub.season).toMatchObject({ mode: 'PLAYER', interactionLimit: 2, chaos: 10 });
+    expect(pub.season).toMatchObject({ mode: 'PLAYER', interactionLimit: 2, chaos: 10, drama: true, showPhrases: false });
 
     const { agent: other } = await signUp('outra');
     expect((await other.post(`/api/publications/${pub.id}/copy-season`).send({})).status).toBe(422);
     const copy = ok(await other.post(`/api/publications/${pub.id}/copy-season`).send({ name: 'Minha vez', human: { name: 'Outra Pessoa' } }), 201);
-    expect(copy).toMatchObject({ name: 'Minha vez', mode: 'PLAYER', status: 'SETUP', interactionLimit: 2 });
+    expect(copy).toMatchObject({ name: 'Minha vez', mode: 'PLAYER', status: 'SETUP', interactionLimit: 2, drama: true, showPhrases: false });
     expect(copy.players).toHaveLength(6);
     expect(copy.players.filter((p: Member) => p.isHuman).map((p: Member) => p.name)).toEqual(['Outra Pessoa']);
   });

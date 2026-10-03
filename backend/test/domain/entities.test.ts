@@ -29,6 +29,7 @@ describe('regras das entidades', () => {
     const season = Season.create({ name: '  Castelo  ', ownerId: 'u1', mode: SeasonMode.AUTOMATIC, chaos: 30, missionPool: 'UK_S2', withdrawals: false });
     expect(season.name).toBe('Castelo');
     expect(season.withdrawals).toBe(false);
+    expect(season.toJSON()).toMatchObject({ drama: false, showPhrases: true });
     expect(() => season.rename(' ')).toThrow();
     expect(() => season.configureSimulation({ chaos: 101 })).toThrow();
     expect(() => season.configureSimulation({ chaos: 1.5 })).toThrow();
@@ -43,6 +44,11 @@ describe('regras das entidades', () => {
     expect(() => season.changeMode(SeasonMode.PLAYER)).toThrow();
     expect(() => season.configureSimulation({ chaos: 10 })).toThrow();
     expect(() => season.configurePrize({ initialPrizePot: 1 })).toThrow();
+    // Drama e falas só mudam a tela: valem até no meio do jogo.
+    season.configureDisplay({ drama: true, showPhrases: false });
+    expect(season.showPhrases).toBe(false);
+    season.configureDisplay({});
+    expect(season.toJSON()).toMatchObject({ drama: true, showPhrases: false });
     season.moveTo(2, GamePhase.BREAKFAST);
     season.startEndgame();
     expect(() => season.startEndgame()).toThrow();
@@ -145,7 +151,7 @@ describe('regras das entidades', () => {
     const place = { area: PublicationArea.FAN, country: null };
     const snapshot = { characters: [], relationships: [] };
     expect(() => Publication.publish({ name: 'Sem configurações', snapshot, source: season, publisherId: 'u', place })).toThrow(/configurações/);
-    const settings = { mode: SeasonMode.MANUAL, chaos: 0, missionPool: 'US_S4' as const, interactionLimit: 3, withdrawals: true, hiddenShieldChance: 0, currency: 'USD', initialPrizePot: 0, maxPrizePot: null };
+    const settings = { mode: SeasonMode.MANUAL, chaos: 0, missionPool: 'US_S4' as const, interactionLimit: 3, withdrawals: true, hiddenShieldChance: 0, currency: 'USD', initialPrizePot: 0, maxPrizePot: null, drama: false, showPhrases: true };
     const published = Publication.publish({ name: 'Com configurações', snapshot, season: settings, source: season, publisherId: 'u', place });
     expect(published.toJSON()).toMatchObject({ kind: 'SEASON', seasonId: 's1', season: settings, area: 'FAN', country: null });
   });

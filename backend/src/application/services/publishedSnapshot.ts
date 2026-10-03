@@ -48,6 +48,6 @@ export async function seasonSnapshot(repos: Repositories, season: Season): Promi
 
 /** As configurações da temporada, que vão junto na publicação (o andamento do jogo não). */
 export function seasonSettings(season: Season): PublishedSeason {
-  const { mode, chaos, missionPool, interactionLimit, withdrawals, hiddenShieldChance, currency, initialPrizePot, maxPrizePot } = season.toJSON();
-  return { mode, chaos, missionPool, interactionLimit, withdrawals, hiddenShieldChance, currency, initialPrizePot, maxPrizePot };
+  const { mode, chaos, missionPool, interactionLimit, withdrawals, hiddenShieldChance, currency, initialPrizePot, maxPrizePot, drama, showPhrases } = season.toJSON();
+  return { mode, chaos, missionPool, interactionLimit, withdrawals, hiddenShieldChance, currency, initialPrizePot, maxPrizePot, drama, showPhrases };
 }

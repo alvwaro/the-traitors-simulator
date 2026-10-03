@@ -4,8 +4,9 @@ import { SeasonIdInput } from '../../dtos/SeasonDTOs';
 import { DayHistory, SeasonHistoryOutput } from '../../dtos/GameDTOs';
 import { PrizeTransactionType } from '../../../domain/enums';
 import { requireSeason } from '../../services/gameGuards';
-import { maskPlayer, viewerOf, visibleEvents, visibleMeeting } from '../../services/playerView';
+import { maskPlayer, viewerOf, visibleEvents, visibleMeeting, withoutPhrases } from '../../services/playerView';
 import { GamePhase } from '../../../domain/enums';
+import { SimulationEventProps } from '../../../domain/entities';
 
 /** Linha do tempo completa da temporada, dia a dia (estilo resumo de episódio). */
 export class GetSeasonHistoryUseCase implements IUseCase<SeasonIdInput, SeasonHistoryOutput> {
@@ -25,6 +26,8 @@ export class GetSeasonHistoryUseCase implements IUseCase<SeasonIdInput, SeasonHi
     const roleById = new Map(players.map((p) => [p.id, p.role]));
     const today = season.currentDay !== null ? days.find((d) => d.number === season.currentDay) : undefined;
     const viewer = viewerOf(season, players, today?.id ?? null);
+    // Falas desligadas: só as que envolvem o jogador humano (no modo Jogador) continuam na narrativa.
+    const phrased = (list: SimulationEventProps[]) => (season.showPhrases ? list : withoutPhrases(list, viewer.human?.id));
 
     const history: DayHistory[] = [];
     for (const day of days) {
@@ -47,7 +50,7 @@ export class GetSeasonHistoryUseCase implements IUseCase<SeasonIdInput, SeasonHi
           day.number === season.currentDay && season.currentPhase === GamePhase.TRAITORS_MEETING,
           viewer,
         ),
-        events: visibleEvents(events.map((e) => e.toJSON()), viewer),
+        events: phrased(visibleEvents(events.map((e) => e.toJSON()), viewer)),
       });
     }
 

@@ -49,4 +49,6 @@ export interface PublishedSeason {
   currency: string;
   initialPrizePot: number;
   maxPrizePot: number | null;
+  drama: boolean;
+  showPhrases: boolean;
 }

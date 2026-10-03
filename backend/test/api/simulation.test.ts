@@ -55,4 +55,39 @@ describe('simulação automática e modo Jogador', () => {
     expect(needs.has('VOTE')).toBe(true);
     expect(needs.has('MISSION')).toBe(true);
   });
+
+  it('drama e frases só mudam a tela: valem em qualquer momento, e sem frases sobra o que importa', async () => {
+    const { agent } = await signUp('falas');
+    type Event = { kind: string; playerIds: string[] };
+    const events = async (seasonId: string): Promise<Event[]> => ok(await agent.get(`/api/seasons/${seasonId}/history`)).days.flatMap((d: { events: Event[] }) => d.events);
+    const dialogues = async (seasonId: string) => (await events(seasonId)).filter((e) => e.kind === 'DIALOGUE');
+
+    // Automática sem frases: a narrativa fica com eliminações, votos e missões.
+    const auto = await createSeason(agent, 10, { mode: 'AUTOMATIC', showPhrases: false });
+    expect(auto).toMatchObject({ drama: false, showPhrases: false });
+    ok(await agent.post(`/api/seasons/${auto.id}/start`));
+    ok(await agent.post(`/api/seasons/${auto.id}/simulate`).send({ untilEnd: true }));
+    expect(await dialogues(auto.id)).toHaveLength(0);
+    expect((await events(auto.id)).some((e) => e.kind === 'VOTE')).toBe(true);
+    // As falas continuam guardadas: ligar de novo traz tudo de volta, mesmo com a temporada encerrada.
+    expect(ok(await agent.patch(`/api/seasons/${auto.id}`).send({ showPhrases: true }))).toMatchObject({ status: 'FINISHED', showPhrases: true });
+    expect((await dialogues(auto.id)).length).toBeGreaterThan(0);
+
+    // Modo Jogador sem frases: só as que envolvem o jogador.
+    const played = await createSeason(agent, 11, { mode: 'PLAYER', human: { name: 'Eu' }, drama: true, showPhrases: false });
+    expect(played).toMatchObject({ drama: true, showPhrases: false });
+    const humanId = played.players.find((p: { isHuman: boolean }) => p.isHuman).id;
+    ok(await agent.post(`/api/seasons/${played.id}/start`));
+    ok(await agent.post(`/api/seasons/${played.id}/simulate`).send({}));
+    // No meio do jogo, drama e frases mudam; o resto das configurações, não.
+    expect(ok(await agent.patch(`/api/seasons/${played.id}`).send({ drama: false }))).toMatchObject({ status: 'IN_PROGRESS', drama: false, showPhrases: false });
+    expect((await agent.patch(`/api/seasons/${played.id}`).send({ chaos: 90 })).status).toBe(422);
+    await playAsHuman(agent, played.id, 3);
+    const mine = await dialogues(played.id);
+    expect(mine.every((e) => e.playerIds.includes(humanId))).toBe(true);
+    ok(await agent.patch(`/api/seasons/${played.id}`).send({ showPhrases: true }));
+    const all = await dialogues(played.id);
+    expect(all.length).toBeGreaterThan(mine.length);
+    expect(all.some((e) => !e.playerIds.includes(humanId))).toBe(true);
+  });
 });

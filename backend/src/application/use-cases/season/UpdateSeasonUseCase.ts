@@ -7,7 +7,7 @@ import { SeasonMode } from '../../../domain/enums';
 import { DomainError } from '../../../domain/errors/DomainError';
 import { ensureRelationships } from '../../services/simulation';
 
-/** Nome pode mudar sempre; configurações de prêmio só antes do início. */
+/** Nome, drama e falas podem mudar sempre; prêmio e simulação só antes do início. */
 export class UpdateSeasonUseCase implements IUseCase<UpdateSeasonInput, SeasonProps> {
   constructor(private readonly uow: IUnitOfWork) {}
 
@@ -26,6 +26,7 @@ export class UpdateSeasonUseCase implements IUseCase<UpdateSeasonInput, SeasonPr
       }
       if (input.mode !== undefined) season.changeMode(input.mode);
       season.configureSimulation({ chaos: input.chaos, missionPool: input.missionPool, interactionLimit: input.interactionLimit, withdrawals: input.withdrawals, hiddenShieldChance: input.hiddenShieldChance });
+      season.configureDisplay({ drama: input.drama, showPhrases: input.showPhrases });
 
       await repos.seasons.update(season);
       if (season.isAutomatic()) await ensureRelationships(repos, season.id);

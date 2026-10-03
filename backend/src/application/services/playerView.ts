@@ -102,6 +102,14 @@ export function visibleEvents(events: readonly SimulationEventProps[], viewer: V
 }
 
 /**
+ * Falas desligadas (foco nas eliminações): somem as falas da biblioteca de frases, menos as que envolvem
+ * o jogador humano (quem o acusa, quem fala com ele). As conversas dele, convites e aproximações continuam.
+ */
+export function withoutPhrases(events: readonly SimulationEventProps[], humanId: string | undefined): SimulationEventProps[] {
+  return events.filter((e) => e.kind !== SimulationEventKind.DIALOGUE || (!!humanId && e.playerIds.includes(humanId)));
+}
+
+/**
  * Reunião dos traidores vista por um fiel: a de hoje ainda é segredo; das anteriores só se sabe
  * quem morreu (o alvo salvo pelo escudo nunca é anunciado) e os convites feitos a ele mesmo.
  */

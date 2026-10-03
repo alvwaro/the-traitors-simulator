@@ -26,6 +26,14 @@ export interface SimulationSettings {
   hiddenShieldChance?: number;
 }
 
+/** Como a simulação é mostrada: pode mudar a qualquer momento (não muda o jogo). */
+export interface DisplaySettings {
+  /** Modo Jogador: os acontecimentos de cada momento aparecem um de cada vez. */
+  drama?: boolean;
+  /** Falas da biblioteca de frases na narrativa (desligado: só as que envolvem o jogador). */
+  showPhrases?: boolean;
+}
+
 export interface SeasonProps {
   id: string;
   name: string;
@@ -37,6 +45,10 @@ export interface SeasonProps {
   withdrawals: boolean;
   /** Chance (0 a 100) de os escudos de cada missão ficarem misteriosos. */
   hiddenShieldChance: number;
+  /** Modo Jogador: revelar os acontecimentos um de cada vez. */
+  drama: boolean;
+  /** Mostrar as falas da biblioteca de frases. */
+  showPhrases: boolean;
   /** Memória da simulação automática entre fases (reviravoltas já usadas etc.). */
   simState: Record<string, unknown>;
   status: SeasonStatus;
@@ -62,7 +74,7 @@ export interface PrizeSettings {
 export class Season {
   constructor(private readonly props: SeasonProps) {}
 
-  static create(input: { name: string; ownerId: string; castId?: string | null; mode?: SeasonMode } & PrizeSettings & SimulationSettings): Season {
+  static create(input: { name: string; ownerId: string; castId?: string | null; mode?: SeasonMode } & PrizeSettings & SimulationSettings & DisplaySettings): Season {
     const season = new Season({
       id: randomUUID(),
       name: '',
@@ -73,6 +85,8 @@ export class Season {
       interactionLimit: 3,
       withdrawals: true,
       hiddenShieldChance: 0,
+      drama: false,
+      showPhrases: true,
       simState: {},
       status: SeasonStatus.SETUP,
       currentDay: null,
@@ -88,6 +102,7 @@ export class Season {
     season.rename(input.name);
     season.configurePrize(input);
     season.configureSimulation(input);
+    season.configureDisplay(input);
     return season;
   }
 
@@ -101,6 +116,7 @@ export class Season {
   get interactionLimit(): number { return this.props.interactionLimit; }
   get withdrawals(): boolean { return this.props.withdrawals; }
   get hiddenShieldChance(): number { return this.props.hiddenShieldChance; }
+  get showPhrases(): boolean { return this.props.showPhrases; }
   get simState(): Record<string, unknown> { return this.props.simState; }
   get status(): SeasonStatus { return this.props.status; }
   get currentDay(): number | null { return this.props.currentDay; }
@@ -163,6 +179,12 @@ export class Season {
       if (!MISSION_POOLS.includes(settings.missionPool)) throw new DomainError('Conjunto de missões inválido');
       this.props.missionPool = settings.missionPool;
     }
+  }
+
+  /** Drama e falas: só mudam o que aparece na tela, então valem a qualquer momento. */
+  configureDisplay(settings: DisplaySettings): void {
+    if (settings.drama !== undefined) this.props.drama = settings.drama;
+    if (settings.showPhrases !== undefined) this.props.showPhrases = settings.showPhrases;
   }
 
   recordSimState(state: Record<string, unknown>): void {
