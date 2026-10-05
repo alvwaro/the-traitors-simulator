@@ -23,7 +23,7 @@
     "@traitors/shared": "file:../shared",
     "dotenv": "^18.0.4",
     "express": "^5.2.1",
-    "pg": "^8.23.0",
+    "pg": "^8.23.1",
     "zod": "^4.6.5"
   },
   "devDependencies": {
