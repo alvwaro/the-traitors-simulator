@@ -12,7 +12,7 @@ COPY frontend/src frontend/src
 RUN npm run build --prefix frontend
 
 # Nginx sem privilégios de root (escuta na 8080).
-FROM nginxinc/nginx-unprivileged:1.29-alpine
+FROM nginxinc/nginx-unprivileged:1.31-alpine
 COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/frontend/dist /usr/share/nginx/html
 EXPOSE 8080
